@@ -10,17 +10,16 @@ export async function POST(request: Request) {
     }
 
     const cleaned = phone.replace(/[^\d+]/g, '')
-
-    // Verify OTP from our store
     const { supabaseAdmin } = await import('@/lib/supabase-admin')
 
-    const { data: otpRecord } = await supabaseAdmin
+    // Verify OTP from our store
+    const { data: otpRecord, error: otpError } = await supabaseAdmin
       .from('otp_codes')
       .select('code, expires_at')
       .eq('phone', cleaned)
       .single()
 
-    if (!otpRecord) {
+    if (otpError || !otpRecord) {
       return NextResponse.json(
         { error: 'No verification code found. Request a new one.' },
         { status: 400 }
@@ -39,57 +38,71 @@ export async function POST(request: Request) {
     // OTP valid — clean up
     await supabaseAdmin.from('otp_codes').delete().eq('phone', cleaned)
 
-    // Check if user exists with this phone
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find((u) => u.phone === cleaned)
+    // Use a deterministic email to create/sign in the user
+    // This avoids issues with phone-based auth provider config
+    const phoneEmail = `${cleaned.replace('+', '')}@phone.polla.football`
+    const phonePassword = `polla_phone_${cleaned}`
 
-    let userId: string
-
-    if (existingUser) {
-      userId = existingUser.id
-    } else {
-      // Create new auth user
-      const { data: newUser, error: createError } =
-        await supabaseAdmin.auth.admin.createUser({
-          phone: cleaned,
-          phone_confirm: true,
-        })
-
-      if (createError || !newUser.user) {
-        return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })
-      }
-
-      userId = newUser.user.id
-    }
-
-    // Generate a session — set a password and sign in via route client
-    const tempPassword = `polla_${cleaned}_${Date.now()}`
-
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      password: tempPassword,
-    })
-
+    // Try to sign in first (existing user)
     const supabase = createRouteClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      phone: cleaned,
-      password: tempPassword,
+      email: phoneEmail,
+      password: phonePassword,
     })
 
-    if (signInError) {
+    if (!signInError) {
+      // Existing user — check onboarding
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session!.user.id
+
+      const { data: profile } = await supabaseAdmin
+        .from('users')
+        .select('onboarding_completed')
+        .eq('id', userId)
+        .single()
+
+      return NextResponse.json({
+        success: true,
+        needsOnboarding: !profile?.onboarding_completed,
+        user: { id: userId, phone: cleaned },
+      })
+    }
+
+    // User doesn't exist — create via admin
+    const { data: newUser, error: createError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: phoneEmail,
+        password: phonePassword,
+        email_confirm: true,
+        user_metadata: { phone: cleaned },
+      })
+
+    if (createError || !newUser.user) {
+      console.error('createUser error:', createError)
+      return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })
+    }
+
+    // Update the user's phone in our public.users table
+    await supabaseAdmin
+      .from('users')
+      .update({ phone: cleaned })
+      .eq('id', newUser.user.id)
+
+    // Sign in the newly created user
+    const { error: newSignInError } = await supabase.auth.signInWithPassword({
+      email: phoneEmail,
+      password: phonePassword,
+    })
+
+    if (newSignInError) {
+      console.error('signIn error:', newSignInError)
       return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
     }
 
-    // Check if user needs onboarding
-    const { data: profile } = await supabaseAdmin
-      .from('users')
-      .select('onboarding_completed')
-      .eq('id', userId)
-      .single()
-
     return NextResponse.json({
       success: true,
-      needsOnboarding: !profile?.onboarding_completed,
-      user: { id: userId, phone: cleaned },
+      needsOnboarding: true,
+      user: { id: newUser.user.id, phone: cleaned },
     })
   } catch (error) {
     console.error('verify-otp error:', error)
