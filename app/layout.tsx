@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { AuthProvider } from './contexts/AuthContext'
 
 export const metadata: Metadata = {
   title: 'Polla Football — Predict the World Cup 2026',
@@ -34,7 +33,7 @@ export default function RootLayout({
         className="bg-polla-bg text-text-100 antialiased font-sans selection:bg-polla-accent/30"
         style={{ overscrollBehavior: 'none' }}
       >
-        <AuthProvider>{children}</AuthProvider>
+        {children}
       </body>
     </html>
   )
