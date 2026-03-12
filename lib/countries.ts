@@ -1,0 +1,31 @@
+// Country codes for phone input — Latin America focus, sorted by relevance
+export const COUNTRIES = [
+  { code: 'CO', dial: '+57', flag: '🇨🇴', name: 'Colombia' },
+  { code: 'MX', dial: '+52', flag: '🇲🇽', name: 'México' },
+  { code: 'AR', dial: '+54', flag: '🇦🇷', name: 'Argentina' },
+  { code: 'BR', dial: '+55', flag: '🇧🇷', name: 'Brasil' },
+  { code: 'PE', dial: '+51', flag: '🇵🇪', name: 'Perú' },
+  { code: 'CL', dial: '+56', flag: '🇨🇱', name: 'Chile' },
+  { code: 'EC', dial: '+593', flag: '🇪🇨', name: 'Ecuador' },
+  { code: 'VE', dial: '+58', flag: '🇻🇪', name: 'Venezuela' },
+  { code: 'US', dial: '+1', flag: '🇺🇸', name: 'United States' },
+  { code: 'ES', dial: '+34', flag: '🇪🇸', name: 'España' },
+  { code: 'CR', dial: '+506', flag: '🇨🇷', name: 'Costa Rica' },
+  { code: 'PA', dial: '+507', flag: '🇵🇦', name: 'Panamá' },
+  { code: 'DO', dial: '+1', flag: '🇩🇴', name: 'Dominican Republic' },
+  { code: 'GT', dial: '+502', flag: '🇬🇹', name: 'Guatemala' },
+  { code: 'HN', dial: '+504', flag: '🇭🇳', name: 'Honduras' },
+  { code: 'SV', dial: '+503', flag: '🇸🇻', name: 'El Salvador' },
+  { code: 'UY', dial: '+598', flag: '🇺🇾', name: 'Uruguay' },
+  { code: 'PY', dial: '+595', flag: '🇵🇾', name: 'Paraguay' },
+  { code: 'BO', dial: '+591', flag: '🇧🇴', name: 'Bolivia' },
+  { code: 'NI', dial: '+505', flag: '🇳🇮', name: 'Nicaragua' },
+  { code: 'CA', dial: '+1', flag: '🇨🇦', name: 'Canada' },
+  { code: 'GB', dial: '+44', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'DE', dial: '+49', flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', dial: '+33', flag: '🇫🇷', name: 'France' },
+  { code: 'NG', dial: '+234', flag: '🇳🇬', name: 'Nigeria' },
+  { code: 'KE', dial: '+254', flag: '🇰🇪', name: 'Kenya' },
+] as const
+
+export type CountryCode = (typeof COUNTRIES)[number]['code']

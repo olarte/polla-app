@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Landing page fonts */
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap');
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ═══ APP STYLES ═══ */
+
+@layer base {
+  /* Number emphasis — weight 800 per design system */
+  .num {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Glass card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+  }
+
+  /* Glow card variant */
+  .glow-card {
+    background: linear-gradient(135deg, #0F3460, #1A1A4E, #16213E);
+    border: 1px solid #E94560;
+    border-radius: 14px;
+  }
+
+  /* Label style — 10px uppercase */
+  .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.35);
+  }
+
+  /* Bottom nav glassmorphism */
+  .nav-glass {
+    background: rgba(10, 10, 18, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Status bar mock */
+  .status-bar {
+    background: #0A0A12;
+    height: env(safe-area-inset-top, 0px);
+    min-height: 0px;
+  }
+
+  /* Safe area bottom padding for nav */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* ═══ LANDING PAGE STYLES ═══ */
+
+/* Flag marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+/* Logo float */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Particle float upward */
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Legendary pulse */
+@keyframes legendary-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.4);
+  }
+}
+.animate-legendary-pulse {
+  animation: legendary-pulse 2s ease-in-out infinite;
+}
