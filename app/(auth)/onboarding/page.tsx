@@ -10,7 +10,7 @@ import { isMiniPayBrowser, getMiniPayAddress } from '@/lib/minipay'
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { user, updateProfile, setMiniPayAddress, profile } = useAuth()
+  const { user, setMiniPayAddress, profile } = useAuth()
 
   const [displayName, setDisplayName] = useState('')
   const [avatarEmoji, setAvatarEmoji] = useState('⚽')
@@ -62,17 +62,21 @@ export default function OnboardingPage() {
     setError('')
 
     try {
-      // Update profile
-      await updateProfile({
-        display_name: displayName.trim(),
-        avatar_emoji: avatarEmoji,
-        country_code: countryCode,
-        onboarding_completed: true,
+      const res = await fetch('/api/auth/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_name: displayName.trim(),
+          avatar_emoji: avatarEmoji,
+          country_code: countryCode,
+        }),
       })
 
-      // Create Blockradar wallets (non-MiniPay users)
-      if (!isMiniPayBrowser()) {
-        await fetch('/api/auth/create-wallet', { method: 'POST' })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong. Try again.')
+        return
       }
 
       router.push('/')
