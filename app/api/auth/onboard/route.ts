@@ -21,38 +21,27 @@ export async function POST(request: Request) {
     const userId = session.user.id
     const { supabaseAdmin } = await import('@/lib/supabase-admin')
 
-    // Update profile via admin (bypasses RLS)
+    // Upsert profile via admin (bypasses RLS, handles missing rows)
     const { error: updateError } = await supabaseAdmin
       .from('users')
-      .update({
+      .upsert({
+        id: userId,
         display_name: display_name.trim(),
         avatar_emoji: avatar_emoji || '⚽',
         country_code: country_code || 'CO',
         onboarding_completed: true,
-      })
-      .eq('id', userId)
+      }, { onConflict: 'id' })
 
     if (updateError) {
       console.error('onboard update error:', updateError)
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
     }
 
-    // Create Blockradar wallets in background
-    const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('is_minipay_user, wallet_celo')
-      .eq('id', userId)
-      .single()
+    // Create Blockradar wallets (awaited — serverless runtime kills fire-and-forget)
+    const { createWalletsForUser } = await import('@/lib/create-wallets')
+    const wallets = await createWalletsForUser(userId)
 
-    if (!user?.is_minipay_user && !user?.wallet_celo) {
-      // Fire and forget — don't block onboarding
-      fetch(`${request.headers.get('origin') || ''}/api/auth/create-wallet`, {
-        method: 'POST',
-        headers: { cookie: request.headers.get('cookie') || '' },
-      }).catch(() => {})
-    }
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, wallets })
   } catch (error) {
     console.error('onboard error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

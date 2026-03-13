@@ -157,6 +157,23 @@ function LoginForm() {
         return
       }
 
+      // Sign in on the client side so the browser Supabase client
+      // picks up the session (server-side cookies alone aren't enough)
+      const cleaned = fullPhone.replace(/[^\d+]/g, '')
+      const phoneEmail = `${cleaned.replace('+', '')}@phone.polla.football`
+      const phonePassword = `polla_phone_${cleaned}`
+
+      const { error: clientSignInError } = await supabase.auth.signInWithPassword({
+        email: phoneEmail,
+        password: phonePassword,
+      })
+
+      if (clientSignInError) {
+        console.error('Client sign-in error:', clientSignInError)
+        setError('Authentication failed. Try again.')
+        return
+      }
+
       if (data.needsOnboarding) {
         router.push('/onboarding')
       } else {
