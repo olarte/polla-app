@@ -142,13 +142,16 @@ function LoginForm() {
     setError('')
 
     try {
+      console.log('[OTP] 1. Calling verify-otp API...')
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: fullPhone, code: otpCode }),
       })
 
+      console.log('[OTP] 2. API responded:', res.status)
       const data = await res.json()
+      console.log('[OTP] 3. Response data:', data)
 
       if (!res.ok) {
         setError(data.error || 'Verification failed')
@@ -163,23 +166,26 @@ function LoginForm() {
       const phoneEmail = `${cleaned.replace('+', '')}@phone.polla.football`
       const phonePassword = `polla_phone_${cleaned}`
 
+      console.log('[OTP] 4. Signing in client-side...')
       const { error: clientSignInError } = await supabase.auth.signInWithPassword({
         email: phoneEmail,
         password: phonePassword,
       })
 
       if (clientSignInError) {
-        console.error('Client sign-in error:', clientSignInError)
+        console.error('[OTP] 5. Client sign-in FAILED:', clientSignInError)
         setError('Authentication failed. Try again.')
         return
       }
 
+      console.log('[OTP] 5. Client sign-in OK. Navigating...')
       if (data.needsOnboarding) {
         router.push('/onboarding')
       } else {
         router.push(redirect)
       }
-    } catch {
+    } catch (err) {
+      console.error('[OTP] ERROR:', err)
       setError('Network error. Try again.')
     } finally {
       setLoading(false)
