@@ -37,11 +37,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
     }
 
-    // Create Blockradar wallets (awaited — serverless runtime kills fire-and-forget)
-    const { createWalletsForUser } = await import('@/lib/create-wallets')
-    const wallets = await createWalletsForUser(userId)
-
-    return NextResponse.json({ success: true, wallets })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('onboard error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

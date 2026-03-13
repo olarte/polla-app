@@ -79,6 +79,9 @@ export default function OnboardingPage() {
         return
       }
 
+      // Trigger wallet creation in background — don't block navigation
+      fetch('/api/auth/create-wallet', { method: 'POST' }).catch(() => {})
+
       router.push('/')
     } catch {
       setError('Something went wrong. Try again.')
