@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createRouteClient } from '@/lib/supabase-route'
 
 export async function POST(request: Request) {
   try {
@@ -38,53 +37,44 @@ export async function POST(request: Request) {
     // OTP valid — clean up
     await supabaseAdmin.from('otp_codes').delete().eq('phone', cleaned)
 
-    // Use a deterministic email to create/sign in the user
+    // Deterministic credentials for this phone number
     const phoneEmail = `${cleaned.replace('+', '')}@phone.polla.football`
     const phonePassword = `polla_phone_${cleaned}`
 
-    // Try to sign in first (existing user)
-    const supabase = createRouteClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: phoneEmail,
-      password: phonePassword,
-    })
-
     let userId: string
+    let isNewUser = false
 
-    if (!signInError) {
-      // Existing auth user — get ID
-      const { data: { session } } = await supabase.auth.getSession()
-      userId = session!.user.id
-    } else {
-      // User doesn't exist — create via admin
-      const { data: newUser, error: createError } =
-        await supabaseAdmin.auth.admin.createUser({
-          email: phoneEmail,
-          password: phonePassword,
-          email_confirm: true,
-          user_metadata: { phone: cleaned },
-        })
-
-      if (createError || !newUser.user) {
-        console.error('createUser error:', createError)
-        return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })
-      }
-
-      userId = newUser.user.id
-
-      // Sign in the newly created user
-      const { error: newSignInError } = await supabase.auth.signInWithPassword({
+    // Try to create auth user — if already exists, look up by phone
+    const { data: newUser, error: createError } =
+      await supabaseAdmin.auth.admin.createUser({
         email: phoneEmail,
         password: phonePassword,
+        email_confirm: true,
+        user_metadata: { phone: cleaned },
       })
 
-      if (newSignInError) {
-        console.error('signIn error:', newSignInError)
-        return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
+    if (!createError && newUser.user) {
+      userId = newUser.user.id
+      isNewUser = true
+    } else {
+      // User already exists — look up in our public.users table
+      const { data: existingProfile } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('phone', cleaned)
+        .single()
+
+      if (existingProfile) {
+        userId = existingProfile.id
+      } else {
+        // Edge case: auth user exists but no public.users row
+        // This shouldn't happen, but handle it gracefully
+        console.error('createUser error and no public.users row:', createError)
+        return NextResponse.json({ error: 'Account issue. Contact support.' }, { status: 500 })
       }
     }
 
-    // Always ensure public.users + balances rows exist (idempotent)
+    // Ensure public.users + balances rows exist (idempotent)
     await supabaseAdmin
       .from('users')
       .upsert(
@@ -92,13 +82,7 @@ export async function POST(request: Request) {
         { onConflict: 'id', ignoreDuplicates: true }
       )
 
-    const { data: existingBalance } = await supabaseAdmin
-      .from('balances')
-      .select('id')
-      .eq('user_id', userId)
-      .single()
-
-    if (!existingBalance) {
+    if (isNewUser) {
       await supabaseAdmin.from('balances').insert({ user_id: userId })
     }
 
