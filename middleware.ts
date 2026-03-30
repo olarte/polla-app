@@ -31,11 +31,11 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // Public routes — no auth required
-  const publicPaths = ['/landing', '/login', '/api/auth']
+  const publicPaths = ['/landing', '/login', '/api/auth', '/api/groups/preview']
   const isPublic = publicPaths.some((p) => pathname.startsWith(p))
 
-  // Allow invite preview without auth
-  const isInvitePreview = pathname.startsWith('/invite/')
+  // Allow invite/join preview without auth
+  const isInvitePreview = pathname.startsWith('/invite/') || pathname.startsWith('/join/')
 
   if (isPublic || isInvitePreview) {
     return res

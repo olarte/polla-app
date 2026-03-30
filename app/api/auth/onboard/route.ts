@@ -29,6 +29,7 @@ export async function POST(request: Request) {
         display_name: display_name.trim(),
         avatar_emoji: avatar_emoji || '⚽',
         country_code: country_code || 'CO',
+        auth_method: 'anonymous',
         onboarding_completed: true,
       }, { onConflict: 'id' })
 

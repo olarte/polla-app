@@ -16,19 +16,6 @@ export async function GET(request: Request) {
         data: { session },
       } = await supabase.auth.getSession()
 
-      if (session) {
-        const { supabaseAdmin } = await import('@/lib/supabase-admin')
-        const { data: profile } = await supabaseAdmin
-          .from('users')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .single()
-
-        if (!profile?.onboarding_completed) {
-          return NextResponse.redirect(`${origin}/onboarding`)
-        }
-      }
-
       return NextResponse.redirect(`${origin}${redirect}`)
     }
   }

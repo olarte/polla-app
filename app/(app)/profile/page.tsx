@@ -1,93 +1,135 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Card from '../../components/Card'
 import Label from '../../components/Label'
 import TierBadge from '../../components/TierBadge'
 import FaqItem from '../../components/FaqItem'
 import Collapsible from '../../components/Collapsible'
-
-// Mock data
-const MOCK_USER = {
-  avatar_emoji: '🦁',
-  display_name: 'Daniel',
-  country_code: 'CO',
-  country_flag: '🇨🇴',
-  tier: 'silver' as const,
-  tier_percentile: 32,
-  active_pollas: 2,
-  balance_available: 42.50,
-  balance_locked: 10.00,
-  prizes_available: 0,
-  total_xp: 385,
-  prediction_progress: 23,
-}
-
-const MOCK_WALLETS = [
-  { chain: 'Celo', token: 'USDC', color: '#FCFF52', address: '0x7a3b...f92e' },
-  { chain: 'Base', token: 'USDC', color: '#0052FF', address: '0x4c1d...a83b' },
-  { chain: 'Polygon', token: 'USDC', color: '#8247E5', address: '0x9e2f...c71d' },
-  { chain: 'Tron', token: 'USDT', color: '#FF0013', address: 'TXk7j...Qp3R' },
-  { chain: 'Ethereum', token: 'USDC', color: '#627EEA', address: '0x1b5a...e04f' },
-]
-
-const MOCK_ACTIVITY = [
-  { type: 'deposit', desc: 'Deposit (Celo)', amount: '+$25.00', date: 'Mar 10' },
-  { type: 'entry', desc: 'Joined Office Polla', amount: '-$10.00', date: 'Mar 10' },
-  { type: 'deposit', desc: 'Deposit (Base)', amount: '+$27.50', date: 'Mar 8' },
-]
-
-const MOCK_PREDICTIONS = [
-  { group: 'Office Polla', completed: 47, total: 104 },
-  { group: 'Family Cup', completed: 70, total: 104 },
-]
+import PredictModal from '../../components/PredictModal'
+import ConnectWalletPrompt from '../../components/ConnectWalletPrompt'
+import MyBets from '../../components/MyBets'
+import { useAuth } from '../../contexts/AuthContext'
+import { createClient } from '@/lib/supabase-browser'
 
 const FAQ_ITEMS = [
   { q: 'What is Polla?', a: 'Polla is a skill-based prediction contest for the FIFA World Cup 2026. Predict match scores, compete in groups, and win prizes based on your accuracy.' },
   { q: 'Is it free to play?', a: 'Yes! Free groups give you the full experience — predictions, XP, cards, and leaderboards. No wallet or deposit needed.' },
   { q: 'How does scoring work?', a: 'Exact score = 5 pts, correct result + goal difference = 3 pts, correct result only = 2 pts. Stage multipliers increase points in knockout rounds (1.5x for Round of 32 up to 4x for the Final).' },
-  { q: 'What are paid pollas?', a: 'Paid groups have a fixed entry fee in USDC/USDT (5–500 cUSD). A 5% service fee is deducted, and 10–30% goes to the global prize pool. The remainder is the group prize pool.' },
+  { q: 'What are paid pollas?', a: 'Paid groups have a fixed entry fee paid via MiniPay. A 5% service fee is deducted, and 10-30% goes to the global prize pool. The remainder is the group prize pool.' },
   { q: 'How do payouts work?', a: 'Three models are available: Winner Takes All (100% to 1st), Podium Split (60/25/15 to top 3), or Proportional (pro-rata by points). The model is locked once the first prediction is made.' },
   { q: 'What is XP?', a: 'XP is earned through daily mini-predictions, polla predictions, login streaks, and sharing. XP unlocks booster packs that contain collectible cards.' },
   { q: 'What are booster packs?', a: 'Packs are unlocked at XP milestones (100, 250, 500, 750, 1000, 1500, 2000, 3000 XP). Each pack contains collectible cards of varying rarity. Higher milestones guarantee rarer cards.' },
   { q: 'What are cards?', a: 'There are 85 collectible cards: 48 Common (national jerseys), 20 Rare (football moments), 12 Epic (cultural costumes), and 5 Legendary. Collect them all in your Panini-style album.' },
-  { q: 'What chains are supported?', a: 'Celo (USDC), Base (USDC), Polygon (USDC), Ethereum (USDC), and Tron (USDT). Deposits are auto-detected and swept to your balance.' },
+  { q: 'How do I pay for paid pollas?', a: 'Connect your MiniPay wallet (available in Opera Mini). Payments are made in USDC on the Celo network.' },
   { q: 'What is La Gran Polla?', a: 'The global prize pool where all paid polla players compete. Prizes are distributed by ranking: Champion (15%), Top 5 (20%), Top 20 (25%), Top 100 (25%), Top 500 (15%). 10% is reserved for stage bonuses.' },
   { q: 'How do tiebreakers work?', a: 'If players are tied on points, the tiebreaker is "total goals scored in the tournament" — the player whose prediction is closest to the actual total wins.' },
 ]
 
 export default function ProfilePage() {
-  const [emoji, setEmoji] = useState(MOCK_USER.avatar_emoji)
-  const [walletsOpen, setWalletsOpen] = useState(false)
-  const [copied, setCopied] = useState<string | null>(null)
-  const user = MOCK_USER
+  const { user: authUser, profile, signOut } = useAuth()
+  const [emoji, setEmoji] = useState('⚽')
+  const [predictOpen, setPredictOpen] = useState(false)
+  const [walletPromptOpen, setWalletPromptOpen] = useState(false)
+  const [linkEmail, setLinkEmail] = useState('')
+  const [linkEmailMsg, setLinkEmailMsg] = useState('')
+  const [linkingEmail, setLinkingEmail] = useState(false)
 
-  const handleEmojiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Real data state
+  const [predictions, setPredictions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!authUser) return
+    const supabase = createClient()
+
+    async function loadProfile() {
+      const { data: groupsData } = await supabase
+        .from('group_members')
+        .select('group_id, total_points, groups(name)')
+        .eq('user_id', authUser!.id)
+
+      if (groupsData) {
+        setPredictions(groupsData.map((gm: any) => ({
+          group: gm.groups?.name || 'Polla',
+          completed: 0,
+          total: 104,
+        })))
+      }
+
+      setLoading(false)
+    }
+
+    loadProfile()
+  }, [authUser])
+
+  useEffect(() => {
+    if (profile?.avatar_emoji) {
+      setEmoji(profile.avatar_emoji)
+    }
+  }, [profile])
+
+  const handleEmojiChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     if (val) {
-      // Take the last emoji entered
       const emojis = [...val]
-      setEmoji(emojis[emojis.length - 1])
+      const newEmoji = emojis[emojis.length - 1]
+      setEmoji(newEmoji)
+      if (authUser) {
+        const supabase = createClient()
+        await supabase.from('users').update({ avatar_emoji: newEmoji }).eq('id', authUser.id)
+      }
     }
   }
 
-  const copyAddress = (chain: string, address: string) => {
-    navigator.clipboard.writeText(address)
-    setCopied(chain)
-    setTimeout(() => setCopied(null), 1500)
+  const handleLinkEmail = async () => {
+    if (!linkEmail.trim() || !linkEmail.includes('@')) {
+      setLinkEmailMsg('Enter a valid email')
+      return
+    }
+    setLinkingEmail(true)
+    setLinkEmailMsg('')
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ email: linkEmail.trim() })
+      if (error) {
+        setLinkEmailMsg(error.message)
+      } else {
+        setLinkEmailMsg('Check your email to confirm')
+        setLinkEmail('')
+      }
+    } catch {
+      setLinkEmailMsg('Failed to link email')
+    } finally {
+      setLinkingEmail(false)
+    }
+  }
+
+  const displayName = profile?.display_name || 'Player'
+  const countryFlag = profile?.country_code === 'CO' ? '🇨🇴' : '🌎'
+  const tier = 'silver' as const
+  const tierPercentile = 50
+
+  if (loading) {
+    return (
+      <div className="px-4 pt-4 flex items-center justify-center min-h-[60vh]">
+        <div className="text-text-40 text-sm">Loading profile...</div>
+      </div>
+    )
   }
 
   return (
     <div className="px-4 pt-4 space-y-5 pb-8">
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <div className="flex items-center justify-between">
         <Link href="/" className="text-text-40 text-sm">← Back</Link>
         <h1 className="text-sm font-bold">Profile</h1>
         <div className="w-10" />
       </div>
 
-      {/* ── Avatar + Info ── */}
+      {/* -- Avatar + Info -- */}
       <div className="flex flex-col items-center">
         <div className="relative">
           <label className="cursor-pointer">
@@ -106,158 +148,172 @@ export default function ProfilePage() {
             />
           </label>
         </div>
-        <p className="text-lg font-bold mt-3">{user.display_name}</p>
+        <p className="text-lg font-bold mt-3">{displayName}</p>
         <div className="flex items-center gap-2 mt-1">
-          <TierBadge tier={user.tier} size="sm" showLabel />
-          <span className="text-text-40 text-xs">· Top {user.tier_percentile}%</span>
+          <TierBadge tier={tier} size="sm" showLabel />
+          <span className="text-text-40 text-xs">· Top {tierPercentile}%</span>
         </div>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-sm">{user.country_flag}</span>
-          <span className="text-text-40 text-xs">{user.active_pollas} active pollas</span>
+          <span className="text-sm">{countryFlag}</span>
+          <span className="text-text-40 text-xs">{predictions.length} active pollas</span>
         </div>
       </div>
 
-      {/* ── Balance Card ── */}
-      <Card glow>
-        <div className="flex items-center justify-between">
-          <div>
-            <Label>Available</Label>
-            <p className="num text-2xl mt-1">${user.balance_available.toFixed(2)}</p>
+      {/* -- Wallet Section -- */}
+      <Card>
+        <Label>Wallet</Label>
+        {profile?.wallet_connected && profile?.wallet_address ? (
+          <div className="flex items-center justify-between mt-2">
+            <div>
+              <p className="text-sm font-mono text-text-70">
+                {profile.wallet_address.slice(0, 6)}...{profile.wallet_address.slice(-4)}
+              </p>
+              <p className="text-[10px] text-text-40 mt-0.5">Celo Network</p>
+            </div>
+            <span className="text-xs text-polla-success font-semibold px-2.5 py-1 rounded-lg bg-polla-success/10 border border-polla-success/20">
+              Connected ✓
+            </span>
           </div>
-          <div className="text-right">
-            <Label>Locked</Label>
-            <p className="num text-lg text-text-40 mt-1">${user.balance_locked.toFixed(2)}</p>
+        ) : (
+          <div className="mt-2">
+            <p className="text-text-40 text-xs mb-3">
+              Connect your MiniPay wallet to join paid pollas and claim prizes.
+            </p>
+            <button
+              onClick={() => setWalletPromptOpen(true)}
+              className="w-full py-2.5 rounded-xl bg-polla-success/20 border border-polla-success/30 text-polla-success text-xs font-bold active:scale-[0.97] transition-transform"
+            >
+              Connect Wallet
+            </button>
           </div>
-        </div>
-        <div className="flex gap-2 mt-4">
-          <button className="flex-1 py-2.5 rounded-xl bg-polla-success/20 border border-polla-success/30 text-polla-success text-xs font-bold active:scale-[0.97] transition-transform">
-            Add Funds
-          </button>
-          <button className="flex-1 py-2.5 rounded-xl bg-card border border-card-border text-text-40 text-xs font-bold active:scale-[0.97] transition-transform">
-            Withdraw
-          </button>
-        </div>
+        )}
       </Card>
 
-      {/* ── Deposit Addresses ── */}
-      <div className="border-t border-card-border">
-        <button
-          onClick={() => setWalletsOpen(!walletsOpen)}
-          className="w-full flex items-center justify-between py-3 px-1"
-        >
-          <span className="label">Deposit Addresses</span>
-          <span className={`text-text-40 text-xs transition-transform duration-200 ${walletsOpen ? 'rotate-180' : ''}`}>
-            ▾
-          </span>
-        </button>
-        <div className={`overflow-hidden transition-all duration-300 ${walletsOpen ? 'max-h-[500px] pb-3' : 'max-h-0'}`}>
-          <div className="space-y-2">
-            {MOCK_WALLETS.map((w) => (
-              <div key={w.chain} className="glass-card px-3 py-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: w.color }} />
-                  <div>
-                    <p className="text-xs font-semibold">{w.chain}</p>
-                    <p className="text-text-40 text-[10px] font-mono">{w.address}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-text-25 text-[10px]">{w.token}</span>
-                  <button
-                    onClick={() => copyAddress(w.chain, w.address)}
-                    className="text-text-40 text-xs px-2 py-1 rounded-lg bg-white/[0.04] active:bg-white/[0.08] transition-colors"
-                  >
-                    {copied === w.chain ? '✓' : 'Copy'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* -- Link Email (account recovery) -- */}
+      <Card>
+        <Label>Account Recovery</Label>
+        <p className="text-text-40 text-[10px] mt-1 mb-3">
+          Link an email to recover your account on another device.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="email"
+            placeholder="your@email.com"
+            value={linkEmail}
+            onChange={e => setLinkEmail(e.target.value)}
+            className="flex-1 bg-white/[0.04] border border-card-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-polla-accent/50 transition-colors"
+          />
+          <button
+            onClick={handleLinkEmail}
+            disabled={linkingEmail || !linkEmail}
+            className="px-5 py-2.5 rounded-xl bg-btn-primary text-xs font-bold disabled:opacity-40 active:scale-[0.97] transition-transform"
+          >
+            {linkingEmail ? '...' : 'Link'}
+          </button>
         </div>
-      </div>
+        {linkEmailMsg && (
+          <p className={`text-xs mt-2 ${linkEmailMsg.includes('Check') ? 'text-polla-success' : 'text-polla-accent'}`}>
+            {linkEmailMsg}
+          </p>
+        )}
+      </Card>
 
-      {/* ── Prizes Card ── */}
+      {/* -- XP Stats -- */}
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <Label>Prizes Available</Label>
-            <p className="num text-xl mt-1">${user.prizes_available.toFixed(2)}</p>
+            <Label>Total XP</Label>
+            <p className="num text-xl mt-0.5">{profile?.total_xp || 0}</p>
           </div>
-          <button
-            disabled={user.prizes_available === 0}
-            className={`px-5 py-2 rounded-xl text-xs font-bold transition-transform ${
-              user.prizes_available > 0
-                ? 'bg-polla-gold/20 border border-polla-gold/30 text-polla-gold active:scale-[0.97]'
-                : 'bg-white/[0.03] border border-card-border text-text-25 cursor-not-allowed'
-            }`}
-          >
-            Claim
-          </button>
+          <div className="text-center">
+            <Label>Packs</Label>
+            <p className="num text-xl mt-0.5">{profile?.packs_earned || 0}</p>
+          </div>
+          <div className="text-right">
+            <Label>Cards</Label>
+            <p className="num text-xl mt-0.5">{profile?.cards_collected || 0}/85</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-3">
+          <div>
+            <Label>Streak</Label>
+            <p className="num text-lg mt-0.5">{profile?.streak_days || 0} days</p>
+          </div>
         </div>
       </Card>
 
-      {/* ── Predict CTA ── */}
+      {/* -- Predict CTA -- */}
       <Card glow className="text-center">
         <p className="text-sm font-bold mb-1">Predict the World Cup</p>
         <p className="text-text-40 text-xs mb-3">
-          104 matches · {user.prediction_progress}% complete
+          104 matches · 0% complete
         </p>
         <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-3">
           <div
             className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark transition-all"
-            style={{ width: `${user.prediction_progress}%` }}
+            style={{ width: '0%' }}
           />
         </div>
-        <button className="w-full py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform">
+        <button
+          onClick={() => setPredictOpen(true)}
+          className="w-full py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform"
+        >
           Continue Predicting
         </button>
       </Card>
 
-      {/* ── Recent Activity ── */}
-      <Collapsible title="Recent Activity">
-        <div className="space-y-0">
-          {MOCK_ACTIVITY.map((item, i) => (
-            <div key={i} className="flex items-center justify-between py-2.5 border-b border-card-border last:border-0">
-              <div>
-                <p className="text-sm">{item.desc}</p>
-                <p className="text-text-25 text-[10px] mt-0.5">{item.date}</p>
-              </div>
-              <span className={`num text-sm ${item.amount.startsWith('+') ? 'text-polla-success' : 'text-text-40'}`}>
-                {item.amount}
-              </span>
-            </div>
-          ))}
-        </div>
-      </Collapsible>
+      {/* -- My Bets -- */}
+      <MyBets />
 
-      {/* ── My Predictions Summary ── */}
-      <Collapsible title="My Predictions Summary">
-        <div className="space-y-2.5">
-          {MOCK_PREDICTIONS.map((p, i) => (
-            <div key={i} className="glass-card px-3 py-2.5">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-semibold">{p.group}</span>
-                <span className="num text-xs text-text-40">{p.completed}/{p.total}</span>
+      {/* -- My Predictions Summary -- */}
+      {predictions.length > 0 && (
+        <Collapsible title="My Predictions Summary">
+          <div className="space-y-2.5">
+            {predictions.map((p, i) => (
+              <div key={i} className="glass-card px-3 py-2.5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-semibold">{p.group}</span>
+                  <span className="num text-xs text-text-40">{p.completed}/{p.total}</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark"
+                    style={{ width: `${Math.round((p.completed / p.total) * 100)}%` }}
+                  />
+                </div>
               </div>
-              <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark"
-                  style={{ width: `${Math.round((p.completed / p.total) * 100)}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Collapsible>
+            ))}
+          </div>
+        </Collapsible>
+      )}
 
-      {/* ── FAQ ── */}
-      <Collapsible title="❓ How Polla Works" defaultOpen>
+      {/* -- FAQ -- */}
+      <Collapsible title="How Polla Works" defaultOpen>
         <div>
           {FAQ_ITEMS.map((item, i) => (
             <FaqItem key={i} question={item.q} answer={item.a} />
           ))}
         </div>
       </Collapsible>
+
+      {/* -- Sign Out -- */}
+      <button
+        onClick={signOut}
+        className="w-full py-3 text-text-40 text-sm hover:text-text-70 transition-colors"
+      >
+        Sign Out
+      </button>
+
+      {/* -- Predict Modal -- */}
+      <PredictModal isOpen={predictOpen} onClose={() => setPredictOpen(false)} />
+
+      {/* -- Connect Wallet Prompt -- */}
+      {walletPromptOpen && (
+        <ConnectWalletPrompt
+          onClose={() => setWalletPromptOpen(false)}
+          onConnected={() => setWalletPromptOpen(false)}
+        />
+      )}
     </div>
   )
 }

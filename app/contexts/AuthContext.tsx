@@ -14,22 +14,19 @@ import type { Database } from '@/lib/database.types'
 
 type UserProfile = Database['public']['Tables']['users']['Row']
 type UserUpdate = Database['public']['Tables']['users']['Update']
-type Balance = Database['public']['Tables']['balances']['Row']
 
 interface AuthState {
   session: Session | null
   user: User | null
   profile: UserProfile | null
-  balance: Balance | null
   loading: boolean
-  isMiniPay: boolean
 }
 
 interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
   updateProfile: (data: UserUpdate) => Promise<void>
-  setMiniPayAddress: (address: string) => Promise<void>
+  connectWallet: (address: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -40,30 +37,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session: null,
     user: null,
     profile: null,
-    balance: null,
     loading: true,
-    isMiniPay: false,
   })
 
   const fetchProfile = useCallback(
     async (userId: string) => {
-      const [{ data: profile }, { data: balance }] = await Promise.all([
-        supabase.from('users').select('*').eq('id', userId).single(),
-        supabase.from('balances').select('*').eq('user_id', userId).single(),
-      ])
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
 
       setState((prev) => ({
         ...prev,
         profile,
-        balance,
-        isMiniPay: profile?.is_minipay_user ?? false,
       }))
     },
     [supabase]
   )
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setState((prev) => ({
         ...prev,
@@ -79,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -95,8 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState((prev) => ({
           ...prev,
           profile: null,
-          balance: null,
-          isMiniPay: false,
         }))
       }
 
@@ -112,9 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session: null,
       user: null,
       profile: null,
-      balance: null,
       loading: false,
-      isMiniPay: false,
     })
   }, [supabase])
 
@@ -143,30 +131,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase, state.user]
   )
 
-  const setMiniPayAddress = useCallback(
+  const connectWallet = useCallback(
     async (address: string) => {
       if (!state.user) return
 
       await supabase
         .from('users')
         .update({
-          is_minipay_user: true,
-          minipay_address: address,
-          wallet_celo: address,
-          deposit_chain: 'celo',
+          wallet_address: address,
+          wallet_connected: true,
         })
         .eq('id', state.user.id)
 
       setState((prev) => ({
         ...prev,
-        isMiniPay: true,
         profile: prev.profile
           ? {
               ...prev.profile,
-              is_minipay_user: true,
-              minipay_address: address,
-              wallet_celo: address,
-              deposit_chain: 'celo',
+              wallet_address: address,
+              wallet_connected: true,
             }
           : null,
       }))
@@ -181,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         refreshProfile,
         updateProfile,
-        setMiniPayAddress,
+        connectWallet,
       }}
     >
       {children}

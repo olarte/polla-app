@@ -1,16 +1,16 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Card from '../components/Card'
 import Label from '../components/Label'
 import TierBadge from '../components/TierBadge'
 import WhatsAppBtn from '../components/WhatsAppBtn'
+import PredictModal from '../components/PredictModal'
+import { useAuth } from '../contexts/AuthContext'
 
 // Mock data — will be replaced with real data later
 const MOCK_USER = {
-  avatar_emoji: '🦁',
-  display_name: 'Daniel',
-  balance: 42.50,
   tier: 'silver' as const,
   tier_percentile: 32,
   total_xp: 385,
@@ -44,29 +44,61 @@ function getCountdown(target: Date) {
 }
 
 export default function HomePage() {
+  const [predictOpen, setPredictOpen] = useState(false)
+  const [unclaimed, setUnclaimed] = useState<{ total: number; count: number } | null>(null)
+  const { profile } = useAuth()
   const user = MOCK_USER
+
+  useEffect(() => {
+    fetch('/api/bets/unclaimed')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.total > 0) setUnclaimed({ total: data.total, count: data.count })
+      })
+      .catch(() => {})
+  }, [])
   const countdown = getCountdown(NEXT_MATCH.date)
   const xpToNext = NEXT_PACK_XP - user.total_xp
   const xpProgress = Math.min((user.total_xp / NEXT_PACK_XP) * 100, 100)
 
   return (
     <div className="px-4 pt-4 space-y-5 pb-4">
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="text-lg font-extrabold tracking-tight">POLLA</span>
         </div>
-        <Link href="/profile" className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-card-border">
-            <span className="num text-xs">${user.balance.toFixed(2)}</span>
-          </div>
+        <Link href="/profile" className="flex items-center gap-2">
+          {profile?.wallet_connected && (
+            <div className="w-2 h-2 rounded-full bg-polla-success" />
+          )}
           <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-polla-accent to-polla-accent-dark flex items-center justify-center text-lg">
-            {user.avatar_emoji}
+            {profile?.avatar_emoji || '⚽'}
           </div>
         </Link>
       </div>
 
-      {/* ── Predict the World Cup CTA ── */}
+      {/* -- Unclaimed Winnings Banner -- */}
+      {unclaimed && unclaimed.total > 0 && (
+        <Link href="/profile">
+          <Card glow className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">💰</span>
+              <div>
+                <p className="text-sm font-bold text-polla-success">
+                  ${unclaimed.total.toFixed(2)} in unclaimed winnings
+                </p>
+                <p className="text-text-40 text-[10px]">
+                  {unclaimed.count} winning {unclaimed.count === 1 ? 'bet' : 'bets'} — Claim now
+                </p>
+              </div>
+            </div>
+            <span className="text-polla-accent text-xs font-semibold">→</span>
+          </Card>
+        </Link>
+      )}
+
+      {/* -- Predict the World Cup CTA -- */}
       <Card glow className="text-center">
         <p className="text-lg font-bold mb-1">Predict the World Cup</p>
         <p className="text-text-40 text-sm mb-3">
@@ -82,12 +114,15 @@ export default function HomePage() {
             style={{ width: `${user.prediction_progress}%` }}
           />
         </div>
-        <button className="mt-4 w-full py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform">
+        <button
+          onClick={() => setPredictOpen(true)}
+          className="mt-4 w-full py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform"
+        >
           Continue Predicting
         </button>
       </Card>
 
-      {/* ── Global Pool Card ── */}
+      {/* -- Global Pool Card -- */}
       <Card glow>
         <Label>La Gran Polla — Global Prize Pool</Label>
         <p className="num text-3xl text-polla-gold mt-1">$228,456</p>
@@ -108,7 +143,7 @@ export default function HomePage() {
         </div>
       </Card>
 
-      {/* ── Next Match Countdown ── */}
+      {/* -- Next Match Countdown -- */}
       {countdown && (
         <Card>
           <Label>Next Match</Label>
@@ -135,7 +170,7 @@ export default function HomePage() {
         </Card>
       )}
 
-      {/* ── XP Summary ── */}
+      {/* -- XP Summary -- */}
       <Card>
         <div className="flex items-center justify-between">
           <div>
@@ -171,7 +206,7 @@ export default function HomePage() {
         </p>
       </Card>
 
-      {/* ── My Pollas ── */}
+      {/* -- My Pollas -- */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <Label>My Pollas</Label>
@@ -215,13 +250,16 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── Share ── */}
+      {/* -- Share -- */}
       <div className="flex justify-center">
         <WhatsAppBtn
           text="Invite Friends"
           message="Join me on Polla Football! Predict the World Cup 2026 🐔⚽ https://polla.football"
         />
       </div>
+
+      {/* -- Predict Modal -- */}
+      <PredictModal isOpen={predictOpen} onClose={() => setPredictOpen(false)} />
     </div>
   )
 }
