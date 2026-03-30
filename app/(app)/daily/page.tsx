@@ -168,7 +168,7 @@ export default function DailyPage() {
   }
 
   return (
-    <div className="px-4 pt-4 space-y-5 pb-4">
+    <div className="px-4 pt-4 space-y-5 pb-32">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
