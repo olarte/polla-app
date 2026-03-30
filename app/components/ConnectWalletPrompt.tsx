@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useConnect, useAccount } from 'wagmi'
+import { injected } from 'wagmi/connectors'
 import { useAuth } from '../contexts/AuthContext'
 
 interface ConnectWalletPromptProps {
@@ -10,6 +12,8 @@ interface ConnectWalletPromptProps {
 
 export default function ConnectWalletPrompt({ onClose, onConnected }: ConnectWalletPromptProps) {
   const { connectWallet } = useAuth()
+  const { connectAsync } = useConnect()
+  const { address: wagmiAddress } = useAccount()
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,15 +24,16 @@ export default function ConnectWalletPrompt({ onClose, onConnected }: ConnectWal
     setError('')
 
     try {
-      const ethereum = (window as any).ethereum
-      const accounts = await ethereum.request({ method: 'eth_requestAccounts' }) as string[]
-      const address = accounts[0]
+      // Connect through wagmi so useAccount() picks it up everywhere
+      const result = await connectAsync({ connector: injected() })
+      const address = result.accounts[0]
 
       if (!address) {
         setError('No account found')
         return
       }
 
+      // Also save to Supabase profile
       await connectWallet(address)
       onConnected?.()
     } catch {
