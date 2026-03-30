@@ -29,33 +29,8 @@ create trigger groups_updated_at
   before update on public.groups
   for each row execute function public.handle_updated_at();
 
--- RLS
+-- RLS (policies added after group_members table creation)
 alter table public.groups enable row level security;
-
--- Anyone authenticated can read groups they belong to
-create policy "Members can read their groups"
-  on public.groups for select
-  using (
-    id in (
-      select group_id from public.group_members where user_id = auth.uid()
-    )
-  );
-
--- Anyone can read a group by invite_code (for join preview)
-create policy "Anyone can read group by invite code"
-  on public.groups for select
-  using (true);
-
--- Creator can update their group (before locked)
-create policy "Creator can update own group"
-  on public.groups for update
-  using (auth.uid() = created_by and status = 'open')
-  with check (auth.uid() = created_by);
-
--- Authenticated users can create groups
-create policy "Authenticated users can create groups"
-  on public.groups for insert
-  with check (auth.uid() = created_by);
 
 -- ──────────────────────────────────────────────────────────────
 -- GROUP MEMBERS
@@ -86,6 +61,35 @@ create policy "Members can read group members"
 create policy "Users can join groups"
   on public.group_members for insert
   with check (auth.uid() = user_id);
+
+-- ──────────────────────────────────────────────────────────────
+-- GROUPS RLS POLICIES (after group_members exists)
+-- ──────────────────────────────────────────────────────────────
+
+-- Anyone authenticated can read groups they belong to
+create policy "Members can read their groups"
+  on public.groups for select
+  using (
+    id in (
+      select group_id from public.group_members where user_id = auth.uid()
+    )
+  );
+
+-- Anyone can read a group by invite_code (for join preview)
+create policy "Anyone can read group by invite code"
+  on public.groups for select
+  using (true);
+
+-- Creator can update their group (before locked)
+create policy "Creator can update own group"
+  on public.groups for update
+  using (auth.uid() = created_by and status = 'open')
+  with check (auth.uid() = created_by);
+
+-- Authenticated users can create groups
+create policy "Authenticated users can create groups"
+  on public.groups for insert
+  with check (auth.uid() = created_by);
 
 -- ──────────────────────────────────────────────────────────────
 -- FUNCTION: increment member_count on join

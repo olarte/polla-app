@@ -31,7 +31,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // Public routes — no auth required
-  const publicPaths = ['/landing', '/login', '/api/auth', '/api/groups/preview']
+  const publicPaths = ['/landing', '/login', '/api/auth', '/api/groups/preview', '/api/cron', '/api/bets', '/api/seed-matches']
   const isPublic = publicPaths.some((p) => pathname.startsWith(p))
 
   // Allow invite/join preview without auth
