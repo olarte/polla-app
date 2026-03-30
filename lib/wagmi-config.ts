@@ -3,7 +3,7 @@ import { celo } from 'wagmi/chains'
 import { injected } from 'wagmi/connectors'
 import { defineChain } from 'viem'
 
-// Celo Sepolia testnet — not yet in viem/wagmi, define manually
+// Celo Sepolia testnet (MiniPay testnet) — chain ID 11142220
 export const celoSepolia = defineChain({
   id: 11142220,
   name: 'Celo Sepolia',
@@ -18,13 +18,12 @@ export const celoSepolia = defineChain({
 })
 
 export const wagmiConfig = createConfig({
-  chains: [celo, celoSepolia],
+  chains: [celoSepolia, celo],
   connectors: [
-    injected(), // Picks up MiniPay / MetaMask / any injected provider
+    injected(), // MiniPay injects window.ethereum automatically
   ],
   transports: {
-    [celo.id]: http('https://forno.celo.org'),
-    [celoSepolia.id]: http('https://forno.celo-sepolia.celo-testnet.org'),
+    [celo.id]: http(),
+    [celoSepolia.id]: http(),
   },
-  ssr: true,
 })

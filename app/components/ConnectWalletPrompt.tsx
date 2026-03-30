@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useConnect, useAccount } from 'wagmi'
-import { injected } from 'wagmi/connectors'
+import { useConnect, useConnectors, useAccount } from 'wagmi'
 import { useAuth } from '../contexts/AuthContext'
 
 interface ConnectWalletPromptProps {
@@ -12,8 +11,9 @@ interface ConnectWalletPromptProps {
 
 export default function ConnectWalletPrompt({ onClose, onConnected }: ConnectWalletPromptProps) {
   const { connectWallet } = useAuth()
+  const connectors = useConnectors()
   const { connectAsync } = useConnect()
-  const { address: wagmiAddress } = useAccount()
+  const { address: wagmiAddress, isConnected } = useAccount()
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,9 +24,13 @@ export default function ConnectWalletPrompt({ onClose, onConnected }: ConnectWal
     setError('')
 
     try {
-      // Connect through wagmi so useAccount() picks it up everywhere
-      const result = await connectAsync({ connector: injected() })
-      const address = result.accounts[0]
+      let address = wagmiAddress
+
+      // If wagmi isn't already connected, connect using first connector (injected/MiniPay)
+      if (!isConnected && connectors.length > 0) {
+        const result = await connectAsync({ connector: connectors[0] })
+        address = result.accounts[0]
+      }
 
       if (!address) {
         setError('No account found')
