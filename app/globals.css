@@ -73,6 +73,11 @@ html {
   }
 }
 
+/* Hide bottom nav when bet controls are active */
+html[data-hide-nav] .nav-glass {
+  display: none !important;
+}
+
 /* ═══ LANDING PAGE STYLES ═══ */
 
 /* Flag marquee */
