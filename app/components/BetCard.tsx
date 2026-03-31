@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { keccak256, toHex, formatUnits, type Hex } from 'viem'
 import { useMarketData, useUserBets, usePlaceBet, useClaimed, useClaim } from '@/lib/contracts/usePollaBets'
@@ -111,6 +111,8 @@ export default function BetCard({ match, onWalletNeeded }: BetCardProps) {
     return () => clearInterval(interval)
   }, [refetchMarket])
 
+  const betBtnRef = useRef<HTMLButtonElement>(null)
+
   const isLocked = new Date(match.kickoff).getTime() <= Date.now()
 
   const outcomeLabels =
@@ -132,6 +134,10 @@ export default function BetCard({ match, onWalletNeeded }: BetCardProps) {
       return
     }
     setSelectedOutcome(idx === selectedOutcome ? null : idx)
+    // Scroll the Place Bet button into view after a tick
+    if (idx !== selectedOutcome) {
+      setTimeout(() => betBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100)
+    }
   }
 
   const handleAmountChip = (val: number) => {
@@ -387,6 +393,7 @@ export default function BetCard({ match, onWalletNeeded }: BetCardProps) {
             </div>
 
             <button
+              ref={betBtnRef}
               onClick={handlePlaceBet}
               disabled={amount <= 0}
               className="w-full py-3 rounded-xl bg-btn-primary text-sm font-bold disabled:opacity-40 active:scale-[0.97] transition-transform"
