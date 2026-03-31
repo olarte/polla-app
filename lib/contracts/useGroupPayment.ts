@@ -10,7 +10,7 @@ const USDC_ADDRESS: Record<number, Address> = {
   11142220: '0x01C5C0122039549AD1493B8220cABEdD739BC44E', // Celo Sepolia (Circle testnet USDC)
 }
 
-const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_ADDRESS as Address
+const TREASURY_ADDRESS = (process.env.NEXT_PUBLIC_TREASURY_ADDRESS || '').trim() as Address
 
 const ERC20_ABI = [
   {
