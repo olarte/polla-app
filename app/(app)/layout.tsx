@@ -8,9 +8,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <Web3Provider>
       <AuthProvider>
-        <div className="min-h-screen bg-polla-bg flex flex-col">
+        <div className="min-h-screen bg-polla-bg">
           <StatusBar />
-          <main className="flex-1 pb-36 overflow-y-auto">{children}</main>
+          <main style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px) + 40px)' }}>
+            {children}
+          </main>
           <BottomNav />
         </div>
         <ServiceWorkerRegistrar />
