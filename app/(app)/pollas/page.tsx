@@ -184,6 +184,13 @@ export default function PollasPage() {
     fetchPollas()
   }, [fetchPollas])
 
+  // Refetch when page regains focus (e.g. navigating back from polla detail)
+  useEffect(() => {
+    const onFocus = () => fetchPollas()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [fetchPollas])
+
   const handleJoin = async (code?: string, txHash?: string) => {
     const inviteCode = (code || joinCode).trim()
     if (!inviteCode) return
