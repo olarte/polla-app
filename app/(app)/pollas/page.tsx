@@ -60,6 +60,12 @@ export default function PollasPage() {
 
   const phase = getTournamentPhase()
 
+  // Stop loading after 3 seconds max as fallback
+  useEffect(() => {
+    const timeout = setTimeout(() => setLoading(false), 3000)
+    return () => clearTimeout(timeout)
+  }, [])
+
   // Hide bottom nav when payment modal is open
   useEffect(() => {
     if (pendingPayment) {
@@ -231,9 +237,9 @@ export default function PollasPage() {
       const txHash = await payEntryFee(pendingPayment.fee)
       // Now retry join with the tx hash
       await handleJoin(pendingPayment.code, txHash)
-    } catch {
-      setJoinError(paymentError || 'Payment failed')
-    } finally {
+    } catch (err: any) {
+      const msg = err?.shortMessage || err?.message || paymentError || 'Payment failed'
+      setJoinError(msg)
       setJoining(false)
     }
   }
