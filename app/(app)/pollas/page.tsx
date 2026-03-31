@@ -184,11 +184,21 @@ export default function PollasPage() {
     fetchPollas()
   }, [fetchPollas])
 
-  // Refetch when page regains focus (e.g. navigating back from polla detail)
+  // Refetch when user becomes available (auth may load after first render)
+  useEffect(() => {
+    if (user) fetchPollas()
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refetch when page regains focus or becomes visible
   useEffect(() => {
     const onFocus = () => fetchPollas()
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchPollas() }
     window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [fetchPollas])
 
   const handleJoin = async (code?: string, txHash?: string) => {
