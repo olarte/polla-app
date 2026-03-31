@@ -71,8 +71,12 @@ export default function PollasPage() {
   }, [pendingPayment])
 
   const fetchPollas = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
+    try {
     // Fetch groups, memberships, and prediction progress in parallel
     const [membershipsRes, matchCountRes, predCountRes] = await Promise.all([
       supabase
@@ -164,6 +168,10 @@ export default function PollasPage() {
 
     setPollas(pollasWithData)
     setLoading(false)
+    } catch (err) {
+      console.error('fetchPollas error:', err)
+      setLoading(false)
+    }
   }, [user, supabase])
 
   useEffect(() => {
