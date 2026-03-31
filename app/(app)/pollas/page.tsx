@@ -60,6 +60,16 @@ export default function PollasPage() {
 
   const phase = getTournamentPhase()
 
+  // Hide bottom nav when payment modal is open
+  useEffect(() => {
+    if (pendingPayment) {
+      document.documentElement.setAttribute('data-hide-nav', 'true')
+    } else {
+      document.documentElement.removeAttribute('data-hide-nav')
+    }
+    return () => document.documentElement.removeAttribute('data-hide-nav')
+  }, [pendingPayment])
+
   const fetchPollas = useCallback(async () => {
     if (!user) return
 
