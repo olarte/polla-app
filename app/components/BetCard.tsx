@@ -113,15 +113,15 @@ export default function BetCard({ match, onWalletNeeded }: BetCardProps) {
 
   const betBtnRef = useRef<HTMLButtonElement>(null)
 
-  // Hide bottom nav when bet selector is active
+  // Hide bottom nav when confirm modal is open
   useEffect(() => {
-    if (selectedOutcome !== null) {
+    if (confirmOpen) {
       document.documentElement.setAttribute('data-hide-nav', 'true')
     } else {
       document.documentElement.removeAttribute('data-hide-nav')
     }
     return () => document.documentElement.removeAttribute('data-hide-nav')
-  }, [selectedOutcome])
+  }, [confirmOpen])
 
   const isLocked = new Date(match.kickoff).getTime() <= Date.now()
 

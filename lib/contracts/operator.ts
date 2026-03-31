@@ -42,7 +42,7 @@ const rpcUrl = IS_TESTNET
   ? 'https://forno.celo-sepolia.celo-testnet.org'
   : 'https://forno.celo.org'
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_POLLA_BETS_ADDRESS as Address
+const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_POLLA_BETS_ADDRESS || '').trim() as Address
 const pollaBetsAbi = PollaBetsArtifact.abi
 
 // ─── Clients ─────────────────────────────────────────────────

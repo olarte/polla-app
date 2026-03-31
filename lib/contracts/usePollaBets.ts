@@ -7,8 +7,8 @@ import PollaBetsArtifact from './PollaBets.json'
 
 // Contract addresses per chain
 const POLLA_BETS_ADDRESS: Record<number, Address> = {
-  42220: (process.env.NEXT_PUBLIC_POLLA_BETS_ADDRESS || '0x0') as Address,    // Celo mainnet
-  11142220: (process.env.NEXT_PUBLIC_POLLA_BETS_ADDRESS || '0x0') as Address, // Celo Sepolia
+  42220: ((process.env.NEXT_PUBLIC_POLLA_BETS_ADDRESS || '0x0').trim()) as Address,    // Celo mainnet
+  11142220: ((process.env.NEXT_PUBLIC_POLLA_BETS_ADDRESS || '0x0').trim()) as Address, // Celo Sepolia
 }
 
 // USDC addresses per chain
