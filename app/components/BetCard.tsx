@@ -391,15 +391,6 @@ export default function BetCard({ match, onWalletNeeded }: BetCardProps) {
                 step="0.01"
               />
             </div>
-
-            <button
-              ref={betBtnRef}
-              onClick={handlePlaceBet}
-              disabled={amount <= 0}
-              className="w-full py-3 rounded-xl bg-btn-primary text-sm font-bold disabled:opacity-40 active:scale-[0.97] transition-transform"
-            >
-              Place Bet — ${amount.toFixed(2)} USDC
-            </button>
           </div>
         )}
 
@@ -417,6 +408,22 @@ export default function BetCard({ match, onWalletNeeded }: BetCardProps) {
           </div>
         )}
       </Card>
+
+      {/* Fixed Place Bet bar — above BottomNav */}
+      {selectedOutcome !== null && !isLocked && !confirmOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-polla-bg/95 backdrop-blur-md border-t border-card-border px-4 pt-3 safe-bottom"
+          style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' }}
+        >
+          <button
+            ref={betBtnRef}
+            onClick={handlePlaceBet}
+            disabled={amount <= 0}
+            className="w-full py-3.5 rounded-xl bg-btn-primary text-sm font-bold disabled:opacity-40 active:scale-[0.97] transition-transform"
+          >
+            Place Bet — ${amount.toFixed(2)} USDC
+          </button>
+        </div>
+      )}
 
       {/* Confirm Modal */}
       {confirmOpen && selectedOutcome !== null && (
