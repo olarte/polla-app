@@ -8,6 +8,10 @@ interface EmptyStateProps {
     label: string
     onClick: () => void
   }
+  secondaryAction?: {
+    label: string
+    onClick: () => void
+  }
   className?: string
 }
 
@@ -16,6 +20,7 @@ export default function EmptyState({
   title,
   description,
   action,
+  secondaryAction,
   className = '',
 }: EmptyStateProps) {
   return (
@@ -33,18 +38,27 @@ export default function EmptyState({
           {action.label}
         </button>
       )}
+      {secondaryAction && (
+        <button
+          onClick={secondaryAction.onClick}
+          className="mt-3 text-text-40 text-xs underline underline-offset-2 hover:text-text-70 transition-colors"
+        >
+          {secondaryAction.label}
+        </button>
+      )}
     </div>
   )
 }
 
 // Pre-built empty states
-export function EmptyPollas({ onCreateFirst }: { onCreateFirst: () => void }) {
+export function EmptyPollas({ onCreateFirst, onJoinWithLink }: { onCreateFirst: () => void; onJoinWithLink?: () => void }) {
   return (
     <EmptyState
-      emoji="🐔"
-      title="No Pollas Yet"
-      description="Create your first group and invite friends to predict the World Cup together!"
-      action={{ label: 'Create Your First Polla', onClick: onCreateFirst }}
+      emoji="⛱️"
+      title="No Pools Yet"
+      description="Create your first pool and invite friends to predict the World Cup together!"
+      action={{ label: 'Create Your First Pool', onClick: onCreateFirst }}
+      secondaryAction={onJoinWithLink ? { label: 'or join one with an invite link', onClick: onJoinWithLink } : undefined}
     />
   )
 }
@@ -70,12 +84,23 @@ export function EmptyCards() {
   )
 }
 
-export function EmptyMatches() {
+export function EmptyBets({ onPlaceBet }: { onPlaceBet?: () => void }) {
+  return (
+    <EmptyState
+      emoji="🎲"
+      title="No Bets Yet"
+      description="Place your first bet on today's matches"
+      action={onPlaceBet ? { label: 'Place a Bet', onClick: onPlaceBet } : undefined}
+    />
+  )
+}
+
+export function EmptyMatches({ nextMatchDate }: { nextMatchDate?: string } = {}) {
   return (
     <EmptyState
       emoji="⚽"
       title="No Matches Today"
-      description="Check back tomorrow for new matches to predict"
+      description={nextMatchDate ? `Next match: ${nextMatchDate}` : 'Check back tomorrow for new matches to predict'}
     />
   )
 }

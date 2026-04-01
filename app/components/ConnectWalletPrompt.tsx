@@ -58,7 +58,7 @@ export default function ConnectWalletPrompt({ onClose, onConnected }: ConnectWal
         {hasCeloProvider ? (
           <>
             <p className="text-text-40 text-sm text-center">
-              Connect your MiniPay wallet to join paid pollas and claim prizes.
+              Connect your MiniPay wallet to join paid pools and claim prizes.
             </p>
 
             {error && (
@@ -78,7 +78,7 @@ export default function ConnectWalletPrompt({ onClose, onConnected }: ConnectWal
         ) : (
           <>
             <p className="text-text-40 text-sm text-center">
-              Polla uses MiniPay for secure payments. Download Opera Mini to get started.
+              Sabi uses MiniPay for secure payments. Download Opera Mini to get started.
             </p>
 
             <a

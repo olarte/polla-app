@@ -1,6 +1,6 @@
-const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://polla.football'
+const BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://sabi.gg'
 
-export type ShareTemplate = 'invite' | 'exact_score' | 'leaderboard' | 'tier' | 'card_pull' | 'payout'
+export type ShareTemplate = 'invite' | 'exact_score' | 'leaderboard' | 'tier' | 'payout'
 
 export interface ShareOptions {
   template: ShareTemplate
@@ -44,7 +44,7 @@ export async function share(options: ShareOptions): Promise<{ xp_awarded: number
       // Try sharing with image
       const imageRes = await fetch(imageUrl)
       const imageBlob = await imageRes.blob()
-      const imageFile = new File([imageBlob], 'polla-share.png', { type: 'image/png' })
+      const imageFile = new File([imageBlob], 'sabi-share.png', { type: 'image/png' })
 
       if (navigator.canShare?.({ files: [imageFile] })) {
         await navigator.share({ title, text, url: shareUrl, files: [imageFile] })
@@ -70,8 +70,8 @@ export async function share(options: ShareOptions): Promise<{ xp_awarded: number
 export function shareInvite(groupName: string, inviteCode: string, entryFee?: number, members?: number) {
   return share({
     template: 'invite',
-    title: `Join ${groupName} on Polla`,
-    text: `Join my World Cup prediction group "${groupName}" on Polla! 🐔⚽`,
+    title: `Join ${groupName} on Sabi`,
+    text: `Join my World Cup prediction pool "${groupName}" on Sabi! ⚽🏆`,
     url: `${BASE_URL}/join/${inviteCode}`,
     params: {
       group_name: groupName,
@@ -91,7 +91,7 @@ export function shareExactScore(
   return share({
     template: 'exact_score',
     title: 'Exact Score Prediction!',
-    text: `🎯 I predicted ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} exactly on Polla! Can you beat that?`,
+    text: `🎯 I predicted ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} exactly on Sabi! Can you beat that?`,
     params: {
       home_team: homeTeam,
       away_team: awayTeam,
@@ -106,7 +106,7 @@ export function shareLeaderboard(groupName: string, rank: number, points: number
   return share({
     template: 'leaderboard',
     title: `#${rank} in ${groupName}`,
-    text: `I'm ranked #${rank} with ${points} pts in "${groupName}" on Polla! 🏆`,
+    text: `I'm ranked #${rank} with ${points} pts in "${groupName}" on Sabi! 🏆`,
     params: {
       group_name: groupName,
       rank: String(rank),
@@ -119,23 +119,9 @@ export function shareLeaderboard(groupName: string, rank: number, points: number
 export function shareTierPromotion(tier: string, percentile: number, userName: string) {
   return share({
     template: 'tier',
-    title: `${tier} Tier on Polla`,
-    text: `I reached ${tier} tier (top ${percentile}%) on Polla! 🐔`,
+    title: `${tier} Tier on Sabi`,
+    text: `I reached ${tier} tier (top ${percentile}%) on Sabi! 🏆`,
     params: { tier, percentile: String(percentile), user_name: userName },
-  })
-}
-
-export function shareCardPull(
-  cardName: string,
-  cardEmoji: string,
-  rarity: string,
-  userName: string
-) {
-  return share({
-    template: 'card_pull',
-    title: `${rarity} Card Pull!`,
-    text: `I just pulled a ${rarity} card "${cardName}" on Polla! 🃏`,
-    params: { card_name: cardName, card_emoji: cardEmoji, rarity, user_name: userName },
   })
 }
 
@@ -148,7 +134,7 @@ export function sharePayout(
   return share({
     template: 'payout',
     title: `$${amount} Payout!`,
-    text: `I won $${amount} finishing #${rank} in "${groupName}" on Polla! 💰`,
+    text: `I won $${amount} finishing #${rank} in "${groupName}" on Sabi! 💰`,
     params: {
       amount: String(amount),
       rank: String(rank),

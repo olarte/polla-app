@@ -1,7 +1,7 @@
 {
-  "name": "Polla Football",
-  "short_name": "Polla",
-  "description": "Predict the World Cup 2026",
+  "name": "Sabi",
+  "short_name": "Sabi",
+  "description": "Predict football, win real money",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A12",

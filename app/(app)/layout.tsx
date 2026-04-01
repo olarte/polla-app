@@ -3,6 +3,7 @@ import StatusBar from '../components/StatusBar'
 import ServiceWorkerRegistrar from '../components/ServiceWorkerRegistrar'
 import Web3Provider from '../components/Web3Provider'
 import WalletSync from '../components/WalletSync'
+import DemoBanner from '../components/DemoBanner'
 import { AuthProvider } from '../contexts/AuthContext'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AuthProvider>
         <WalletSync />
         <div className="min-h-screen bg-polla-bg">
+          <DemoBanner />
           <StatusBar />
           <main style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px) + 40px)' }}>
             {children}

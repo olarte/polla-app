@@ -100,8 +100,34 @@ export default function GlobalPage() {
 
   if (loading) {
     return (
-      <div className="px-4 pt-4 pb-4">
-        <div className="text-center py-20 text-text-35 text-sm">Loading...</div>
+      <div className="px-4 pt-4 space-y-5 pb-4">
+        <div className="animate-pulse space-y-2">
+          <div className="h-6 w-36 rounded bg-white/[0.06]" />
+          <div className="h-3 w-24 rounded bg-white/[0.06]" />
+        </div>
+        <Card>
+          <div className="animate-pulse space-y-3">
+            <div className="h-3 w-28 rounded bg-white/[0.06]" />
+            <div className="h-9 w-40 rounded bg-white/[0.06]" />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="h-10 rounded bg-white/[0.06]" />
+              <div className="h-10 rounded bg-white/[0.06]" />
+              <div className="h-10 rounded bg-white/[0.06]" />
+            </div>
+          </div>
+        </Card>
+        <div className="space-y-1.5 animate-pulse">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/[0.02]">
+              <div className="w-7 h-6 rounded bg-white/[0.06]" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-4 w-24 rounded bg-white/[0.06]" />
+                <div className="h-3 w-32 rounded bg-white/[0.06]" />
+              </div>
+              <div className="h-4 w-16 rounded bg-white/[0.06]" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -120,10 +146,10 @@ export default function GlobalPage() {
   const tierTotal = Object.values(tierDist).reduce((a, b) => a + b, 0)
 
   return (
-    <div className="px-4 pt-4 space-y-5 pb-4">
+    <div className="px-4 pt-4 space-y-5 pb-4 animate-fade-in">
       {/* ── Header ── */}
       <div>
-        <h1 className="text-xl font-bold">La Gran Polla</h1>
+        <h1 className="text-xl font-bold">Grand Pool</h1>
         <p className="text-text-40 text-xs mt-0.5">Global Rankings</p>
       </div>
 

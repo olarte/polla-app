@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   // Configure web-push
   webpush.setVapidDetails(
-    'mailto:hello@polla.football',
+    'mailto:hello@sabi.gg',
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
     process.env.VAPID_PRIVATE_KEY!
   )

@@ -7,9 +7,9 @@ type Props = {
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polla.football'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sabi.gg'
   const template = searchParams.template || 'invite'
-  const title = searchParams.title || 'Polla Football — Predict the World Cup 2026'
+  const title = searchParams.title || 'Sabi — Predict football, win real money'
   const description =
     searchParams.description || 'The ultimate social prediction game for FIFA World Cup 2026'
 
@@ -24,7 +24,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     openGraph: {
       title,
       description,
-      siteName: 'Polla Football',
+      siteName: 'Sabi',
       images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
       type: 'website',
     },

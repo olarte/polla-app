@@ -14,7 +14,7 @@ const BRAND = {
   text40: 'rgba(255,255,255,0.4)',
 }
 
-type Template = 'invite' | 'exact_score' | 'leaderboard' | 'tier' | 'card_pull' | 'payout'
+type Template = 'invite' | 'exact_score' | 'leaderboard' | 'tier' | 'payout'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
@@ -37,8 +37,6 @@ function renderTemplate(template: Template, data: Record<string, string>) {
       return renderLeaderboard(data)
     case 'tier':
       return renderTier(data)
-    case 'card_pull':
-      return renderCardPull(data)
     case 'payout':
       return renderPayout(data)
     default:
@@ -60,7 +58,7 @@ function renderInvite(data: Record<string, string>) {
         fontFamily: 'sans-serif',
       }}
     >
-      <div style={{ fontSize: 80, marginBottom: 10, display: 'flex' }}>🐔⚽</div>
+      <div style={{ fontSize: 80, marginBottom: 10, display: 'flex' }}>⚽🏆</div>
       <div
         style={{
           fontSize: 48,
@@ -70,7 +68,7 @@ function renderInvite(data: Record<string, string>) {
           display: 'flex',
         }}
       >
-        {data.group_name || 'Join My Polla!'}
+        {data.group_name || 'Join My Pool!'}
       </div>
       <div
         style={{
@@ -112,7 +110,7 @@ function renderInvite(data: Record<string, string>) {
           display: 'flex',
         }}
       >
-        polla.football
+        sabi.gg
       </div>
     </div>
   )
@@ -174,7 +172,7 @@ function renderExactScore(data: Record<string, string>) {
           display: 'flex',
         }}
       >
-        polla.football
+        sabi.gg
       </div>
     </div>
   )
@@ -196,7 +194,7 @@ function renderLeaderboard(data: Record<string, string>) {
     >
       <div style={{ fontSize: 60, marginBottom: 10, display: 'flex' }}>🏆</div>
       <div style={{ fontSize: 28, color: BRAND.text70, marginBottom: 8, display: 'flex' }}>
-        {data.group_name || 'La Gran Polla'}
+        {data.group_name || 'Grand Pool'}
       </div>
       <div
         style={{
@@ -221,7 +219,7 @@ function renderLeaderboard(data: Record<string, string>) {
           display: 'flex',
         }}
       >
-        polla.football
+        sabi.gg
       </div>
     </div>
   )
@@ -290,79 +288,7 @@ function renderTier(data: Record<string, string>) {
           display: 'flex',
         }}
       >
-        polla.football
-      </div>
-    </div>
-  )
-}
-
-function renderCardPull(data: Record<string, string>) {
-  const rarityColors: Record<string, string> = {
-    common: 'rgba(255,255,255,0.4)',
-    rare: '#4FC3F7',
-    epic: '#CE93D8',
-    legendary: BRAND.gold,
-  }
-  const rarity = (data.rarity || 'common').toLowerCase()
-  const color = rarityColors[rarity] || BRAND.text40
-
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: `linear-gradient(135deg, ${BRAND.bg}, #1A1A4E)`,
-        fontFamily: 'sans-serif',
-      }}
-    >
-      <div
-        style={{
-          width: 200,
-          height: 280,
-          borderRadius: 16,
-          border: `3px solid ${color}`,
-          background: 'rgba(255,255,255,0.05)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 20,
-          boxShadow: `0 0 30px ${color}40`,
-        }}
-      >
-        <span style={{ fontSize: 80, display: 'flex' }}>{data.card_emoji || '🃏'}</span>
-        <span style={{ fontSize: 16, color, marginTop: 12, display: 'flex' }}>
-          {data.card_name || 'Mystery Card'}
-        </span>
-      </div>
-      <div
-        style={{
-          fontSize: 24,
-          fontWeight: 800,
-          color,
-          textTransform: 'uppercase',
-          display: 'flex',
-        }}
-      >
-        {rarity}
-      </div>
-      <div style={{ fontSize: 18, color: BRAND.text70, marginTop: 8, display: 'flex' }}>
-        Pulled by {data.user_name || 'Player'}
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 30,
-          fontSize: 18,
-          color: BRAND.text40,
-          display: 'flex',
-        }}
-      >
-        polla.football
+        sabi.gg
       </div>
     </div>
   )
@@ -398,7 +324,7 @@ function renderPayout(data: Record<string, string>) {
         ${data.amount || '0'}
       </div>
       <div style={{ fontSize: 24, color: BRAND.text70, marginBottom: 8, display: 'flex' }}>
-        {data.user_name || 'Player'} • #{data.rank || '1'} in {data.group_name || 'Polla'}
+        {data.user_name || 'Player'} • #{data.rank || '1'} in {data.group_name || 'Pool'}
       </div>
       <div
         style={{
@@ -409,7 +335,7 @@ function renderPayout(data: Record<string, string>) {
           display: 'flex',
         }}
       >
-        polla.football
+        sabi.gg
       </div>
     </div>
   )

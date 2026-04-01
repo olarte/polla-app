@@ -17,7 +17,7 @@ export interface LeaderboardResult {
 /**
  * Score all predictions for a completed match.
  * Calls the DB function that compares predictions vs actual results,
- * awards points (with stage multiplier), and credits XP.
+ * awards points (with stage multiplier).
  */
 export async function scoreMatch(matchId: string): Promise<ScoreMatchResult> {
   const { data, error } = await supabaseAdmin.rpc('score_match_predictions', {

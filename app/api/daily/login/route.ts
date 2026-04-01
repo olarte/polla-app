@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createRouteClient } from '@/lib/supabase-route'
 
-// POST /api/daily/login — Record daily login, update streak, award XP
+// POST /api/daily/login — Record daily login
 export async function POST() {
   const supabase = createRouteClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -10,18 +10,12 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data, error } = await supabase.rpc('record_daily_login', {
-    p_user_id: session.user.id,
-  })
+  // Update last_login_date (no streak/XP logic)
+  const today = new Date().toISOString().split('T')[0]
+  await supabase
+    .from('users')
+    .update({ last_login_date: today })
+    .eq('id', session.user.id)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  // Check XP milestones after awarding XP
-  const { data: milestones } = await supabase.rpc('check_xp_milestones', {
-    p_user_id: session.user.id,
-  })
-
-  return NextResponse.json({ login: data, milestones })
+  return NextResponse.json({ ok: true })
 }

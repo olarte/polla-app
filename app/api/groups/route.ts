@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       .from('groups')
       .insert({
         name,
-        emoji: emoji || '🐔',
+        emoji: emoji || '⚽',
         created_by: session.user.id,
         is_paid: !!is_paid,
         entry_fee: fee,

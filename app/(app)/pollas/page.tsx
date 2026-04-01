@@ -270,11 +270,11 @@ export default function PollasPage() {
   const MEDALS = ['🥇', '🥈', '🥉']
 
   return (
-    <div className="px-4 pt-4 space-y-5 pb-4">
+    <div className="px-4 pt-4 space-y-5 pb-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold">My Pollas</h1>
+          <h1 className="text-xl font-bold">My Pools</h1>
           {pollas.length > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-polla-accent/15 text-polla-accent text-xs num font-bold">
               {pollas.length}
@@ -306,20 +306,41 @@ export default function PollasPage() {
         ))}
       </div>
 
-      {/* Polla cards */}
+      {/* Pool cards */}
       {loading ? (
-        <div className="text-center py-12 text-text-35 text-sm">Loading...</div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <div className="flex items-center gap-3 animate-pulse">
+                <div className="w-10 h-10 rounded-full bg-white/[0.06]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 rounded bg-white/[0.06]" />
+                  <div className="h-3 w-20 rounded bg-white/[0.06]" />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-card-border animate-pulse">
+                <div className="h-1.5 w-full rounded-full bg-white/[0.06]" />
+              </div>
+            </Card>
+          ))}
+        </div>
       ) : filtered.length === 0 && pollas.length === 0 ? (
-        <Card className="text-center py-12">
-          <span className="text-4xl block mb-3">🐔</span>
-          <p className="text-text-70 text-sm font-semibold mb-1">No pollas yet</p>
-          <p className="text-text-35 text-xs max-w-[220px] mx-auto">
-            Create a group with friends or join one to start competing
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+          <span className="text-5xl mb-4">⛱️</span>
+          <h3 className="text-lg font-bold mb-1">No Pools Yet</h3>
+          <p className="text-text-40 text-sm max-w-xs mb-4">
+            Create your first Pool or join one with an invite link
           </p>
-        </Card>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="px-5 py-2.5 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform"
+          >
+            Create Your First Pool
+          </button>
+        </div>
       ) : filtered.length === 0 ? (
         <Card className="text-center py-8">
-          <p className="text-text-40 text-sm">No {filter} pollas</p>
+          <p className="text-text-40 text-sm">No {filter} pools</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -338,7 +359,7 @@ export default function PollasPage() {
 
       {/* Join section */}
       <div>
-        <Label>Join a Polla with invite link</Label>
+        <Label>Join a Pool with invite link</Label>
         <Card className="mt-2">
           <div className="flex gap-2">
             <input
@@ -366,7 +387,7 @@ export default function PollasPage() {
         </Card>
       </div>
 
-      {/* Create Polla Modal */}
+      {/* Create Pool Modal */}
       <CreatePollaModal
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}

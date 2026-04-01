@@ -109,3 +109,38 @@ export function SkeletonProfileHeader() {
     </div>
   )
 }
+
+export const SkeletonPoolCard = SkeletonPollaCard
+
+export function SkeletonGlobalPool() {
+  return (
+    <div className="glass-card p-4 space-y-3">
+      <SkeletonBase className="h-3 w-24 rounded skeleton-pulse" />
+      <SkeletonBase className="h-10 w-48 rounded skeleton-pulse" />
+      <div className="flex justify-between pt-1">
+        <SkeletonBase className="h-3 w-20 rounded skeleton-pulse" />
+        <SkeletonBase className="h-3 w-20 rounded skeleton-pulse" />
+        <SkeletonBase className="h-3 w-20 rounded skeleton-pulse" />
+      </div>
+    </div>
+  )
+}
+
+export function SkeletonDailyMatch() {
+  return (
+    <div className="glass-card p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <SkeletonBase className="h-8 w-8 rounded-full skeleton-pulse" />
+          <SkeletonBase className="h-4 w-16 rounded skeleton-pulse" />
+        </div>
+        <SkeletonBase className="h-4 w-8 rounded skeleton-pulse" />
+        <div className="flex items-center gap-2">
+          <SkeletonBase className="h-4 w-16 rounded skeleton-pulse" />
+          <SkeletonBase className="h-8 w-8 rounded-full skeleton-pulse" />
+        </div>
+      </div>
+      <SkeletonBase className="h-3 w-24 rounded mx-auto skeleton-pulse" />
+    </div>
+  )
+}

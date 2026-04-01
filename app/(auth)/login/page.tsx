@@ -71,8 +71,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-polla-bg flex flex-col items-center justify-center px-6">
       {/* Logo */}
-      <div className="text-6xl mb-2">🐔</div>
-      <h1 className="text-2xl font-extrabold text-white mb-1">POLLA</h1>
+      <div className="text-6xl mb-2">⚽</div>
+      <h1 className="text-2xl font-extrabold text-white mb-1">SABI</h1>
       <p className="text-text-40 text-sm mb-8">Predict the World Cup 2026</p>
 
       <div className="w-full max-w-sm">

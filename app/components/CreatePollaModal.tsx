@@ -10,7 +10,7 @@ interface CreatePollaModalProps {
   onCreated: (group: any) => void
 }
 
-const POLLA_EMOJIS = ['🐔', '⚽', '🏆', '🔥', '🎯', '👑', '🦁', '🐉', '🎪', '🌟', '💎', '🦅']
+const POOL_EMOJIS = ['⚽', '🏆', '🔥', '🎯', '👑', '🦁', '🐉', '🎪', '🌟', '💎', '🦅', '⛱️']
 
 const PAYOUT_MODELS = [
   { value: 'winner_takes_all', label: 'Winner Takes All', desc: '100% to 1st', icon: '👑' },
@@ -21,7 +21,7 @@ const PAYOUT_MODELS = [
 export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreatePollaModalProps) {
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
-  const [emoji, setEmoji] = useState('🐔')
+  const [emoji, setEmoji] = useState('⚽')
   const [isPaid, setIsPaid] = useState(false)
   const [entryFee, setEntryFee] = useState('10')
   const [payoutModel, setPayoutModel] = useState('podium_split')
@@ -34,7 +34,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
   const reset = () => {
     setStep(1)
     setName('')
-    setEmoji('🐔')
+    setEmoji('⚽')
     setIsPaid(false)
     setEntryFee('10')
     setPayoutModel('podium_split')
@@ -86,7 +86,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
       <div className="w-full max-w-md bg-polla-bg border-t border-card-border rounded-t-2xl p-5 pb-8 animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold">Create a Polla</h2>
+          <h2 className="text-lg font-bold">Create a Pool</h2>
           <button onClick={handleClose} className="text-text-40 text-xl leading-none">&times;</button>
         </div>
 
@@ -100,7 +100,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <Label>Polla Name</Label>
+              <Label>Pool Name</Label>
               <input
                 type="text"
                 value={name}
@@ -114,7 +114,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
             <div>
               <Label>Emoji</Label>
               <div className="mt-1.5 flex flex-wrap gap-2">
-                {POLLA_EMOJIS.map((e) => (
+                {POOL_EMOJIS.map((e) => (
                   <button
                     key={e}
                     onClick={() => setEmoji(e)}
@@ -227,7 +227,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
                 />
                 <span className="num text-sm text-text-70 w-10 text-right">{globalAlloc}%</span>
               </div>
-              <p className="text-text-25 text-[10px] mt-1">% of net pool contributed to La Gran Polla</p>
+              <p className="text-text-25 text-[10px] mt-1">% of net pool contributed to the Grand Pool</p>
             </div>
 
             <div className="flex gap-2">
@@ -305,7 +305,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
                 disabled={loading}
                 className="flex-1 py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform disabled:opacity-50"
               >
-                {loading ? 'Creating…' : 'Create Polla'}
+                {loading ? 'Creating…' : 'Create Pool'}
               </button>
             </div>
           </div>

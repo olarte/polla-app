@@ -8,7 +8,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = params
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polla.football'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sabi.gg'
 
   // Fetch group preview for OG tags
   const supabase = createClient(
@@ -22,9 +22,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('invite_code', code)
     .single()
 
-  const groupName = group?.name || 'Polla'
-  const emoji = group?.emoji || '🐔'
-  const title = `Join ${emoji} ${groupName} on Polla`
+  const groupName = group?.name || 'Pool'
+  const emoji = group?.emoji || '⛱️'
+  const title = `Join ${emoji} ${groupName} on Sabi`
   const description = group?.is_paid
     ? `$${group.entry_fee} entry • Predict the World Cup 2026 with friends`
     : 'Free to play • Predict the World Cup 2026 with friends'
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: `${baseUrl}/join/${code}`,
-      siteName: 'Polla Football',
+      siteName: 'Sabi',
       images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
       type: 'website',
     },

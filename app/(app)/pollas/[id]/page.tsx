@@ -101,7 +101,7 @@ function generateAnnouncements(group: GroupData, members: MemberRow[], phase: st
     if (group.member_count < 4) {
       announcements.push({
         icon: '👥',
-        text: `Invite more friends! ${group.member_count} of 4 minimum for a competitive polla.`,
+        text: `Invite more friends! ${group.member_count} of 4 minimum for a competitive pool.`,
         time: 'Tip',
         type: 'info',
       })
@@ -229,19 +229,43 @@ export default function PollaDetailPage() {
 
   if (loading) {
     return (
-      <div className="px-4 pt-4 text-center text-text-35 text-sm py-20">Loading...</div>
+      <div className="px-4 pt-4 space-y-4 pb-6">
+        <div className="h-4 w-28 rounded bg-white/[0.06] animate-pulse" />
+        <div className="flex items-center gap-3 animate-pulse">
+          <div className="w-12 h-12 rounded-full bg-white/[0.06]" />
+          <div className="space-y-2">
+            <div className="h-5 w-36 rounded bg-white/[0.06]" />
+            <div className="h-3 w-24 rounded bg-white/[0.06]" />
+          </div>
+        </div>
+        <Card><div className="animate-pulse space-y-3">
+          <div className="h-3 w-20 rounded bg-white/[0.06]" />
+          <div className="h-4 w-full rounded bg-white/[0.06]" />
+          <div className="h-4 w-3/4 rounded bg-white/[0.06]" />
+        </div></Card>
+        <div className="space-y-1.5 animate-pulse">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/[0.02]">
+              <div className="w-7 h-6 rounded bg-white/[0.06]" />
+              <div className="w-8 h-8 rounded-full bg-white/[0.06]" />
+              <div className="flex-1 h-4 rounded bg-white/[0.06]" />
+              <div className="w-10 h-4 rounded bg-white/[0.06]" />
+            </div>
+          ))}
+        </div>
+      </div>
     )
   }
 
   if (!group) {
     return (
       <div className="px-4 pt-4 text-center py-20">
-        <p className="text-text-40 text-sm">Polla not found</p>
+        <p className="text-text-40 text-sm">Pool not found</p>
         <button
           onClick={() => router.push('/pollas')}
           className="mt-4 text-polla-accent text-sm underline"
         >
-          Back to My Pollas
+          Back to My Pools
         </button>
       </div>
     )
@@ -255,13 +279,13 @@ export default function PollaDetailPage() {
   const announcements = generateAnnouncements(group, members, phase)
 
   return (
-    <div className="px-4 pt-4 space-y-4 pb-6">
+    <div className="px-4 pt-4 space-y-4 pb-6 animate-fade-in">
       {/* Back button */}
       <button
         onClick={() => router.push('/pollas')}
         className="text-text-40 text-sm flex items-center gap-1"
       >
-        ← Back to My Pollas
+        ← Back to My Pools
       </button>
 
       {/* Header */}
@@ -280,15 +304,15 @@ export default function PollaDetailPage() {
         <div className="flex gap-2">
           <Card className="flex-1 text-center">
             <Label>Entry Fee</Label>
-            <p className="num text-lg font-extrabold mt-0.5">${Number(group.entry_fee).toFixed(0)}</p>
+            <p className="num text-lg font-extrabold mt-0.5">${Math.round(Number(group.entry_fee)).toLocaleString()}</p>
           </Card>
           <Card className="flex-1 text-center">
             <Label>Prize Pool</Label>
-            <p className="num text-lg font-extrabold text-polla-gold mt-0.5">${Number(group.pool_amount).toFixed(0)}</p>
+            <p className="num text-lg font-extrabold text-polla-gold mt-0.5">${Math.round(Number(group.pool_amount)).toLocaleString()}</p>
           </Card>
           <Card className="flex-1 text-center">
             <Label>Global</Label>
-            <p className="num text-lg font-extrabold text-polla-accent mt-0.5">${globalContrib.toFixed(0)}</p>
+            <p className="num text-lg font-extrabold text-polla-accent mt-0.5">${Math.round(globalContrib).toLocaleString()}</p>
           </Card>
         </div>
       )}
@@ -377,7 +401,7 @@ export default function PollaDetailPage() {
         <div className="mt-3">
           <WhatsAppBtn
             text="Share on WhatsApp"
-            message={`Join my Polla "${group.name}" for the World Cup 2026! 🐔⚽\n\nCode: ${group.invite_code}\nhttps://polla.football/join/${group.invite_code}`}
+            message={`Join my Pool "${group.name}" for the World Cup 2026! ⚽🏆\n\nCode: ${group.invite_code}\nhttps://sabi.gg/join/${group.invite_code}`}
             className="w-full justify-center"
           />
         </div>

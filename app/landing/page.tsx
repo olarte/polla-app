@@ -7,12 +7,12 @@ const WORLD_CUP_DATE = new Date('2026-06-11T00:00:00Z')
 
 const FLAGS = ['🇧🇷','🇦🇷','🇫🇷','🇩🇪','🇪🇸','🇵🇹','🇮🇹','🇳🇱','🇬🇧','🇺🇸','🇲🇽','🇨🇦','🇯🇵','🇰🇷','🇸🇦','🇦🇺','🇳🇬','🇸🇳','🇲🇦','🇨🇴']
 
-const PARTICLES = ['⚽','🐔','🏆','⭐','🥇','🎯','🃏']
+const PARTICLES = ['⚽','🏆','⭐','🥇','🎯','🃏','🌸']
 
 const STEPS = [
   { emoji: '📱', title: 'Sign Up', desc: 'Create your account with WhatsApp or Google in seconds' },
   { emoji: '🔮', title: 'Predict', desc: 'Predict scores for all 104 World Cup matches' },
-  { emoji: '🐔', title: 'Create Polla', desc: 'Start a group with friends and set your entry fee' },
+  { emoji: '⛱️', title: 'Create a Pool', desc: 'Start a pool with friends and set your entry fee' },
   { emoji: '🏆', title: 'Win Prizes', desc: 'Top predictors win from the group and global prize pools' },
 ]
 
@@ -166,7 +166,7 @@ export default function LandingPage() {
           <div className="text-[100px] sm:text-[140px]"
             style={{ filter: 'drop-shadow(0 8px 20px rgba(255,215,0,0.4))' }}
           >
-            🐔
+            ⚽
           </div>
         </div>
 
@@ -272,10 +272,10 @@ export default function LandingPage() {
 
       <WoodDivider />
 
-      {/* ═══ LA GRAN POLLA ═══ */}
+      {/* ═══ GRAND POOL ═══ */}
       <section id="prizes" className="py-20 px-4">
         <div className="max-w-[700px] mx-auto">
-          <SectionTitle title="La Gran Polla" subtitle="The global prize pool — every paid player competes" />
+          <SectionTitle title="Grand Pool" subtitle="The global prize pool — every paid player competes" />
 
           {/* Pool card */}
           <div className="rounded-2xl p-8 text-center mb-10"
@@ -369,7 +369,7 @@ export default function LandingPage() {
               XP Unlocks Everything
             </h3>
             <p className="font-body text-white/50 text-sm max-w-md mx-auto leading-relaxed">
-              Earn XP from daily predictions, streaks, shares, and polla predictions.
+              Earn XP from daily predictions, streaks, shares, and pool predictions.
               Hit milestones to unlock booster packs and discover new cards.
             </p>
           </div>
@@ -399,11 +399,11 @@ export default function LandingPage() {
 
       {/* ═══ FOOTER ═══ */}
       <footer className="border-t border-white/[0.06] py-12 px-4 text-center">
-        <div className="text-5xl mb-4">🐔</div>
+        <div className="text-5xl mb-4">⚽</div>
         <h3 className="font-display text-gold text-xl uppercase mb-2"
           style={{ textShadow: '0 2px 0 #B8960F' }}
         >
-          Polla.Football
+          Sabi.gg
         </h3>
         <p className="font-body text-white/40 text-sm mb-6">
           The ultimate World Cup prediction game
@@ -416,7 +416,7 @@ export default function LandingPage() {
           ))}
         </div>
         <p className="font-body text-white/20 text-xs">
-          &copy; 2026 Polla Football. This is a skill-based prediction contest, not gambling.
+          &copy; 2026 Sabi. This is a skill-based prediction contest, not gambling.
         </p>
       </footer>
     </main>

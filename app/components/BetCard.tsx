@@ -276,8 +276,8 @@ export default function BetCard({ match, onWalletNeeded }: BetCardProps) {
               text="Share Win"
               options={{
                 template: 'payout',
-                title: 'I won on Polla!',
-                text: `Just won $${userWonAmount.toFixed(2)} predicting ${match.team_a_name} vs ${match.team_b_name} on Polla Football!`,
+                title: 'I won on Sabi!',
+                text: `Just won $${userWonAmount.toFixed(2)} predicting ${match.team_a_name} vs ${match.team_b_name} on Sabi!`,
               }}
             />
           </div>

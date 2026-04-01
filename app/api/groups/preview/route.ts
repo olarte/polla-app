@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     group: {
       ...group,
       creator_name: creator?.display_name ?? 'Unknown',
-      creator_emoji: creator?.avatar_emoji ?? '🐔',
+      creator_emoji: creator?.avatar_emoji ?? '⚽',
     },
   })
 }

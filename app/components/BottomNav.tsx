@@ -4,14 +4,22 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const TABS = [
-  { href: '/', icon: '⚽', label: 'Home' },
-  { href: '/pollas', icon: '🐔', label: 'Pollas' },
-  { href: '/daily', icon: '🎯', label: 'Daily' },
+  { href: '/', icon: '🏠', label: 'Home' },
+  { href: '/pollas', icon: '⛱️', label: 'My Pools' },
+  { href: '/daily', icon: '🌸', label: 'Daily' },
   { href: '/global', icon: '🌍', label: 'Global' },
 ] as const
 
 export default function BottomNav() {
   const pathname = usePathname()
+
+  const handleTabClick = (href: string) => {
+    const isCurrentTab =
+      href === '/' ? pathname === '/' : pathname.startsWith(href)
+    if (isCurrentTab) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 nav-glass safe-bottom">
@@ -26,6 +34,7 @@ export default function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
+              onClick={() => handleTabClick(tab.href)}
               className={`flex flex-col items-center justify-center gap-0.5 w-16 py-1 rounded-xl transition-all duration-200 ${
                 active ? 'scale-105' : 'opacity-50'
               }`}

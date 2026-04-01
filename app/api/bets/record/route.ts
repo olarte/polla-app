@@ -38,16 +38,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Award XP for placing a bet (2 XP)
-  await supabase.rpc('increment_xp', { p_user_id: user.id, p_amount: 2 })
-
-  // Record XP event
-  await supabase.from('xp_events').insert({
-    user_id: user.id,
-    event_type: 'bet_placed',
-    xp_amount: 2,
-    reference_id: match_id,
-  })
-
   return NextResponse.json({ bet })
 }

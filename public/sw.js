@@ -1,6 +1,6 @@
-// Polla Service Worker — Push Notifications + Offline Cache
+// Sabi Service Worker — Push Notifications + Offline Cache
 
-const CACHE_NAME = 'polla-v1'
+const CACHE_NAME = 'sabi-v1'
 const PRECACHE_URLS = ['/', '/manifest.json']
 
 // Install — precache shell
@@ -29,7 +29,7 @@ self.addEventListener('push', (event) => {
   const { title, body, icon, badge, data: notifData } = data
 
   event.waitUntil(
-    self.registration.showNotification(title || 'Polla Football', {
+    self.registration.showNotification(title || 'Sabi', {
       body: body || '',
       icon: icon || '/icon-192.png',
       badge: badge || '/icon-192.png',

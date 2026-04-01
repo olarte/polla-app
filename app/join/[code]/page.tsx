@@ -101,8 +101,8 @@ export default function JoinPage() {
   if (notFound) {
     return (
       <div className="min-h-screen bg-polla-bg flex flex-col items-center justify-center px-6">
-        <span className="text-5xl mb-4">🐔</span>
-        <h1 className="text-xl font-bold mb-2">Polla Not Found</h1>
+        <span className="text-5xl mb-4">⛱️</span>
+        <h1 className="text-xl font-bold mb-2">Pool Not Found</h1>
         <p className="text-text-40 text-sm text-center mb-6">
           This invite code is invalid or the group no longer exists
         </p>
@@ -175,16 +175,16 @@ export default function JoinPage() {
             disabled={joining}
             className="w-full py-3.5 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform disabled:opacity-50"
           >
-            {joining ? 'Joining...' : group.is_paid ? `Join — $${Number(group.entry_fee).toFixed(0)}` : 'Join Polla'}
+            {joining ? 'Joining...' : group.is_paid ? `Join — $${Number(group.entry_fee).toFixed(0)}` : 'Join Pool'}
           </button>
         ) : (
           <div className="text-center">
-            <p className="text-text-40 text-sm">This polla is no longer accepting members</p>
+            <p className="text-text-40 text-sm">This pool is no longer accepting members</p>
           </div>
         )}
 
         <p className="text-center text-text-25 text-xs">
-          Predict the FIFA World Cup 2026 🐔⚽
+          Predict the FIFA World Cup 2026 ⚽🏆
         </p>
       </div>
 

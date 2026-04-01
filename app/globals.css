@@ -129,6 +129,34 @@ html[data-hide-nav] .nav-glass {
   animation: legendary-pulse 2s ease-in-out infinite;
 }
 
+/* Tappable card press state */
+.glass-card {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+.glass-card:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Page fade transition */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 150ms ease-out;
+}
+
+/* Skeleton pulse - subtle */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.08; }
+}
+.skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.05);
+}
+
 @keyframes pack-shake {
   0%, 100% { transform: rotate(0deg) scale(1); }
   25% { transform: rotate(-3deg) scale(1.02); }

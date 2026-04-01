@@ -169,20 +169,6 @@ export async function resolveMatchMarkets(
             result.errors.push(`Bet ${bet.id}: ${updateErr.message}`)
           } else {
             result.bets_updated++
-
-            // Award XP for winning bet (5 XP)
-            if (isWinner) {
-              await supabaseAdmin.rpc('increment_xp', {
-                p_user_id: bet.user_id,
-                p_amount: 5,
-              })
-              await supabaseAdmin.from('xp_events').insert({
-                user_id: bet.user_id,
-                event_type: 'bet_won',
-                xp_amount: 5,
-                reference_id: matchId,
-              })
-            }
           }
         }
       }

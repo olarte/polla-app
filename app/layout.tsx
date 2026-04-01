@@ -2,35 +2,35 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Polla Football — Predict the World Cup 2026',
+  title: 'Sabi — Predict football, win real money',
   description:
-    'The ultimate social prediction game for FIFA World Cup 2026. Create groups, predict matches, win prizes.',
+    'Predict football, win real money. Create pools, predict matches, win prizes.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Polla',
+    title: 'Sabi',
   },
   openGraph: {
-    title: 'Polla Football — Predict the World Cup 2026',
-    description: 'The ultimate social prediction game for FIFA World Cup 2026. Create groups, predict matches, win prizes.',
-    url: 'https://polla.football',
-    siteName: 'Polla Football',
+    title: 'Sabi — Predict football, win real money',
+    description: 'Predict football, win real money. Create pools, predict matches, win prizes.',
+    url: 'https://sabi.gg',
+    siteName: 'Sabi',
     images: [
       {
-        url: 'https://polla.football/api/share/generate?template=invite&group_name=Polla%20Football',
+        url: 'https://sabi.gg/api/share/generate?template=invite&group_name=Sabi',
         width: 1200,
         height: 630,
-        alt: 'Polla Football — Predict the World Cup 2026',
+        alt: 'Sabi — Predict football, win real money',
       },
     ],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Polla Football — Predict the World Cup 2026',
-    description: 'The ultimate social prediction game for FIFA World Cup 2026.',
-    images: ['https://polla.football/api/share/generate?template=invite&group_name=Polla%20Football'],
+    title: 'Sabi — Predict football, win real money',
+    description: 'Predict football, win real money.',
+    images: ['https://sabi.gg/api/share/generate?template=invite&group_name=Sabi'],
   },
 }
 

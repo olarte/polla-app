@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (group.status !== 'open') {
-      return NextResponse.json({ error: 'This polla is no longer accepting members' }, { status: 400 })
+      return NextResponse.json({ error: 'This pool is no longer accepting members' }, { status: 400 })
     }
 
     // Check if already a member
