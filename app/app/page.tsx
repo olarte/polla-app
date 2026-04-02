@@ -232,7 +232,7 @@ export default function HomePage() {
         <div className="flex items-center gap-2.5">
           <span className="text-lg font-extrabold tracking-tight">SABI</span>
         </div>
-        <Link href="/profile" className="flex items-center gap-2 active:scale-[0.98] transition-transform">
+        <Link href="/app/profile" className="flex items-center gap-2 active:scale-[0.98] transition-transform">
           {profile?.wallet_connected && (
             <div className="w-2 h-2 rounded-full bg-polla-success" />
           )}
@@ -244,7 +244,7 @@ export default function HomePage() {
 
       {/* -- Unclaimed Winnings Banner -- */}
       {unclaimed && unclaimed.total > 0 && (
-        <Link href="/profile" className="active:scale-[0.98] transition-transform block">
+        <Link href="/app/profile" className="active:scale-[0.98] transition-transform block">
           <Card glow className="flex items-center justify-between py-3">
             <div className="flex items-center gap-2">
               <span className="text-lg">💰</span>
@@ -296,7 +296,7 @@ export default function HomePage() {
       {loading ? (
         <Skeleton className="h-[130px]" />
       ) : (
-        <Link href="/global" className="block active:scale-[0.98] transition-transform">
+        <Link href="/app/global" className="block active:scale-[0.98] transition-transform">
           <Card glow>
             <Label>Grand Pool — Global Prize Pool</Label>
             <p className="num text-3xl text-polla-gold mt-1">
@@ -352,10 +352,10 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-3">
           <Label>My Pools</Label>
           <div className="flex items-center gap-3">
-            <Link href="/pollas" className="text-text-40 text-xs underline underline-offset-2">
+            <Link href="/app/pollas" className="text-text-40 text-xs underline underline-offset-2">
               Join with code
             </Link>
-            <Link href="/pollas" className="text-polla-accent text-xs font-semibold">
+            <Link href="/app/pollas" className="text-polla-accent text-xs font-semibold">
               + Create
             </Link>
           </div>
@@ -377,7 +377,7 @@ export default function HomePage() {
             {groups.map((group) => (
               <Link
                 key={group.id}
-                href={`/pollas/${group.id}`}
+                href={`/app/pollas/${group.id}`}
                 className="block active:scale-[0.98] transition-transform"
               >
                 <Card className="flex items-center justify-between">

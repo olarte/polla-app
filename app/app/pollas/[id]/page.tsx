@@ -262,7 +262,7 @@ export default function PollaDetailPage() {
       <div className="px-4 pt-4 text-center py-20">
         <p className="text-text-40 text-sm">Pool not found</p>
         <button
-          onClick={() => router.push('/pollas')}
+          onClick={() => router.push('/app/pollas')}
           className="mt-4 text-polla-accent text-sm underline"
         >
           Back to My Pools
@@ -282,7 +282,7 @@ export default function PollaDetailPage() {
     <div className="px-4 pt-4 space-y-4 pb-6 animate-fade-in">
       {/* Back button */}
       <button
-        onClick={() => router.push('/pollas')}
+        onClick={() => router.push('/app/pollas')}
         className="text-text-40 text-sm flex items-center gap-1"
       >
         ← Back to My Pools

@@ -1,11 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const [displayName, setDisplayName] = useState('')
@@ -60,7 +69,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/')
+      router.push(searchParams.get('redirect') || '/app')
     } catch {
       setError('Something went wrong. Try again.')
     } finally {

@@ -80,6 +80,18 @@ html[data-hide-nav] .nav-glass {
 
 /* ═══ LANDING PAGE STYLES ═══ */
 
+/* fadeUp entrance */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glow pulse for pill dot */
+@keyframes glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
 /* Flag marquee */
 @keyframes marquee {
   0% { transform: translateX(0); }
@@ -87,6 +99,9 @@ html[data-hide-nav] .nav-glass {
 }
 .animate-marquee {
   animation: marquee 20s linear infinite;
+}
+.animate-marquee-landing {
+  animation: marquee 40s linear infinite;
 }
 
 /* Logo float */

@@ -169,7 +169,7 @@ export default function ProfilePage() {
     <div className="px-4 pt-4 space-y-5 pb-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link href="/" className="text-text-40 text-sm">← Home</Link>
+        <Link href="/app" className="text-text-40 text-sm">← Home</Link>
         <h1 className="text-sm font-bold">Profile</h1>
         <div className="w-10" />
       </div>

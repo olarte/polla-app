@@ -71,7 +71,7 @@ export default function JoinPage() {
 
       if (!res.ok) {
         if (data.error === 'Already a member' && data.group_id) {
-          router.push(`/pollas/${data.group_id}`)
+          router.push(`/app/pollas/${data.group_id}`)
           return
         }
         if (data.needs_wallet) {
@@ -82,7 +82,7 @@ export default function JoinPage() {
         return
       }
 
-      router.push(`/pollas/${data.group_id}`)
+      router.push(`/app/pollas/${data.group_id}`)
     } catch {
       setError('Something went wrong')
     } finally {
@@ -107,7 +107,7 @@ export default function JoinPage() {
           This invite code is invalid or the group no longer exists
         </p>
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/app')}
           className="px-6 py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform"
         >
           Go Home

@@ -39,6 +39,6 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default function SharePage({ searchParams }: Props) {
   // Redirect to app — the share page only exists for OG previews
-  const redirectTo = searchParams.redirect || '/'
+  const redirectTo = searchParams.redirect || '/app'
   redirect(redirectTo)
 }

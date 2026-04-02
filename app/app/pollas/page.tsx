@@ -237,7 +237,7 @@ export default function PollasPage() {
 
       setJoinCode('')
       setPendingPayment(null)
-      router.push(`/pollas/${data.group_id}`)
+      router.push(`/app/pollas/${data.group_id}`)
     } catch {
       setJoinError('Something went wrong')
     } finally {
@@ -345,7 +345,7 @@ export default function PollasPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((polla) => (
-            <Link key={polla.id} href={`/pollas/${polla.id}`}>
+            <Link key={polla.id} href={`/app/pollas/${polla.id}`}>
               <PollaCard
                 polla={polla}
                 phase={phase}
@@ -392,7 +392,7 @@ export default function PollasPage() {
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         onCreated={(group) => {
-          router.push(`/pollas/${group.id}`)
+          router.push(`/app/pollas/${group.id}`)
         }}
       />
 
