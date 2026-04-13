@@ -106,7 +106,7 @@ export default function LandingPage() {
         }}
       >
         <div className="max-w-[900px] mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="text-lg" style={{ fontWeight: 800 }}>
+          <Link href="/?stay=1" className="text-lg" style={{ fontWeight: 800 }}>
             <span style={{ color: '#34d399' }}>sabi</span>
             <span style={{ color: '#64748b' }}>.gg</span>
           </Link>

@@ -39,7 +39,7 @@ export async function middleware(req: NextRequest) {
 
   if (isPublic || isInvitePreview) {
     // If authenticated and visiting root landing page, redirect to /app
-    if (pathname === '/' && session) {
+    if (pathname === '/' && session && req.nextUrl.searchParams.get('stay') !== '1') {
       const appUrl = req.nextUrl.clone()
       appUrl.pathname = '/app'
       return NextResponse.redirect(appUrl)
