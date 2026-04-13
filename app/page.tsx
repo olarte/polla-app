@@ -106,10 +106,10 @@ export default function LandingPage() {
         }}
       >
         <div className="max-w-[900px] mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="text-lg" style={{ fontWeight: 800 }}>
+          <Link href="/" className="text-lg" style={{ fontWeight: 800 }}>
             <span style={{ color: '#34d399' }}>sabi</span>
             <span style={{ color: '#64748b' }}>.gg</span>
-          </span>
+          </Link>
           <div className="flex items-center gap-5">
             <a href="#how" className="text-[#94a3b8] text-sm hover:text-white transition-colors hidden sm:block">
               How it works
@@ -122,7 +122,7 @@ export default function LandingPage() {
               className="text-sm font-bold px-4 py-2 rounded-xl transition-all hover:shadow-[0_4px_16px_rgba(52,211,153,0.25)]"
               style={{ background: '#34d399', color: '#0c1117' }}
             >
-              Play free ⚽
+              Play
             </Link>
           </div>
         </div>
@@ -215,9 +215,9 @@ export default function LandingPage() {
         className="overflow-hidden py-4"
         style={{ borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
       >
-        <div className="animate-marquee-landing whitespace-nowrap inline-flex">
+        <div className="flex animate-marquee-landing" style={{ width: 'max-content' }}>
           {[...FLAGS, ...FLAGS].map((flag, i) => (
-            <span key={i} style={{ fontSize: '1.6rem', margin: '0 10px', opacity: 0.4 }}>{flag}</span>
+            <span key={i} className="flex-shrink-0" style={{ fontSize: '1.6rem', margin: '0 10px', opacity: 0.4 }}>{flag}</span>
           ))}
         </div>
       </div>
