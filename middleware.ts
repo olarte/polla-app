@@ -42,8 +42,12 @@ export async function middleware(req: NextRequest) {
     if (pathname === '/' && session && req.nextUrl.searchParams.get('stay') !== '1') {
       const appUrl = req.nextUrl.clone()
       appUrl.pathname = '/app'
-      return NextResponse.redirect(appUrl)
+      appUrl.search = ''
+      const redirectRes = NextResponse.redirect(appUrl)
+      redirectRes.headers.set('Cache-Control', 'no-store, max-age=0')
+      return redirectRes
     }
+    res.headers.set('Cache-Control', 'no-store, max-age=0')
     return res
   }
 

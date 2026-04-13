@@ -230,7 +230,7 @@ export default function HomePage() {
       {/* -- Header -- */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <Link href="/?stay=1" className="text-lg font-extrabold tracking-tight">SABI</Link>
+          <Link href="/?stay=1" prefetch={false} className="text-lg font-extrabold tracking-tight">SABI</Link>
         </div>
         <Link href="/app/profile" className="flex items-center gap-2 active:scale-[0.98] transition-transform">
           {profile?.wallet_connected && (
