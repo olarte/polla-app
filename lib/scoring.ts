@@ -4,6 +4,87 @@
 
 import { supabaseAdmin } from './supabase-admin'
 
+// ── Match prediction grading ────────────────────────────────
+//
+// Tiered, exclusive scoring. Pick the highest tier the prediction
+// satisfies; each row is strictly harder to reach than the one below.
+//
+//   EXACT             Both scores match exactly.                10
+//   GD_WINNER         Winner + signed goal difference match.     5
+//   WINNER_TEAM_GOALS Winner right + one team's goal count      3
+//                     matches (but not both, else EXACT).
+//   WINNER            Winner right, goals miss on both sides.    2
+//   NONE              Wrong winner.                              0
+//
+// Note: the bonus "one team's goals right" cannot fire on the
+// GD_WINNER tier — if GD matches and one team's goal count matches,
+// the other team's count must also match by arithmetic, which is
+// the EXACT tier. So the tiers above are mutually exclusive by
+// construction.
+
+export type ScoreTier =
+  | 'EXACT'
+  | 'GD_WINNER'
+  | 'WINNER_TEAM_GOALS'
+  | 'WINNER'
+  | 'NONE'
+
+export const TIER_POINTS: Record<ScoreTier, number> = {
+  EXACT: 10,
+  GD_WINNER: 5,
+  WINNER_TEAM_GOALS: 3,
+  WINNER: 2,
+  NONE: 0,
+}
+
+export interface GradedPrediction {
+  tier: ScoreTier
+  points: number
+}
+
+interface ScoreInput {
+  score_a: number
+  score_b: number
+}
+
+export function gradePrediction(
+  predicted: ScoreInput,
+  actual: ScoreInput
+): GradedPrediction {
+  if (
+    predicted.score_a === actual.score_a &&
+    predicted.score_b === actual.score_b
+  ) {
+    return { tier: 'EXACT', points: TIER_POINTS.EXACT }
+  }
+
+  const predWinner = Math.sign(predicted.score_a - predicted.score_b)
+  const actWinner = Math.sign(actual.score_a - actual.score_b)
+  if (predWinner !== actWinner) {
+    return { tier: 'NONE', points: TIER_POINTS.NONE }
+  }
+
+  const predGD = predicted.score_a - predicted.score_b
+  const actGD = actual.score_a - actual.score_b
+  if (predGD === actGD) {
+    return { tier: 'GD_WINNER', points: TIER_POINTS.GD_WINNER }
+  }
+
+  const oneTeamGoalsMatch =
+    predicted.score_a === actual.score_a ||
+    predicted.score_b === actual.score_b
+  if (oneTeamGoalsMatch) {
+    return {
+      tier: 'WINNER_TEAM_GOALS',
+      points: TIER_POINTS.WINNER_TEAM_GOALS,
+    }
+  }
+
+  return { tier: 'WINNER', points: TIER_POINTS.WINNER }
+}
+
+// ── DB-backed scoring pipeline ──────────────────────────────
+
 export interface ScoreMatchResult {
   match_id: string
   match_number: number
@@ -17,7 +98,7 @@ export interface LeaderboardResult {
 /**
  * Score all predictions for a completed match.
  * Calls the DB function that compares predictions vs actual results,
- * awards points (with stage multiplier).
+ * awards points per the tiered rules in gradePrediction() above.
  */
 export async function scoreMatch(matchId: string): Promise<ScoreMatchResult> {
   const { data, error } = await supabaseAdmin.rpc('score_match_predictions', {

@@ -4,7 +4,7 @@ A social prediction game for the FIFA World Cup 2026. Players predict match outc
 
 ## What it does
 
-- **Predict matches** — Submit score predictions for all 104 World Cup matches. Earn points for correct results, goal differences, and exact scores, with multipliers that increase as the tournament progresses.
+- **Predict matches** — Submit score predictions for all 104 World Cup matches. Earn points for correct winners, goal differences, and exact scores. Every match is worth the same.
 - **Create or join pollas** — Organize private prediction groups with friends. Each group has its own leaderboard and prize pool with configurable payout models (winner-takes-all, podium split, or proportional).
 - **Free and paid modes** — Free groups require only phone auth. Paid groups accept stablecoin deposits (USDC/USDT) across Celo, Base, Polygon, Tron, and Ethereum.
 - **Global competition** — All paid-group players compete on a global leaderboard ("La Gran Polla") with a tiered prize ladder from Champion down to Top 500.

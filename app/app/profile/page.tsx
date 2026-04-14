@@ -16,7 +16,7 @@ import { createClient } from '@/lib/supabase-browser'
 const FAQ_ITEMS = [
   { q: 'What is Sabi?', a: 'Sabi is a skill-based prediction contest for the FIFA World Cup 2026. Predict match scores, compete in pools, and win real money based on your accuracy.' },
   { q: 'Is it free to play?', a: 'Yes! Free pools give you the full experience — predictions and leaderboards. No wallet or deposit needed. Betting on matches requires a connected wallet.' },
-  { q: 'How does scoring work?', a: 'Exact score = 5 pts, correct result + goal difference = 3 pts, correct result only = 2 pts. Stage multipliers increase points in knockout rounds (1.5x for Round of 32 up to 4x for the Final).' },
+  { q: 'How does scoring work?', a: 'Exact score = 10 pts. Winner + goal difference = 5 pts. Winner + one team\u2019s goals right = 3 pts. Winner only = 2 pts. Wrong winner = 0 pts. Every match is worth the same — no stage multipliers.' },
   { q: 'How do bets work?', a: 'Bet USDC on match outcomes — either the result (home/draw/away) or total goals (over/under 2.5). Odds are pari-mutuel: your payout depends on the total pool and how many people picked the same outcome. The fewer people on your side, the higher the payout. A 5% fee is deducted from winnings.' },
   { q: 'How do I claim my winnings?', a: 'After a match finishes and markets are resolved, winning bets show a "Claim" button. Tap it to send your winnings to your wallet. Unclaimed winnings are shown as a banner on the Home and Daily screens. You can also claim from your bet history in Profile.' },
   { q: 'What happens if a match is cancelled?', a: 'If a match is cancelled or postponed, all bets on that match are refunded. You\'ll see a "Refund" button on your bet — tap to claim your original amount back.' },

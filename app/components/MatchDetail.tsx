@@ -55,7 +55,6 @@ export default function MatchDetail({ match, prediction, onScoreChange, onBack, 
           {match.group_letter && (
             <p className="text-text-40 text-[10px] mt-2">
               Group {match.group_letter} · Match #{match.match_number}
-              {match.multiplier > 1 && <span className="text-polla-gold"> · {match.multiplier}x multiplier</span>}
             </p>
           )}
         </div>

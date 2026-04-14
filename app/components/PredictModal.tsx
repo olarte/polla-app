@@ -742,11 +742,6 @@ function MatchCard({
         <p className="text-text-40 text-[9px] mt-0.5">
           {match.venue}, {match.city}
         </p>
-        {match.multiplier > 1 && (
-          <p className="text-polla-gold text-[9px] mt-0.5 num font-bold">
-            {match.multiplier}x multiplier
-          </p>
-        )}
       </div>
       <div className="grid grid-cols-2 gap-3 mb-3">
         <TeamScore

@@ -24,7 +24,6 @@ export interface MatchDef {
   kickoff: string // ISO string
   venue: string
   city: string
-  multiplier: number
 }
 
 // ── Venues ──────────────────────────────────────────────────
@@ -161,17 +160,6 @@ export const GROUPS: GroupDef[] = [
 
 // ── All teams flat list (for dropdowns) ─────────────────────
 export const ALL_TEAMS: Team[] = GROUPS.flatMap((g) => g.teams)
-
-// ── Stage multipliers ───────────────────────────────────────
-const STAGE_MULTIPLIER: Record<string, number> = {
-  group: 1.0,
-  r32: 1.5,
-  r16: 2.0,
-  qf: 2.5,
-  sf: 3.0,
-  third: 4.0,
-  final: 4.0,
-}
 
 // ── Official FIFA World Cup 2026 match schedule ─────────────
 // Source: FIFA final draw (Dec 5, 2025) + official match schedule.
@@ -328,7 +316,6 @@ export function generateAllMatches(): MatchDef[] {
       kickoff: etToUtcISO(date, time),
       venue,
       city,
-      multiplier: STAGE_MULTIPLIER.group,
     })
   }
 
@@ -342,7 +329,6 @@ export function generateAllMatches(): MatchDef[] {
       kickoff: etToUtcISO(date, time),
       venue,
       city,
-      multiplier: STAGE_MULTIPLIER[stage],
     })
   }
 

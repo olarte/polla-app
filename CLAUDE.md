@@ -185,10 +185,15 @@ Entry fees → 5% service fee → Net pool → 20% to global → Group pool → 
 ## Scoring System
 
 ### Match Predictions
-Exact score: 5 pts. Result + GD: 3 pts. Result only: 2 pts. Wrong: 0 pts.
+Tiered, exclusive. Pick the highest tier the prediction satisfies.
 
-### Stage Multipliers
-Group 1.0x → R32 1.5x → R16 2.0x → QF 2.5x → SF 3.0x → Final 4.0x
+- **Exact score:** 10 pts.
+- **Goal difference + winner:** 5 pts.
+- **Winner + one team's goal count:** 3 pts.
+- **Winner only:** 2 pts.
+- **Wrong winner:** 0 pts.
+
+Note: the "one team's goals" bonus can only fire on the winner-only tier — if both GD and a team's goal count match, the exact score is reached by arithmetic. See `lib/scoring.ts` → `gradePrediction()`.
 
 ### Bonus Predictions
 Champion 20, Runner-up 10, Third 5, Golden Boot 15, Golden Ball 10, Group winners 5 each.

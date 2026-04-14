@@ -38,15 +38,6 @@ const TIER_META: { key: Tier; icon: string; label: string; percentile: string }[
   { key: 'bronze', icon: '🥉', label: 'Bronze', percentile: 'Everyone else' },
 ]
 
-const STAGE_BONUSES = [
-  { stage: 'Group', multiplier: '1.0x', icon: '⚽' },
-  { stage: 'Round of 32', multiplier: '1.5x', icon: '🎯' },
-  { stage: 'Round of 16', multiplier: '2.0x', icon: '🔥' },
-  { stage: 'Quarter-final', multiplier: '2.5x', icon: '💥' },
-  { stage: 'Semi-final', multiplier: '3.0x', icon: '⭐' },
-  { stage: 'Final', multiplier: '4.0x', icon: '🏆' },
-]
-
 const TIER_COLORS: Record<Tier, string> = {
   mythic: 'bg-polla-gold',
   diamond: 'bg-rarity-epic',
@@ -245,36 +236,6 @@ export default function GlobalPage() {
             </div>
           </Card>
         )}
-      </div>
-
-      {/* ── Stage Bonuses ── */}
-      <div>
-        <Label>Stage Bonuses</Label>
-        <p className="text-text-25 text-[10px] mt-1 mb-2">10% of pool reserved for stage bonuses</p>
-        <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1">
-          {STAGE_BONUSES.map((stage, i) => {
-            const isActive = i === 0
-            return (
-              <div
-                key={stage.stage}
-                className={`flex-shrink-0 w-[100px] rounded-xl p-3 text-center ${
-                  isActive
-                    ? 'bg-gradient-to-b from-polla-secondary to-polla-secondary-deep border border-polla-accent/30'
-                    : 'bg-card border border-card-border opacity-50'
-                }`}
-              >
-                <span className="text-xl block mb-1">{stage.icon}</span>
-                <p className="text-[10px] text-text-70 font-semibold leading-tight">{stage.stage}</p>
-                <p className={`num text-sm mt-1 ${isActive ? 'text-polla-gold' : 'text-text-40'}`}>
-                  {stage.multiplier}
-                </p>
-                {!isActive && (
-                  <p className="text-text-25 text-[8px] mt-0.5">🔒</p>
-                )}
-              </div>
-            )
-          })}
-        </div>
       </div>
 
       {/* ── Player Distribution ── */}

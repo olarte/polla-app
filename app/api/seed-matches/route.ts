@@ -33,7 +33,7 @@ export async function POST() {
     kickoff: m.kickoff,
     venue: m.venue,
     city: m.city,
-    multiplier: m.multiplier,
+    multiplier: 1, // stage multipliers removed; DB column kept at 1 for back-compat
     status: 'scheduled',
   }))
 
