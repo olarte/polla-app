@@ -50,7 +50,9 @@ async function reseed() {
   console.log('====================================')
   console.log('')
 
-  // 1. Find current WC matches
+  // 1. Find current WC matches. Also sweep any stray dev-seed rows
+  //    (match_number >= 201) so the groups review screens don't show
+  //    ghost matches.
   const { data: wcMatches, error: findErr } = await sb
     .from('matches')
     .select('id')
@@ -58,8 +60,19 @@ async function reseed() {
     .lte('match_number', 104)
 
   if (findErr) throw findErr
-  const wcMatchIds = (wcMatches || []).map((m) => m.id)
-  console.log(`  Found ${wcMatchIds.length} existing WC matches`)
+
+  const { data: strayMatches } = await sb
+    .from('matches')
+    .select('id')
+    .gte('match_number', 201)
+
+  const wcMatchIds = [
+    ...(wcMatches || []).map((m) => m.id),
+    ...(strayMatches || []).map((m) => m.id),
+  ]
+  console.log(
+    `  Found ${wcMatches?.length ?? 0} WC matches + ${strayMatches?.length ?? 0} dev-seed strays`
+  )
 
   // 2. Delete dependent rows (FK-safe order)
   if (wcMatchIds.length > 0) {
@@ -75,12 +88,11 @@ async function reseed() {
       }
     }
 
-    // 3. Delete matches
+    // 3. Delete matches — real WC range and any dev-seed strays.
     const { error: delErr } = await sb
       .from('matches')
       .delete()
-      .gte('match_number', 1)
-      .lte('match_number', 104)
+      .in('id', wcMatchIds)
     if (delErr) throw delErr
     console.log(`  ✓ Deleted ${wcMatchIds.length} matches`)
   }

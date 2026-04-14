@@ -126,7 +126,15 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     setLoading(true)
     ;(async () => {
       const [mRes, pRes] = await Promise.all([
-        supabase.from('matches').select('*').order('match_number'),
+        // Scope to the real 104 WC matches. Dev seed scripts can leave
+        // test rows with match_number >= 201 that would otherwise
+        // pollute the group review screens.
+        supabase
+          .from('matches')
+          .select('*')
+          .gte('match_number', 1)
+          .lte('match_number', 104)
+          .order('match_number'),
         supabase.from('predictions').select('*').eq('user_id', user.id),
       ])
       if (cancelled) return
