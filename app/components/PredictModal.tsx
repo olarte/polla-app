@@ -49,10 +49,12 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const [history, setHistory] = useState<Action[]>([])
   const [draftA, setDraftA] = useState<number | null>(null)
   const [draftB, setDraftB] = useState<number | null>(null)
+  const [draftPen, setDraftPen] = useState<'a' | 'b' | null>(null)
   const [phase, setPhase] = useState<Phase>('catchup')
   const [editMatchId, setEditMatchId] = useState<string | null>(null)
   const [editDraftA, setEditDraftA] = useState<number | null>(null)
   const [editDraftB, setEditDraftB] = useState<number | null>(null)
+  const [editDraftPen, setEditDraftPen] = useState<'a' | 'b' | null>(null)
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
   const initRef = useRef(false)
   // Scroll-position memory for when the user dives into the edit
@@ -102,16 +104,16 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       if (!p) continue
       const teamA = map[m.team_a_code]
       const teamB = map[m.team_b_code]
-      if (teamA && teamB && p.score_a !== p.score_b) {
-        map = propagateKoResult(
-          m.match_number,
-          teamA,
-          teamB,
-          p.score_a,
-          p.score_b,
-          map
-        )
-      }
+      if (!teamA || !teamB) continue
+      map = propagateKoResult(
+        m.match_number,
+        teamA,
+        teamB,
+        p.score_a,
+        p.score_b,
+        p.penalty_winner ?? null,
+        map
+      )
     }
     return map
   }, [matches, predictions, standings])
@@ -152,7 +154,11 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       setMatches(mRes.data ?? [])
       const map: PredictionMap = {}
       for (const p of pRes.data ?? []) {
-        map[p.match_id] = { score_a: p.score_a, score_b: p.score_b }
+        map[p.match_id] = {
+          score_a: p.score_a,
+          score_b: p.score_b,
+          penalty_winner: p.penalty_winner ?? null,
+        }
       }
       setPredictions(map)
       setLoading(false)
@@ -204,11 +210,13 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     if (!current) {
       setDraftA(null)
       setDraftB(null)
+      setDraftPen(null)
       return
     }
     const existing = predictions[current.id]
     setDraftA(existing?.score_a ?? null)
     setDraftB(existing?.score_b ?? null)
+    setDraftPen(existing?.penalty_winner ?? null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id])
 
@@ -217,28 +225,43 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     if (!editMatchId) {
       setEditDraftA(null)
       setEditDraftB(null)
+      setEditDraftPen(null)
       return
     }
     const existing = predictions[editMatchId]
     setEditDraftA(existing?.score_a ?? null)
     setEditDraftB(existing?.score_b ?? null)
+    setEditDraftPen(existing?.penalty_winner ?? null)
   }, [editMatchId, predictions])
 
   // ── Debounced persistence ──
   const persistPrediction = useCallback(
-    (matchId: string, scoreA: number, scoreB: number) => {
+    (
+      matchId: string,
+      scoreA: number,
+      scoreB: number,
+      penaltyWinner: 'a' | 'b' | null
+    ) => {
       if (!user) return
       if (saveTimer.current) clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(async () => {
-        await supabase.from('predictions').upsert(
-          {
-            user_id: user.id,
-            match_id: matchId,
-            score_a: scoreA,
-            score_b: scoreB,
-          },
-          { onConflict: 'user_id,match_id' }
-        )
+        // Only include penalty_winner in the payload when it's
+        // actually set. This lets the existing group-match +
+        // non-tied-knockout save path keep working even if
+        // migration 009 hasn't added the column yet. Tied-KO
+        // saves will error loudly until the column exists.
+        const payload: Record<string, unknown> = {
+          user_id: user.id,
+          match_id: matchId,
+          score_a: scoreA,
+          score_b: scoreB,
+        }
+        if (penaltyWinner !== null) {
+          payload.penalty_winner = penaltyWinner
+        }
+        await supabase.from('predictions').upsert(payload as never, {
+          onConflict: 'user_id,match_id',
+        })
       }, 300)
     },
     [user, supabase]
@@ -268,14 +291,23 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
 
   const handleSave = () => {
     if (!current || draftA === null || draftB === null) return
-    if (current.stage !== 'group' && draftA === draftB) return
+    const isKo = current.stage !== 'group'
+    const tiedRegulation = draftA === draftB
+    // Knockout ties need an explicit penalty winner.
+    if (isKo && tiedRegulation && draftPen === null) return
 
-    const pred = { score_a: draftA, score_b: draftB }
+    // Penalty winner is only meaningful on tied-regulation knockouts.
+    const penToSave: 'a' | 'b' | null = isKo && tiedRegulation ? draftPen : null
+    const pred = {
+      score_a: draftA,
+      score_b: draftB,
+      penalty_winner: penToSave,
+    }
     const matchId = current.id
 
     setPredictions((p) => ({ ...p, [matchId]: pred }))
     setHistory((h) => [...h, { matchId, kind: 'save' }])
-    persistPrediction(matchId, pred.score_a, pred.score_b)
+    persistPrediction(matchId, pred.score_a, pred.score_b, penToSave)
     advance()
   }
 
@@ -289,6 +321,7 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     const existing = predictions[last.matchId]
     setDraftA(existing?.score_a ?? null)
     setDraftB(existing?.score_b ?? null)
+    setDraftPen(existing?.penalty_winner ?? null)
   }
 
   // ── Phase navigation ──
@@ -344,10 +377,18 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     if (!editMatchId || editDraftA === null || editDraftB === null) return
     const match = matches.find((m) => m.id === editMatchId)
     if (!match) return
-    if (match.stage !== 'group' && editDraftA === editDraftB) return
-    const pred = { score_a: editDraftA, score_b: editDraftB }
+    const isKo = match.stage !== 'group'
+    const tiedRegulation = editDraftA === editDraftB
+    if (isKo && tiedRegulation && editDraftPen === null) return
+    const penToSave: 'a' | 'b' | null =
+      isKo && tiedRegulation ? editDraftPen : null
+    const pred = {
+      score_a: editDraftA,
+      score_b: editDraftB,
+      penalty_winner: penToSave,
+    }
     setPredictions((p) => ({ ...p, [editMatchId]: pred }))
-    persistPrediction(editMatchId, pred.score_a, pred.score_b)
+    persistPrediction(editMatchId, pred.score_a, pred.score_b, penToSave)
     setEditMatchId(null)
   }
 
@@ -416,6 +457,8 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
               scoreB={editDraftB}
               setScoreA={setEditDraftA}
               setScoreB={setEditDraftB}
+              penaltyWinner={editDraftPen}
+              setPenaltyWinner={setEditDraftPen}
               isLocked={isLocked}
             />
           </div>
@@ -432,6 +475,8 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
               scoreB={draftB}
               setScoreA={setDraftA}
               setScoreB={setDraftB}
+              penaltyWinner={draftPen}
+              setPenaltyWinner={setDraftPen}
               isLocked={isLocked}
             />
           </div>
@@ -468,8 +513,10 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
           current,
           draftA,
           draftB,
+          draftPen,
           editDraftA,
           editDraftB,
+          editDraftPen,
           isLocked,
           groupsPredictedCount,
           koPredictedCount,
@@ -606,8 +653,10 @@ function renderFooter(args: {
   current: Match | undefined
   draftA: number | null
   draftB: number | null
+  draftPen: 'a' | 'b' | null
   editDraftA: number | null
   editDraftB: number | null
+  editDraftPen: 'a' | 'b' | null
   isLocked: boolean
   groupsPredictedCount: number
   koPredictedCount: number
@@ -625,8 +674,10 @@ function renderFooter(args: {
     current,
     draftA,
     draftB,
+    draftPen,
     editDraftA,
     editDraftB,
+    editDraftPen,
     isLocked,
     groupsPredictedCount,
     koPredictedCount,
@@ -641,11 +692,12 @@ function renderFooter(args: {
 
   if (editingMatch) {
     const isKo = editingMatch.stage !== 'group'
+    const tied = editDraftA !== null && editDraftA === editDraftB
     const saveDisabled =
       isLocked ||
       editDraftA === null ||
       editDraftB === null ||
-      (isKo && editDraftA === editDraftB)
+      (isKo && tied && editDraftPen === null)
     return (
       <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border flex gap-3">
         <button
@@ -667,11 +719,12 @@ function renderFooter(args: {
 
   if (phase === 'catchup' && current) {
     const isKo = current.stage !== 'group'
+    const tied = draftA !== null && draftA === draftB
     const saveDisabled =
       isLocked ||
       draftA === null ||
       draftB === null ||
-      (isKo && draftA === draftB)
+      (isKo && tied && draftPen === null)
     return (
       <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border flex gap-3">
         <button
@@ -761,6 +814,8 @@ interface MatchCardProps {
   scoreB: number | null
   setScoreA: (v: number | null) => void
   setScoreB: (v: number | null) => void
+  penaltyWinner: 'a' | 'b' | null
+  setPenaltyWinner: (v: 'a' | 'b' | null) => void
   isLocked: boolean
 }
 
@@ -774,6 +829,8 @@ function MatchCard({
   scoreB,
   setScoreA,
   setScoreB,
+  penaltyWinner,
+  setPenaltyWinner,
   isLocked,
 }: MatchCardProps) {
   const kickoff = new Date(match.kickoff)
@@ -793,6 +850,7 @@ function MatchCard({
 
   const isKo = match.stage !== 'group'
   const isTied = scoreA !== null && scoreB !== null && scoreA === scoreB
+  const showPenaltyPicker = isKo && isTied
 
   return (
     <div className="glow-card p-4 mx-auto w-full max-w-md">
@@ -825,19 +883,75 @@ function MatchCard({
           disabled={isLocked}
         />
       </div>
-      <div className="text-center min-h-[12px]">
-        {isKo && isTied && (
-          <p className="text-polla-warning text-[10px] font-semibold">
-            Knockouts can&apos;t end in a tie — pick a winner.
+
+      {showPenaltyPicker ? (
+        <div className="space-y-2">
+          <p className="text-polla-warning text-[9px] font-bold uppercase tracking-widest text-center">
+            Regulation tied — pick the penalty winner
           </p>
-        )}
-        {!isKo && (
-          <p className="text-text-25 text-[9px]">
-            Exact: 5pts · Result + GD: 3pts · Result: 2pts
-          </p>
-        )}
-      </div>
+          <div className="grid grid-cols-2 gap-2">
+            <PenaltyPickerButton
+              team={teamA}
+              label={labelA}
+              selected={penaltyWinner === 'a'}
+              onClick={() => setPenaltyWinner('a')}
+              disabled={isLocked}
+            />
+            <PenaltyPickerButton
+              team={teamB}
+              label={labelB}
+              selected={penaltyWinner === 'b'}
+              onClick={() => setPenaltyWinner('b')}
+              disabled={isLocked}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="text-center min-h-[12px]">
+          {!isKo && (
+            <p className="text-text-25 text-[9px]">
+              Exact: 10 · GD + winner: 5 · Winner + one team's goals: 3 · Winner: 2
+            </p>
+          )}
+          {isKo && (
+            <p className="text-text-25 text-[9px]">
+              Tied scores go to penalties — pick a winner.
+            </p>
+          )}
+        </div>
+      )}
     </div>
+  )
+}
+
+function PenaltyPickerButton({
+  team,
+  label,
+  selected,
+  onClick,
+  disabled,
+}: {
+  team: Team | null
+  label: string
+  selected: boolean
+  onClick: () => void
+  disabled: boolean
+}) {
+  const display = team?.code ?? prettySlotLabel(label)
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center justify-center gap-2 h-10 rounded-xl border-2 text-xs font-bold transition-colors ${
+        selected
+          ? 'border-polla-accent bg-polla-accent/15 text-white'
+          : 'border-card-border bg-white/[0.04] text-text-70 active:bg-polla-accent/10'
+      } disabled:opacity-40`}
+    >
+      <span className="text-lg leading-none">{team?.flag ?? '🏳️'}</span>
+      <span className="truncate max-w-[110px]">{display}</span>
+    </button>
   )
 }
 
@@ -1131,16 +1245,28 @@ function BracketCell({
   match: Match
   teamA: Team | null
   teamB: Team | null
-  prediction?: { score_a: number; score_b: number }
+  prediction?: {
+    score_a: number
+    score_b: number
+    penalty_winner?: 'a' | 'b' | null
+  }
   onEdit: () => void
 }) {
   const hasPred = !!prediction
-  const winnerSide =
-    hasPred && prediction && prediction.score_a !== prediction.score_b
-      ? prediction.score_a > prediction.score_b
-        ? 'a'
-        : 'b'
-      : null
+  // Pen-aware effective winner for highlighting.
+  let winnerSide: 'a' | 'b' | null = null
+  let wentToPens = false
+  if (hasPred && prediction) {
+    if (prediction.score_a > prediction.score_b) winnerSide = 'a'
+    else if (prediction.score_a < prediction.score_b) winnerSide = 'b'
+    else if (prediction.penalty_winner === 'a') {
+      winnerSide = 'a'
+      wentToPens = true
+    } else if (prediction.penalty_winner === 'b') {
+      winnerSide = 'b'
+      wentToPens = true
+    }
+  }
   return (
     <button
       onClick={onEdit}
@@ -1165,6 +1291,11 @@ function BracketCell({
         isWinner={winnerSide === 'b'}
         isLoser={winnerSide === 'a'}
       />
+      {wentToPens && (
+        <p className="text-[8px] text-polla-warning font-bold uppercase tracking-widest text-center mt-1">
+          On pens
+        </p>
+      )}
     </button>
   )
 }

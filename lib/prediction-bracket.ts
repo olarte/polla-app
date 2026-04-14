@@ -10,7 +10,16 @@ import { GROUPS, type Team } from './world-cup-data'
 import type { Database } from './database.types'
 
 type Match = Database['public']['Tables']['matches']['Row']
-export type PredictionMap = Record<string, { score_a: number; score_b: number }>
+export type PredictionMap = Record<
+  string,
+  {
+    score_a: number
+    score_b: number
+    // Only meaningful for knockout matches where the user picked
+    // a tied regulation score. Otherwise null / undefined.
+    penalty_winner?: 'a' | 'b' | null
+  }
+>
 
 export interface TeamStanding {
   team: Team
@@ -123,18 +132,34 @@ export function buildGroupSlotMap(
 }
 
 // Feed a knockout result forward so downstream rounds can resolve.
-// W{num} = winner team, L{num} = loser team.
+// W{num} = winner team, L{num} = loser team. Handles tied regulation
+// scores by consulting the penalty winner.
 export function propagateKoResult(
   matchNumber: number,
   teamA: Team,
   teamB: Team,
   scoreA: number,
   scoreB: number,
+  penaltyWinner: 'a' | 'b' | null,
   slotMap: Record<string, Team>
 ): Record<string, Team> {
-  if (scoreA === scoreB) return slotMap // tie can't propagate — user must break it
-  const winner = scoreA > scoreB ? teamA : teamB
-  const loser = scoreA > scoreB ? teamB : teamA
+  let winner: Team
+  let loser: Team
+  if (scoreA > scoreB) {
+    winner = teamA
+    loser = teamB
+  } else if (scoreA < scoreB) {
+    winner = teamB
+    loser = teamA
+  } else if (penaltyWinner === 'a') {
+    winner = teamA
+    loser = teamB
+  } else if (penaltyWinner === 'b') {
+    winner = teamB
+    loser = teamA
+  } else {
+    return slotMap // tied with no pen decision — can't propagate yet
+  }
   return {
     ...slotMap,
     [`W${matchNumber}`]: winner,

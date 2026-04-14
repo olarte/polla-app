@@ -42,24 +42,47 @@ export interface GradedPrediction {
   points: number
 }
 
-interface ScoreInput {
+export interface ScoreInput {
   score_a: number
   score_b: number
+  // For knockout matches where the regulation score is tied, who
+  // wins on penalties. Ignored on group matches and on non-tied
+  // regulation scores.
+  penalty_winner?: 'a' | 'b' | null
+}
+
+// The match's "effective winner" after penalties are applied.
+// Group matches use 'D' for draws; knockouts use the penalty
+// winner to turn a regulation tie into an A/B result.
+function effectiveWinner(s: ScoreInput): 'A' | 'B' | 'D' {
+  if (s.score_a > s.score_b) return 'A'
+  if (s.score_a < s.score_b) return 'B'
+  if (s.penalty_winner === 'a') return 'A'
+  if (s.penalty_winner === 'b') return 'B'
+  return 'D'
 }
 
 export function gradePrediction(
   predicted: ScoreInput,
   actual: ScoreInput
 ): GradedPrediction {
-  if (
+  const scoresMatch =
     predicted.score_a === actual.score_a &&
     predicted.score_b === actual.score_b
-  ) {
+
+  // For tied regulations the penalty winner must also match for
+  // the prediction to count as exact.
+  const tiedRegulation = predicted.score_a === predicted.score_b
+  const penMatches =
+    !tiedRegulation ||
+    (predicted.penalty_winner ?? null) === (actual.penalty_winner ?? null)
+
+  if (scoresMatch && penMatches) {
     return { tier: 'EXACT', points: TIER_POINTS.EXACT }
   }
 
-  const predWinner = Math.sign(predicted.score_a - predicted.score_b)
-  const actWinner = Math.sign(actual.score_a - actual.score_b)
+  const predWinner = effectiveWinner(predicted)
+  const actWinner = effectiveWinner(actual)
   if (predWinner !== actWinner) {
     return { tier: 'NONE', points: TIER_POINTS.NONE }
   }

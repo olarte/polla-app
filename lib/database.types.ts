@@ -80,6 +80,7 @@ export interface Database {
           multiplier: number
           score_a: number | null
           score_b: number | null
+          penalty_winner: 'a' | 'b' | null
           status: string
           created_at: string
         }
@@ -99,6 +100,7 @@ export interface Database {
           multiplier?: number
           score_a?: number | null
           score_b?: number | null
+          penalty_winner?: 'a' | 'b' | null
           status?: string
         }
         Update: {
@@ -117,6 +119,7 @@ export interface Database {
           multiplier?: number
           score_a?: number | null
           score_b?: number | null
+          penalty_winner?: 'a' | 'b' | null
           status?: string
         }
         Relationships: []
@@ -128,6 +131,7 @@ export interface Database {
           match_id: string
           score_a: number
           score_b: number
+          penalty_winner: 'a' | 'b' | null
           points: number | null
           created_at: string
           updated_at: string
@@ -137,6 +141,7 @@ export interface Database {
           match_id: string
           score_a: number
           score_b: number
+          penalty_winner?: 'a' | 'b' | null
           points?: number | null
         }
         Update: {
@@ -144,6 +149,7 @@ export interface Database {
           match_id?: string
           score_a?: number
           score_b?: number
+          penalty_winner?: 'a' | 'b' | null
           points?: number | null
         }
         Relationships: [
