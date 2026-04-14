@@ -432,6 +432,97 @@ export default function PreviewLanding() {
           </div>
         </section>
 
+        {/* ═══ DAILY PREDICTIONS (teal card) ═══ */}
+        <section className="px-4 py-12 max-w-[760px] mx-auto">
+          <div
+            className="relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(160deg, #14B8A6, #0F766E)',
+              borderRadius: '32px',
+              padding: '36px 28px',
+              boxShadow: '0 30px 80px rgba(15,118,110,0.35)',
+            }}
+          >
+            <PillTag color="rgba(0,0,0,0.3)" text="#FFF5DC">🎯 Daily Predictions</PillTag>
+            <h3
+              style={{
+                fontSize: 'clamp(1.6rem, 4.5vw, 2.2rem)',
+                fontWeight: 900,
+                marginTop: '18px',
+                color: '#FFF5DC',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+              }}
+            >
+              A fresh pool every match day.
+            </h3>
+            <p style={{ color: 'rgba(255,245,220,0.8)', marginTop: '12px', fontSize: '0.98rem', lineHeight: 1.55 }}>
+              Don&rsquo;t want to commit to a full World Cup Pool? Predict one match at a time. Each game has its own pari-mutuel pool — predict before kickoff, watch the match, winners split the pool.
+            </p>
+
+            {/* Two markets */}
+            <div className="mt-6 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+              <div
+                style={{
+                  background: 'rgba(11,7,20,0.35)',
+                  border: '1px solid rgba(255,245,220,0.12)',
+                  borderRadius: '18px',
+                  padding: '18px',
+                }}
+              >
+                <div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,245,220,0.55)', textTransform: 'uppercase' }}>
+                  Market 1
+                </div>
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#FFF5DC', marginTop: '4px' }}>
+                  🥅 Match Result
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'rgba(255,245,220,0.7)', marginTop: '6px', lineHeight: 1.5 }}>
+                  Home · Draw · Away. Pick the winner.
+                </div>
+              </div>
+              <div
+                style={{
+                  background: 'rgba(11,7,20,0.35)',
+                  border: '1px solid rgba(255,245,220,0.12)',
+                  borderRadius: '18px',
+                  padding: '18px',
+                }}
+              >
+                <div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,245,220,0.55)', textTransform: 'uppercase' }}>
+                  Market 2
+                </div>
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#FFF5DC', marginTop: '4px' }}>
+                  ⚽ Total Goals
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'rgba(255,245,220,0.7)', marginTop: '6px', lineHeight: 1.5 }}>
+                  Over or under 2.5 goals in the match.
+                </div>
+              </div>
+            </div>
+
+            {/* Quick flow */}
+            <div
+              className="mt-5"
+              style={{
+                background: 'rgba(11,7,20,0.35)',
+                border: '1px solid rgba(255,245,220,0.12)',
+                borderRadius: '18px',
+                padding: '18px 20px',
+              }}
+            >
+              <div className="flex items-center flex-wrap gap-x-3 gap-y-2" style={{ fontSize: '0.9rem', color: 'rgba(255,245,220,0.85)', fontWeight: 700 }}>
+                <span>📝 Predict before kickoff</span>
+                <span style={{ color: 'rgba(255,245,220,0.35)' }}>→</span>
+                <span>⚽ Watch the match</span>
+                <span style={{ color: 'rgba(255,245,220,0.35)' }}>→</span>
+                <span>🏆 Winners split the pool</span>
+                <span style={{ color: 'rgba(255,245,220,0.35)' }}>→</span>
+                <span>💸 Tap claim</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ═══ NOT THE HOUSE (pari-mutuel explainer — ink navy) ═══ */}
         <section className="px-4 py-12 max-w-[760px] mx-auto">
           <div
