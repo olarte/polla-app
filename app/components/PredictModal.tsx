@@ -50,6 +50,12 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const [editDraftB, setEditDraftB] = useState<number | null>(null)
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
   const initRef = useRef(false)
+  // Scroll-position memory for when the user dives into the edit
+  // overlay from the groups review and comes back. Without this
+  // the browser clamps the saved scrollTop to the tiny edit view
+  // and we lose the user's place in the (tall) groups list.
+  const bodyScrollRef = useRef<HTMLDivElement>(null)
+  const savedScrollTop = useRef(0)
 
   const isLocked = new Date() >= LOCK_DEADLINE
 
@@ -289,8 +295,27 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   }
 
   // ── Edit overlay actions ──
-  const openEdit = (matchId: string) => setEditMatchId(matchId)
+  const openEdit = (matchId: string) => {
+    if (bodyScrollRef.current) {
+      savedScrollTop.current = bodyScrollRef.current.scrollTop
+    }
+    setEditMatchId(matchId)
+  }
   const closeEdit = () => setEditMatchId(null)
+
+  // Restore the groups-review scroll position after the edit overlay closes.
+  useEffect(() => {
+    if (editMatchId) return
+    if (!bodyScrollRef.current) return
+    if (savedScrollTop.current <= 0) return
+    // Wait one frame so the groups list has remounted at full height
+    // before we push scrollTop — otherwise the browser clamps again.
+    const target = savedScrollTop.current
+    const raf = requestAnimationFrame(() => {
+      if (bodyScrollRef.current) bodyScrollRef.current.scrollTop = target
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [editMatchId])
 
   const saveEdit = () => {
     if (!editMatchId || editDraftA === null || editDraftB === null) return
@@ -349,7 +374,7 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       )}
 
       {/* ── Body ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div ref={bodyScrollRef} className="flex-1 min-h-0 overflow-y-auto">
         {loading ? (
           <div className="h-full flex items-center justify-center text-text-40 text-sm">
             Loading matches…
