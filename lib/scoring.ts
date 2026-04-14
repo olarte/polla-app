@@ -16,11 +16,11 @@ import { supabaseAdmin } from './supabase-admin'
 //   WINNER            Winner right, goals miss on both sides.    2
 //   NONE              Wrong winner.                              0
 //
-// Note: the bonus "one team's goals right" cannot fire on the
-// GD_WINNER tier — if GD matches and one team's goal count matches,
-// the other team's count must also match by arithmetic, which is
-// the EXACT tier. So the tiers above are mutually exclusive by
-// construction.
+// Note: the WINNER_TEAM_GOALS tier cannot fire when GD also
+// matches — if GD matches and one team's goal count matches,
+// the other team's count must also match by arithmetic, which
+// is the EXACT tier. So the tiers above are mutually exclusive
+// by construction.
 
 export type ScoreTier =
   | 'EXACT'
@@ -171,17 +171,3 @@ export async function runScoringPipeline(matchId: string) {
   }
 }
 
-/**
- * Score bonus predictions at tournament end.
- */
-export async function scoreBonusPredictions(results: Record<string, string>) {
-  const { data, error } = await supabaseAdmin.rpc('score_bonus_predictions', {
-    p_results: results,
-  })
-  if (error) throw new Error(`score_bonus_predictions failed: ${error.message}`)
-
-  // Refresh global leaderboard to include bonus points
-  await refreshGlobalLeaderboard()
-
-  return data
-}

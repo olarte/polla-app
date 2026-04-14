@@ -33,7 +33,8 @@
 //      still writes xp_earned / xp_events / users.total_xp columns —
 //      strip those writes (or drop the function entirely) when the
 //      markets are reworked. Whatever replaces "5/5 = perfect match"
-//      bonus logic should plug into the new reward system, not XP.
+//      perfect-match reward logic should plug into the new reward
+//      system, not XP.
 //
 // Also handle SUSPENDED / POSTPONED status as "void" for grading —
 // current mapApiStatus collapses them into 'scheduled'.

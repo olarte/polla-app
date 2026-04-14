@@ -332,7 +332,6 @@ async function wipeExisting() {
     await sb.from('push_subscriptions').delete().in('user_id', seedAuthIds)
     await sb.from('deposits').delete().in('user_id', seedAuthIds)
     await sb.from('payouts').delete().in('user_id', seedAuthIds)
-    await sb.from('bonus_predictions').delete().in('user_id', seedAuthIds)
   }
 
   // 2. Delete seed groups (cascade deletes group_members)

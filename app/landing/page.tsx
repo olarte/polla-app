@@ -318,9 +318,6 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <p className="font-body text-white/35 text-xs text-center mt-6">
-            10% of pool reserved for knockout-stage bonuses
-          </p>
         </div>
       </section>
 

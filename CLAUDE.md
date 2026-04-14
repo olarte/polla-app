@@ -30,7 +30,7 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 | Home | ⚽ | Home | Global pool, XP summary, Predict CTA, group list, next match |
 | Pollas | 🐔 | My Pollas | List of user's groups → tap for group detail |
 | Daily | 🎯 | Daily Predictions | Today's matches, XP game, card album, packs |
-| Global | 🌍 | Global | Prize ladder, tier distribution, stage bonuses |
+| Global | 🌍 | Global | Prize ladder, tier distribution |
 
 ### Additional Screens (not in nav)
 | Screen | Access | Purpose |
@@ -81,7 +81,7 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 | 🥇 Top 100 | 25% | 80 |
 | 🥈 Top 500 | 15% | 400 |
 
-Show user's current position on ladder with prize they'd earn now. 10% reserved for stage bonuses.
+Show user's current position on ladder with prize they'd earn now. Ladder sums to 100% — no reserved stage-bonus pool (TBD whether to reintroduce a separate knockout-performance pool in a later pass).
 
 ### Tier System (percentile-based)
 | Tier | Percentile | Badge |
@@ -193,13 +193,9 @@ Tiered, exclusive. Pick the highest tier the prediction satisfies.
 - **Winner only:** 2 pts.
 - **Wrong winner:** 0 pts.
 
-Note: the "one team's goals" bonus can only fire on the winner-only tier — if both GD and a team's goal count match, the exact score is reached by arithmetic. See `lib/scoring.ts` → `gradePrediction()`.
+Note: the "winner + one team's goals" tier can only fire when GD is wrong — if both GD and a team's goal count match, the exact score is reached by arithmetic. See `lib/scoring.ts` → `gradePrediction()`.
 
-### Bonus Predictions
-Champion 20, Runner-up 10, Third 5, Golden Boot 15, Golden Ball 10, Group winners 5 each.
-
-### Tiebreaker
-"Total goals in tournament" — closest wins.
+Tournament-wide bonus predictions (champion, runner-up, top scorer, etc.) have been removed. All scoring comes from match-level grading above.
 
 ---
 
@@ -233,7 +229,7 @@ Launched from Home CTA or Profile CTA. Full-screen with group tabs (A-L) + KO ta
 ---
 
 ## Database Schema
-See tables: users, groups, group_members, matches, predictions, bonus_predictions, mini_predictions, scores, group_leaderboards, global_leaderboard, pools, payouts, deposits, balances, cards, user_cards, booster_packs, xp_events. User table includes avatar_emoji, total_xp, packs_earned, cards_collected, streak_days.
+See tables: users, groups, group_members, matches, predictions, mini_predictions, scores, group_leaderboards, global_leaderboard, pools, payouts, deposits, balances, cards, user_cards, booster_packs, xp_events. User table includes avatar_emoji, total_xp, packs_earned, cards_collected, streak_days.
 
 ---
 

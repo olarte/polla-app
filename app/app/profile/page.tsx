@@ -23,7 +23,7 @@ const FAQ_ITEMS = [
   { q: 'What are paid pools?', a: 'Paid pools have a fixed entry fee paid via MiniPay. A 5% service fee is deducted, and 10-30% goes to the global prize pool. The remainder is the pool prize.' },
   { q: 'How do pool payouts work?', a: 'Three models are available: Winner Takes All (100% to 1st), Podium Split (60/25/15 to top 3), or Proportional (pro-rata by points). The model is locked once the first prediction is made.' },
   { q: 'What are tiers?', a: 'Tiers are based on your global points ranking. From top to bottom: Mythic (top 0.1%), Diamond (top 1%), Platinum (top 5%), Gold (top 15%), Silver (top 40%), and Bronze (everyone else). Your tier updates as you earn more points.' },
-  { q: 'What is the Grand Pool?', a: 'The global prize pool where all paid pool players compete. Prizes are distributed by ranking: Champion (15%), Top 5 (20%), Top 20 (25%), Top 100 (25%), Top 500 (15%). 10% is reserved for stage bonuses.' },
+  { q: 'What is the Grand Pool?', a: 'The global prize pool where all paid pool players compete. Prizes are distributed by ranking: Champion (15%), Top 5 (20%), Top 20 (25%), Top 100 (25%), Top 500 (15%).' },
   { q: 'How do I connect my wallet?', a: 'Tap "Connect Wallet" in your Profile. Sabi uses MiniPay (available in Opera Mini) for payments on the Celo network. You need a connected wallet to join paid pools and place bets.' },
   { q: 'How do tiebreakers work?', a: 'If players are tied on points, the tiebreaker is "total goals scored in the tournament" — the player whose prediction is closest to the actual total wins.' },
 ]

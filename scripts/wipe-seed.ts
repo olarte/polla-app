@@ -133,7 +133,6 @@ async function wipe() {
     await sb.from('deposits').delete().in('user_id', seedUserIds)
     await sb.from('payouts').delete().in('user_id', seedUserIds)
     await sb.from('push_subscriptions').delete().in('user_id', seedUserIds)
-    await sb.from('bonus_predictions').delete().in('user_id', seedUserIds)
     await sb.from('balances').delete().in('user_id', seedUserIds)
   }
 
