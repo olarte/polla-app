@@ -224,7 +224,7 @@ export default function PreviewLanding() {
               animation: 'fadeUp 0.6s ease 0.3s both',
             }}
           >
-            A football prediction game where you compete with friends and bet real money on match outcomes. Free to play — bring a wallet when you want stakes.
+            A football prediction game where you compete with friends on the World Cup outcomes.
           </p>
 
           <Link
@@ -242,11 +242,11 @@ export default function PreviewLanding() {
               display: 'inline-block',
             }}
           >
-            Start predicting — free
+            Start predicting
           </Link>
 
           <p style={{ color: 'rgba(255,245,220,0.35)', fontSize: '0.8rem', marginTop: '14px', animation: 'fadeUp 0.6s ease 0.5s both' }}>
-            No download. Works in your browser.
+            Reuse your prediction in as many pools as you want.
           </p>
         </section>
 
