@@ -271,7 +271,7 @@ export default function PreviewLanding() {
                 minHeight: '240px',
               }}
             >
-              <PillTag color="rgba(0,0,0,0.25)" text="#FFF5DC">Predict the group stage before the first match</PillTag>
+              <PillTag color="rgba(0,0,0,0.25)" text="#FFF5DC">Predict all the matches before the kick-off</PillTag>
               <h3
                 style={{
                   fontSize: '1.8rem',
