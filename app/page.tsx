@@ -203,14 +203,14 @@ export default function PreviewLanding() {
           {/* Chunky headline */}
           <div style={{ animation: 'fadeUp 0.6s ease 0.2s both' }}>
             <Chunky>
-              Predict the future.
+              Predict the World Cup.
             </Chunky>
             <div style={{ marginTop: '0.25em' }}>
               <Chunky
                 color="#FFC93C"
                 shadow="0 2px 0 rgba(0,0,0,0.35), 0 8px 32px rgba(255,201,60,0.4)"
               >
-                Win the pool.
+                Win the World Pool.
               </Chunky>
             </div>
           </div>
