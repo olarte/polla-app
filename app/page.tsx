@@ -315,7 +315,7 @@ export default function PreviewLanding() {
                 USDC · CELO
               </div>
               <div style={{ marginTop: '32px' }}>
-                <PillTag color="rgba(0,0,0,0.3)" text="#FFF5DC">💰 Money — connect MiniPay</PillTag>
+                <PillTag color="rgba(0,0,0,0.3)" text="#FFF5DC">Predict a game before the kickoff</PillTag>
               </div>
               <h3
                 style={{
@@ -326,10 +326,10 @@ export default function PreviewLanding() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                Bet on matches
+                Daily Predictions
               </h3>
               <p style={{ color: 'rgba(255,245,220,0.75)', marginTop: '10px', lineHeight: 1.5, fontSize: '0.95rem' }}>
-                Pari-mutuel betting on result + goals. Live odds. Winners split the pool. 5% fee, no house.
+                Pari-mutuel predictions on each match outcomes. Winners split the pool.
               </p>
             </div>
           </div>
