@@ -834,10 +834,12 @@ function TeamScore({
         <button
           type="button"
           onClick={() => {
-            if (value === null || value === 0) return
+            // First tap on a blank box seeds 0 rather than underflowing.
+            if (value === null) return onChange(0)
+            if (value === 0) return
             onChange(Math.max(0, value - 1))
           }}
-          disabled={disabled || value === null || value === 0}
+          disabled={disabled || value === 0}
           className="w-8 h-8 rounded-lg bg-white/[0.04] border border-card-border text-text-70 text-sm font-bold active:bg-polla-accent/20 disabled:opacity-30"
           aria-label="decrement"
         >
@@ -845,7 +847,11 @@ function TeamScore({
         </button>
         <button
           type="button"
-          onClick={() => onChange((value ?? 0) + 1)}
+          onClick={() => {
+            // First tap on a blank box seeds 0 rather than jumping to 1.
+            if (value === null) return onChange(0)
+            onChange(value + 1)
+          }}
           disabled={disabled}
           className="w-8 h-8 rounded-lg bg-white/[0.04] border border-card-border text-text-70 text-sm font-bold active:bg-polla-accent/20 disabled:opacity-30"
           aria-label="increment"
