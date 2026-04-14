@@ -118,6 +118,35 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
   )
 }
 
+/* ─── FAQ content ─── */
+
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: 'How does scoring work?',
+    a: 'Pick a score for every match. You earn points based on how close you were: 10 for the exact score, 5 for the right winner + goal difference, 3 for the right winner + one team\u2019s goals, 2 for just the right winner, 0 if you got the winner wrong. Every match is worth the same — no stage multipliers, no side bonuses.',
+  },
+  {
+    q: 'Can I join more than one pool? Does that give me more chances to win?',
+    a: 'Join as many pools as you want — with your family, your office, a group of die-hard fans. But you only make ONE set of predictions, and that same bracket is scored in every pool you\u2019ve joined. Joining ten pools doesn\u2019t give you ten shots at the global prize; your skill is your skill. What joining more pools does do is put you on more leaderboards where you can compete against different circles of friends.',
+  },
+  {
+    q: 'Is there a minimum entry fee to compete for the big prize?',
+    a: 'No. Any paid pool qualifies you for La Gran Polla, even one that costs a dollar. We want the underdog story — a casual player topping the leaderboard and winning big — to be possible. Free pools compete on their own group leaderboard only, since they don\u2019t contribute to the global prize pool.',
+  },
+  {
+    q: 'How are the global prizes distributed?',
+    a: 'The global prize pool is split across the top 500 ranked players: 15% to the Champion, 20% to positions 2\u20135, 25% to positions 6\u201320, 25% to positions 21\u2013100, and 15% to positions 101\u2013500. Flat and final — no held-back side pools, no perfect-bracket jackpots.',
+  },
+  {
+    q: 'What\u2019s the difference between free and paid pools?',
+    a: 'Free pools are the full experience — predict every match, see your score, compete with friends on a group leaderboard. They\u2019re a zero-risk way to learn the product and build a streak. Paid pools add a stablecoin entry fee (any amount you like), put real money in the group prize pool, and qualify you for La Gran Polla. You pick the stakes that feel right for your circle.',
+  },
+  {
+    q: 'Is this gambling?',
+    a: 'No. Polla is a skill-based prediction contest. Everyone pays the same entry fee inside a pool, everyone is scored on the same matches by the same rules, and the prize pool is distributed by accuracy ranking. We don\u2019t set odds, we don\u2019t take trades, and there\u2019s no outcome-based pool splitting. It\u2019s closer to a March Madness office bracket than a sportsbook.',
+  },
+]
+
 /* ─── Main Page ─── */
 
 export default function LandingPage() {
@@ -373,6 +402,35 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <WoodDivider />
+
+      {/* ═══ FAQ ═══ */}
+      <section id="faq" className="py-20 px-4">
+        <div className="max-w-[760px] mx-auto">
+          <SectionTitle title="FAQ" subtitle="The rules in plain English" />
+          <div className="space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-2xl border border-gold/20 bg-white/[0.03] px-5 py-4 open:bg-white/[0.05] transition-colors"
+              >
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
+                  <span className="font-display text-cream text-base sm:text-lg uppercase leading-tight">
+                    {item.q}
+                  </span>
+                  <span className="font-display text-gold text-2xl leading-none shrink-0 transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="font-body text-white/70 text-sm sm:text-base mt-3 leading-relaxed">
+                  {item.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══ FINAL CTA ═══ */}
       <section className="py-20 px-4 text-center">
         <div className="max-w-[600px] mx-auto">
@@ -406,9 +464,13 @@ export default function LandingPage() {
           The ultimate World Cup prediction game
         </p>
         <div className="flex justify-center gap-6 mb-8">
-          {['Terms', 'Privacy', 'FAQ'].map((link) => (
-            <a key={link} href="#" className="font-body text-white/35 text-sm hover:text-white/60 transition-colors">
-              {link}
+          {[
+            { label: 'Terms', href: '#' },
+            { label: 'Privacy', href: '#' },
+            { label: 'FAQ', href: '#faq' },
+          ].map((link) => (
+            <a key={link.label} href={link.href} className="font-body text-white/35 text-sm hover:text-white/60 transition-colors">
+              {link.label}
             </a>
           ))}
         </div>

@@ -9,6 +9,22 @@ Polla is a social prediction game for the FIFA World Cup 2026. Players predict m
 
 ---
 
+## Locked Design Decisions
+
+These are intentional, debated choices. Do not relitigate without a deliberate re-discussion.
+
+1. **One user, one set of predictions.** Predictions are keyed on `(user_id, match_id)` in the schema and apply to every pool the user has joined, including the global leaderboard. Joining more pools never creates more shots at a prize — the same bracket is scored everywhere. This is the guardrail that makes "no minimum entry fee" defensible, closes the spam-pool gaming vector, and keeps the mental model simple (March Madness analogue, not fantasy football).
+
+2. **No minimum entry fee for global-pool eligibility.** Any paid pool — even $1 — qualifies a user for La Gran Polla. Free pools compete on their group leaderboard only (they don't contribute financially to the global pool). The underdog narrative ("$5 entry, $15k win") is the most valuable marketing asset a skill-based contest has, and the 80/20 group-to-global split structurally insulates whales — most of their money stays in their private group where they compete against peers.
+
+3. **No stage multipliers.** Every match is worth the same, regardless of stage. The Final and a Group A opener both max out at 10 pts. Multipliers let late-tournament variance overwrite careful group-stage work, and the 80/20 pool split already gives knockout results outsized prize impact through the shared pool.
+
+4. **No tournament-wide bonus predictions.** No champion/runner-up/top-scorer/golden-ball side markets. All scoring comes from match-level grading. The `bonus_predictions` table and `score_bonus_predictions()` function are dropped in migration 008.
+
+5. **Flat global prize ladder, no reserved stage-bonus pool.** The 15/20/25/25/15 ladder sums to 100%. The ladder is the only global-pool payout mechanism — no knockout-performance side pool, no perfect-bracket jackpot, no held-back stage bonuses.
+
+---
+
 ## Product Model
 Polla is a **skill-based prize pool competition** — not a prediction market, not pari-mutuel betting, and not a sportsbook. Everyone pays a fixed entry fee, makes predictions, and is scored on accuracy. The prize pool is distributed to the top scorers based on a predetermined structure.
 
