@@ -12,11 +12,10 @@ import Link from 'next/link'
 const FLAGS = ['🇲🇽','🇿🇦','🇰🇷','🇨🇿','🇨🇦','🇧🇦','🇶🇦','🇨🇭','🇧🇷','🇲🇦','🇭🇹','🏴󠁧󠁢󠁳󠁣󠁴󠁿','🇺🇸','🇵🇾','🇦🇺','🇹🇷','🇩🇪','🇨🇼','🇨🇮','🇪🇨','🇳🇱','🇯🇵','🇸🇪','🇹🇳','🇧🇪','🇪🇬','🇮🇷','🇳🇿','🇪🇸','🇨🇻','🇸🇦','🇺🇾','🇫🇷','🇸🇳','🇮🇶','🇳🇴','🇦🇷','🇩🇿','🇦🇹','🇯🇴','🇵🇹','🇨🇩','🇺🇿','🇨🇴','🏴󠁧󠁢󠁥󠁮󠁧󠁿','🇭🇷','🇬🇭','🇵🇦']
 
 const STEPS = [
-  { n: '01', emoji: '📱', title: 'Sign up', desc: 'Pick a name and an emoji. No email, no password.', bg: '#7B2CFF', text: '#FFF5DC' },
-  { n: '02', emoji: '📝', title: 'Predict every match', desc: 'All 104 games. Research form, stats, and history.', bg: '#FF7B54', text: '#1a0b05' },
-  { n: '03', emoji: '⛱️', title: 'Join a pool', desc: 'Create one or jump in. Free or paid, your call.', bg: '#FFC93C', text: '#1a1106' },
-  { n: '04', emoji: '🎯', title: 'Bet on matches', desc: 'Real-time odds. Winners split the pool.', bg: '#0F766E', text: '#FFF5DC' },
-  { n: '05', emoji: '💸', title: 'Claim winnings', desc: 'One tap. USDC lands in your wallet instantly.', bg: '#FF3D6E', text: '#FFF5DC' },
+  { n: '01', emoji: '📝', title: 'Predict every match', desc: 'Predict all the 104 matches before the first game kick off.', bg: '#7B2CFF', text: '#FFF5DC' },
+  { n: '02', emoji: '⛱️', title: 'Join a Pool', desc: 'Create one or join a pool using an invite link. You can join multiple pools with the same prediction.', bg: '#FF7B54', text: '#1a0b05' },
+  { n: '03', emoji: '💳', title: 'Pay the pool entry fee', desc: 'Pay the pool entry fee before the World Cup begins.', bg: '#FFC93C', text: '#1a1106' },
+  { n: '04', emoji: '🏆', title: 'Claim winnings', desc: 'Once the World Cup ends, all pools resolve and payouts are distributed.', bg: '#FF3D6E', text: '#FFF5DC' },
 ]
 
 const PRIZE_TIERS = [
@@ -321,9 +320,9 @@ export default function PreviewLanding() {
         {/* ═══ HOW IT WORKS ═══ */}
         <section id="how" className="px-4 py-12 max-w-[960px] mx-auto">
           <div className="text-center mb-10">
-            <Chunky size="clamp(1.6rem, 4.5vw, 2.4rem)">How Sabi works ✨</Chunky>
+            <Chunky size="clamp(1.6rem, 4.5vw, 2.4rem)">How Sabi pools work</Chunky>
             <p className="mt-3" style={{ color: 'rgba(255,245,220,0.55)' }}>
-              Five simple steps to the prize pool.
+              Four simple steps to the prize pool.
             </p>
           </div>
 
