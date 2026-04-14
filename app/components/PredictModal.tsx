@@ -693,14 +693,29 @@ function renderFooter(args: {
   }
 
   if (phase === 'review') {
+    const totalPredicted = groupsPredictedCount + koPredictedCount
+    const groupsRemaining = 72 - groupsPredictedCount
+    const groupStageComplete = groupsRemaining === 0
     return (
       <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border">
-        <div className="flex items-center justify-between mb-2 text-[10px] text-text-40">
-          <span>
-            <span className="num text-white">{groupsPredictedCount}</span> / 72 predicted
-          </span>
-          {groupsPredictedCount < 72 && (
-            <button onClick={goToFinishGroups} className="text-polla-accent font-semibold">
+        <div className="flex items-center justify-between gap-3 mb-2 text-[10px] text-text-40">
+          <p className="leading-snug">
+            <span className="num text-white">{totalPredicted}</span>
+            /104 games predicted.{' '}
+            {groupStageComplete ? (
+              <span className="text-polla-success font-semibold">Group stage complete.</span>
+            ) : (
+              <>
+                <span className="num text-white">{groupsRemaining}</span>{' '}
+                {groupsRemaining === 1 ? 'game' : 'games'} left in the group stage.
+              </>
+            )}
+          </p>
+          {!groupStageComplete && (
+            <button
+              onClick={goToFinishGroups}
+              className="shrink-0 text-polla-accent font-semibold"
+            >
               Finish groups →
             </button>
           )}
