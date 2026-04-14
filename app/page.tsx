@@ -135,12 +135,9 @@ export default function PreviewLanding() {
         }}
       >
         <div className="max-w-[960px] mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/sabi_pwa.png" alt="" className="w-8 h-8 rounded-lg" style={{ boxShadow: '0 2px 12px rgba(123,44,255,0.5)' }} />
-            <span style={{ fontWeight: 900, fontSize: '1.15rem', letterSpacing: '-0.02em' }}>
-              <span style={{ color: '#FFC93C' }}>sabi</span>
-              <span style={{ color: 'rgba(255,245,220,0.35)' }}>.gg</span>
-            </span>
+          <Link href="/" style={{ fontWeight: 900, fontSize: '1.15rem', letterSpacing: '-0.02em' }}>
+            <span style={{ color: '#FFC93C' }}>sabi</span>
+            <span style={{ color: 'rgba(255,245,220,0.35)' }}>.gg</span>
           </Link>
           <div className="flex items-center gap-3">
             <a href="#how" className="hidden sm:block text-sm" style={{ color: 'rgba(255,245,220,0.55)' }}>
@@ -686,8 +683,7 @@ export default function PreviewLanding() {
 
         {/* ═══ FOOTER ═══ */}
         <footer className="px-4 py-10 text-center" style={{ borderTop: '1px solid rgba(255,245,220,0.06)' }}>
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <img src="/sabi_pwa.png" alt="" className="w-6 h-6 rounded-md" />
+          <div className="mb-3">
             <span style={{ fontWeight: 900, fontSize: '1rem' }}>
               <span style={{ color: '#FFC93C' }}>sabi</span>
               <span style={{ color: 'rgba(255,245,220,0.35)' }}>.gg</span>

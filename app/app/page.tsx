@@ -230,12 +230,9 @@ export default function HomePage() {
       {/* -- Header -- */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <Link href="/?stay=1" prefetch={false} className="flex items-center gap-2 active:scale-95 transition-transform">
-            <img src="/sabi_pwa.png" alt="" className="w-8 h-8 rounded-lg" style={{ boxShadow: '0 2px 12px rgba(123,44,255,0.45)' }} />
-            <span className="text-lg font-black tracking-tight">
-              <span style={{ color: '#FFC93C' }}>sabi</span>
-              <span className="text-text-35">.gg</span>
-            </span>
+          <Link href="/?stay=1" prefetch={false} className="text-lg font-black tracking-tight active:scale-95 transition-transform">
+            <span style={{ color: '#FFC93C' }}>sabi</span>
+            <span className="text-text-35">.gg</span>
           </Link>
         </div>
         <Link href="/app/profile" className="flex items-center gap-2 active:scale-[0.98] transition-transform">
