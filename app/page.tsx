@@ -14,7 +14,7 @@ const FLAGS = ['🇲🇽','🇿🇦','🇰🇷','🇨🇿','🇨🇦','🇧🇦'
 const STEPS = [
   { n: '01', emoji: '📝', title: 'Predict every match', desc: 'Predict all the 104 matches before the first game kick off.', bg: '#7B2CFF', text: '#FFF5DC' },
   { n: '02', emoji: '⛱️', title: 'Join a Pool', desc: 'Create one or join a pool using an invite link. You can join multiple pools with the same prediction.', bg: '#FF7B54', text: '#1a0b05' },
-  { n: '03', emoji: '🤑', title: 'Pay the pool entry fee', desc: 'Pay the pool entry fee before the World Cup begins.', bg: '#FFC93C', text: '#1a1106' },
+  { n: '03', emoji: '🤑', title: 'Pay the entry fee', desc: 'Pay the pool entry fee before the World Cup begins.', bg: '#FFC93C', text: '#1a1106' },
   { n: '04', emoji: '🏆', title: 'Claim winnings', desc: 'Once the World Cup ends, all pools resolve and payouts are distributed.', bg: '#FF3D6E', text: '#FFF5DC' },
 ]
 
