@@ -255,7 +255,7 @@ export default function PreviewLanding() {
           <div className="text-center mb-8">
             <Chunky size="clamp(1.6rem, 4.5vw, 2.4rem)">Two ways to play</Chunky>
             <p className="mt-3" style={{ color: 'rgba(255,245,220,0.55)' }}>
-              Everyone starts free. Add money when you\u2019re ready.
+              Create or join a World Cup Pool, share with friends. Predict all the matches. Play daily prediction games.
             </p>
           </div>
 
@@ -271,8 +271,7 @@ export default function PreviewLanding() {
                 minHeight: '240px',
               }}
             >
-              <div className="absolute top-5 right-5 text-5xl opacity-30">🎮</div>
-              <PillTag color="rgba(0,0,0,0.25)" text="#FFF5DC">🎮 Free — no wallet</PillTag>
+              <PillTag color="rgba(0,0,0,0.25)" text="#FFF5DC">Predict the group stage before the first match</PillTag>
               <h3
                 style={{
                   fontSize: '1.8rem',
@@ -282,10 +281,10 @@ export default function PreviewLanding() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                Predict & compete
+                World Cup Pools
               </h3>
               <p style={{ color: 'rgba(26,11,5,0.75)', marginTop: '10px', lineHeight: 1.5, fontSize: '0.95rem' }}>
-                Call every match. Join free pools. Climb the global leaderboard. No signup friction — just a name and an emoji.
+                Call every match. Win points if you predict the exact result, the winner, and the goal difference.
               </p>
             </div>
 
