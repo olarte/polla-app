@@ -255,7 +255,7 @@ export default function PreviewLanding() {
           <div className="text-center mb-8">
             <Chunky size="clamp(1.6rem, 4.5vw, 2.4rem)">Two ways to play</Chunky>
             <p className="mt-3" style={{ color: 'rgba(255,245,220,0.55)' }}>
-              Create or join a World Cup Pool, share with friends. Predict all the matches. Play daily prediction games.
+              Create or join a World Cup Pool, invite your friends. Predict all the matches or play daily prediction games.
             </p>
           </div>
 
