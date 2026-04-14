@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start",
     "seed": "tsx scripts/seed.ts",
-    "wipe": "tsx scripts/wipe-seed.ts"
+    "wipe": "tsx scripts/wipe-seed.ts",
+    "reseed-wc": "tsx scripts/reseed-wc-matches.ts"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.15.0",

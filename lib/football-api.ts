@@ -2,6 +2,42 @@
 // Football Data API Client
 // Polls football-data.org for live match results
 // ============================================================
+//
+// PARKED — upgrade to "Free + Deep Data" tier (€29/mo) before launch.
+// Enables the `bookings[]` array on the match endpoint: { minute, team,
+// player, card: 'YELLOW' | 'RED' }. Needed for:
+//
+//   1. FIFA Fair Play points tiebreaker in real group standings
+//      (-1 yellow, -3 indirect red, -4 direct red). Post-process
+//      second-yellow → direct-red by checking same-minute YELLOW+RED
+//      on the same player.
+//
+//   2. Daily mini-prediction markets (post-redesign):
+//        - Total Goals           (0–1 / 2–3 / 4+)       [keep, already live]
+//        - Both Teams Score      (Yes / No)             [keep, already live]
+//        - Early Goal (< 15')    (Yes / No)             [needs goals[] minute data]
+//        - Total Cards (both)    (Under 3 / 3–5 / 6+)   [new — needs bookings]
+//      Drop: First to Score, Man of the Match.
+//
+//   3. Grading cleanup in score_mini_predictions() —
+//      migration 006_mini_predictions_xp.sql fakes three markets today:
+//        - first_to_score: derived from final score (drop the market)
+//        - motm:           derived from final score (drop the market)
+//        - early_goal:     hardcoded to 'no' (never graded correctly)
+//      Once Deep Data is live: replace with real goals[] events
+//      (first event by minute ASC → first_to_score; any goal with
+//      minute < 15 → early_goal = 'yes') and compute total_cards
+//      from bookings[].
+//
+//   4. XP has been removed from the product. The scoring function
+//      still writes xp_earned / xp_events / users.total_xp columns —
+//      strip those writes (or drop the function entirely) when the
+//      markets are reworked. Whatever replaces "5/5 = perfect match"
+//      bonus logic should plug into the new reward system, not XP.
+//
+// Also handle SUSPENDED / POSTPONED status as "void" for grading —
+// current mapApiStatus collapses them into 'scheduled'.
+// ============================================================
 
 const API_BASE = 'https://api.football-data.org/v4'
 const COMPETITION_ID = 2000 // FIFA World Cup

@@ -29,20 +29,20 @@ export interface MatchDef {
 
 // ── Venues ──────────────────────────────────────────────────
 export const VENUES = [
-  { name: 'MetLife Stadium', city: 'New York/New Jersey' },
-  { name: 'AT&T Stadium', city: 'Dallas' },
-  { name: 'SoFi Stadium', city: 'Los Angeles' },
-  { name: 'Hard Rock Stadium', city: 'Miami' },
+  { name: 'MetLife Stadium', city: 'East Rutherford' },
+  { name: 'AT&T Stadium', city: 'Arlington' },
+  { name: 'SoFi Stadium', city: 'Inglewood' },
+  { name: 'Hard Rock Stadium', city: 'Miami Gardens' },
   { name: 'Lumen Field', city: 'Seattle' },
   { name: 'NRG Stadium', city: 'Houston' },
   { name: 'Mercedes-Benz Stadium', city: 'Atlanta' },
   { name: 'Lincoln Financial Field', city: 'Philadelphia' },
-  { name: "Levi's Stadium", city: 'San Francisco' },
+  { name: "Levi's Stadium", city: 'Santa Clara' },
   { name: 'Arrowhead Stadium', city: 'Kansas City' },
-  { name: 'Gillette Stadium', city: 'Boston' },
+  { name: 'Gillette Stadium', city: 'Foxborough' },
   { name: 'Estadio Azteca', city: 'Mexico City' },
   { name: 'Estadio BBVA', city: 'Monterrey' },
-  { name: 'Estadio Akron', city: 'Guadalajara' },
+  { name: 'Estadio Akron', city: 'Zapopan' },
   { name: 'BMO Field', city: 'Toronto' },
   { name: 'BC Place', city: 'Vancouver' },
 ] as const
@@ -173,202 +173,178 @@ const STAGE_MULTIPLIER: Record<string, number> = {
   final: 4.0,
 }
 
-// ── Generate group match pairings ───────────────────────────
-// Each group of 4 teams → 6 matches (round-robin)
-function groupPairings(teams: [Team, Team, Team, Team]): [Team, Team][] {
-  return [
-    [teams[0], teams[1]], // Matchday 1
-    [teams[2], teams[3]],
-    [teams[0], teams[2]], // Matchday 2
-    [teams[1], teams[3]],
-    [teams[0], teams[3]], // Matchday 3
-    [teams[1], teams[2]],
-  ]
+// ── Official FIFA World Cup 2026 match schedule ─────────────
+// Source: FIFA final draw (Dec 5, 2025) + official match schedule.
+// All kickoff times below are Eastern Time (EDT = UTC−4 in June/July).
+
+const TEAM_BY_CODE: Record<string, Team> = Object.fromEntries(
+  ALL_TEAMS.map((t) => [t.code, t])
+)
+
+function tbdTeam(label: string): Team {
+  return { name: label, code: label, flag: '🏳️' }
 }
+
+function etToUtcISO(date: string, time: string): string {
+  const [y, mo, d] = date.split('-').map(Number)
+  const [h, mi] = time.split(':').map(Number)
+  return new Date(Date.UTC(y, mo - 1, d, h + 4, mi)).toISOString()
+}
+
+// [match_number, group, teamA_code, teamB_code, date, ET_time, venue, city]
+type GroupRow = [number, string, string, string, string, string, string, string]
+
+const GROUP_SCHEDULE: GroupRow[] = [
+  [1,  'A', 'MEX', 'RSA', '2026-06-11', '15:00', 'Estadio Azteca',          'Mexico City'],
+  [2,  'A', 'KOR', 'CZE', '2026-06-11', '22:00', 'Estadio Akron',           'Zapopan'],
+  [3,  'B', 'CAN', 'BIH', '2026-06-12', '15:00', 'BMO Field',               'Toronto'],
+  [4,  'D', 'USA', 'PAR', '2026-06-12', '21:00', 'SoFi Stadium',            'Inglewood'],
+  [5,  'D', 'AUS', 'TUR', '2026-06-13', '00:00', 'BC Place',                'Vancouver'],
+  [6,  'B', 'QAT', 'SUI', '2026-06-13', '15:00', "Levi's Stadium",          'Santa Clara'],
+  [7,  'C', 'BRA', 'MAR', '2026-06-13', '18:00', 'MetLife Stadium',         'East Rutherford'],
+  [8,  'C', 'HAI', 'SCO', '2026-06-13', '21:00', 'Gillette Stadium',        'Foxborough'],
+  [9,  'E', 'GER', 'CUW', '2026-06-14', '13:00', 'NRG Stadium',             'Houston'],
+  [10, 'F', 'NED', 'JPN', '2026-06-14', '16:00', 'AT&T Stadium',            'Arlington'],
+  [11, 'E', 'CIV', 'ECU', '2026-06-14', '19:00', 'Lincoln Financial Field', 'Philadelphia'],
+  [12, 'F', 'SWE', 'TUN', '2026-06-14', '22:00', 'Estadio BBVA',            'Monterrey'],
+  [13, 'H', 'ESP', 'CPV', '2026-06-15', '12:00', 'Mercedes-Benz Stadium',   'Atlanta'],
+  [14, 'G', 'BEL', 'EGY', '2026-06-15', '15:00', 'Lumen Field',             'Seattle'],
+  [15, 'H', 'KSA', 'URU', '2026-06-15', '18:00', 'Hard Rock Stadium',       'Miami Gardens'],
+  [16, 'G', 'IRN', 'NZL', '2026-06-15', '21:00', 'SoFi Stadium',            'Inglewood'],
+  [17, 'I', 'FRA', 'SEN', '2026-06-16', '15:00', 'MetLife Stadium',         'East Rutherford'],
+  [18, 'I', 'IRQ', 'NOR', '2026-06-16', '18:00', 'Gillette Stadium',        'Foxborough'],
+  [19, 'J', 'ARG', 'ALG', '2026-06-16', '21:00', 'Arrowhead Stadium',       'Kansas City'],
+  [20, 'J', 'AUT', 'JOR', '2026-06-17', '00:00', "Levi's Stadium",          'Santa Clara'],
+  [21, 'K', 'POR', 'COD', '2026-06-17', '13:00', 'NRG Stadium',             'Houston'],
+  [22, 'L', 'ENG', 'CRO', '2026-06-17', '16:00', 'AT&T Stadium',            'Arlington'],
+  [23, 'L', 'GHA', 'PAN', '2026-06-17', '19:00', 'BMO Field',               'Toronto'],
+  [24, 'K', 'UZB', 'COL', '2026-06-17', '22:00', 'Estadio Azteca',          'Mexico City'],
+  [25, 'A', 'CZE', 'RSA', '2026-06-18', '12:00', 'Mercedes-Benz Stadium',   'Atlanta'],
+  [26, 'B', 'SUI', 'BIH', '2026-06-18', '15:00', 'SoFi Stadium',            'Inglewood'],
+  [27, 'B', 'CAN', 'QAT', '2026-06-18', '18:00', 'BC Place',                'Vancouver'],
+  [28, 'A', 'MEX', 'KOR', '2026-06-18', '21:00', 'Estadio Akron',           'Zapopan'],
+  [29, 'D', 'TUR', 'PAR', '2026-06-19', '00:00', "Levi's Stadium",          'Santa Clara'],
+  [30, 'D', 'USA', 'AUS', '2026-06-19', '15:00', 'Lumen Field',             'Seattle'],
+  [31, 'C', 'SCO', 'MAR', '2026-06-19', '18:00', 'Gillette Stadium',        'Foxborough'],
+  [32, 'C', 'BRA', 'HAI', '2026-06-19', '21:00', 'Lincoln Financial Field', 'Philadelphia'],
+  [33, 'F', 'TUN', 'JPN', '2026-06-20', '00:00', 'Estadio BBVA',            'Monterrey'],
+  [34, 'F', 'NED', 'SWE', '2026-06-20', '13:00', 'NRG Stadium',             'Houston'],
+  [35, 'E', 'GER', 'CIV', '2026-06-20', '16:00', 'BMO Field',               'Toronto'],
+  [36, 'E', 'ECU', 'CUW', '2026-06-20', '20:00', 'Arrowhead Stadium',       'Kansas City'],
+  [37, 'H', 'ESP', 'KSA', '2026-06-21', '12:00', 'Mercedes-Benz Stadium',   'Atlanta'],
+  [38, 'G', 'BEL', 'IRN', '2026-06-21', '15:00', 'SoFi Stadium',            'Inglewood'],
+  [39, 'H', 'URU', 'CPV', '2026-06-21', '18:00', 'Hard Rock Stadium',       'Miami Gardens'],
+  [40, 'G', 'NZL', 'EGY', '2026-06-21', '21:00', 'BC Place',                'Vancouver'],
+  [41, 'J', 'ARG', 'AUT', '2026-06-22', '13:00', 'AT&T Stadium',            'Arlington'],
+  [42, 'I', 'FRA', 'IRQ', '2026-06-22', '17:00', 'Lincoln Financial Field', 'Philadelphia'],
+  [43, 'I', 'NOR', 'SEN', '2026-06-22', '20:00', 'MetLife Stadium',         'East Rutherford'],
+  [44, 'J', 'JOR', 'ALG', '2026-06-22', '23:00', "Levi's Stadium",          'Santa Clara'],
+  [45, 'K', 'POR', 'UZB', '2026-06-23', '13:00', 'NRG Stadium',             'Houston'],
+  [46, 'L', 'ENG', 'GHA', '2026-06-23', '16:00', 'Gillette Stadium',        'Foxborough'],
+  [47, 'L', 'PAN', 'CRO', '2026-06-23', '19:00', 'BMO Field',               'Toronto'],
+  [48, 'K', 'COL', 'COD', '2026-06-23', '22:00', 'Estadio Akron',           'Zapopan'],
+  [49, 'B', 'SUI', 'CAN', '2026-06-24', '15:00', 'BC Place',                'Vancouver'],
+  [50, 'B', 'BIH', 'QAT', '2026-06-24', '15:00', 'Lumen Field',             'Seattle'],
+  [51, 'C', 'SCO', 'BRA', '2026-06-24', '18:00', 'Hard Rock Stadium',       'Miami Gardens'],
+  [52, 'C', 'MAR', 'HAI', '2026-06-24', '18:00', 'Mercedes-Benz Stadium',   'Atlanta'],
+  [53, 'A', 'CZE', 'MEX', '2026-06-24', '21:00', 'Estadio Azteca',          'Mexico City'],
+  [54, 'A', 'RSA', 'KOR', '2026-06-24', '21:00', 'Estadio BBVA',            'Monterrey'],
+  [55, 'E', 'CUW', 'CIV', '2026-06-25', '16:00', 'Lincoln Financial Field', 'Philadelphia'],
+  [56, 'E', 'ECU', 'GER', '2026-06-25', '16:00', 'MetLife Stadium',         'East Rutherford'],
+  [57, 'F', 'JPN', 'SWE', '2026-06-25', '19:00', 'AT&T Stadium',            'Arlington'],
+  [58, 'F', 'TUN', 'NED', '2026-06-25', '19:00', 'Arrowhead Stadium',       'Kansas City'],
+  [59, 'D', 'TUR', 'USA', '2026-06-25', '22:00', 'SoFi Stadium',            'Inglewood'],
+  [60, 'D', 'PAR', 'AUS', '2026-06-25', '22:00', "Levi's Stadium",          'Santa Clara'],
+  [61, 'I', 'NOR', 'FRA', '2026-06-26', '15:00', 'Gillette Stadium',        'Foxborough'],
+  [62, 'I', 'SEN', 'IRQ', '2026-06-26', '15:00', 'BMO Field',               'Toronto'],
+  [63, 'H', 'CPV', 'KSA', '2026-06-26', '20:00', 'NRG Stadium',             'Houston'],
+  [64, 'H', 'URU', 'ESP', '2026-06-26', '20:00', 'Estadio Akron',           'Zapopan'],
+  [65, 'G', 'EGY', 'IRN', '2026-06-26', '23:00', 'Lumen Field',             'Seattle'],
+  [66, 'G', 'NZL', 'BEL', '2026-06-26', '23:00', 'BC Place',                'Vancouver'],
+  [67, 'L', 'PAN', 'ENG', '2026-06-27', '17:00', 'MetLife Stadium',         'East Rutherford'],
+  [68, 'L', 'CRO', 'GHA', '2026-06-27', '17:00', 'Lincoln Financial Field', 'Philadelphia'],
+  [69, 'K', 'COL', 'POR', '2026-06-27', '19:30', 'Hard Rock Stadium',       'Miami Gardens'],
+  [70, 'K', 'COD', 'UZB', '2026-06-27', '19:30', 'Mercedes-Benz Stadium',   'Atlanta'],
+  [71, 'J', 'ALG', 'AUT', '2026-06-27', '22:00', 'Arrowhead Stadium',       'Kansas City'],
+  [72, 'J', 'JOR', 'ARG', '2026-06-27', '22:00', 'AT&T Stadium',            'Arlington'],
+]
+
+// Knockout bracket — teams are bracket slot labels until groups resolve.
+// Labels: "1A" = Group A winner, "2A" = Group A runner-up,
+// "3ABCDF" = best 3rd-placed team from groups A/B/C/D/F,
+// "W73" = winner of match 73, "L101" = loser of match 101.
+type KoRow = [number, MatchDef['stage'], string, string, string, string, string, string]
+
+const KO_SCHEDULE: KoRow[] = [
+  [73,  'r32',   '2A',      '2B',      '2026-06-28', '15:00', 'SoFi Stadium',            'Inglewood'],
+  [74,  'r32',   '1C',      '2F',      '2026-06-29', '13:00', 'NRG Stadium',             'Houston'],
+  [75,  'r32',   '1E',      '3ABCDF',  '2026-06-29', '16:30', 'Gillette Stadium',        'Foxborough'],
+  [76,  'r32',   '1F',      '2C',      '2026-06-29', '21:00', 'Estadio BBVA',            'Monterrey'],
+  [77,  'r32',   '1I',      '3CDFGH',  '2026-06-30', '17:00', 'MetLife Stadium',         'East Rutherford'],
+  [78,  'r32',   '2E',      '2I',      '2026-06-30', '13:00', 'AT&T Stadium',            'Arlington'],
+  [79,  'r32',   '1A',      '3CEFHI',  '2026-06-30', '21:00', 'Estadio Azteca',          'Mexico City'],
+  [80,  'r32',   '1L',      '3EHIJK',  '2026-07-01', '12:00', 'Mercedes-Benz Stadium',   'Atlanta'],
+  [81,  'r32',   '1D',      '3BEFIJ',  '2026-07-01', '20:00', "Levi's Stadium",          'Santa Clara'],
+  [82,  'r32',   '1G',      '3AEHIJ',  '2026-07-01', '16:00', 'Lumen Field',             'Seattle'],
+  [83,  'r32',   '2K',      '2L',      '2026-07-02', '19:00', 'BMO Field',               'Toronto'],
+  [84,  'r32',   '1H',      '2J',      '2026-07-02', '15:00', 'SoFi Stadium',            'Inglewood'],
+  [85,  'r32',   '1B',      '3EFGIJ',  '2026-07-02', '23:00', 'BC Place',                'Vancouver'],
+  [86,  'r32',   '1J',      '2H',      '2026-07-03', '18:00', 'Hard Rock Stadium',       'Miami Gardens'],
+  [87,  'r32',   '1K',      '3DEIJL',  '2026-07-03', '21:30', 'Arrowhead Stadium',       'Kansas City'],
+  [88,  'r32',   '2D',      '2G',      '2026-07-03', '14:00', 'AT&T Stadium',            'Arlington'],
+
+  [89,  'r16',   'W74',     'W77',     '2026-07-04', '17:00', 'Lincoln Financial Field', 'Philadelphia'],
+  [90,  'r16',   'W73',     'W75',     '2026-07-04', '13:00', 'NRG Stadium',             'Houston'],
+  [91,  'r16',   'W76',     'W78',     '2026-07-05', '16:00', 'MetLife Stadium',         'East Rutherford'],
+  [92,  'r16',   'W79',     'W80',     '2026-07-05', '20:00', 'Estadio Azteca',          'Mexico City'],
+  [93,  'r16',   'W83',     'W84',     '2026-07-06', '15:00', 'AT&T Stadium',            'Arlington'],
+  [94,  'r16',   'W81',     'W82',     '2026-07-06', '20:00', 'Lumen Field',             'Seattle'],
+  [95,  'r16',   'W86',     'W88',     '2026-07-07', '12:00', 'Mercedes-Benz Stadium',   'Atlanta'],
+  [96,  'r16',   'W85',     'W87',     '2026-07-07', '16:00', 'BC Place',                'Vancouver'],
+
+  [97,  'qf',    'W89',     'W90',     '2026-07-09', '16:00', 'Gillette Stadium',        'Foxborough'],
+  [98,  'qf',    'W93',     'W94',     '2026-07-10', '15:00', 'SoFi Stadium',            'Inglewood'],
+  [99,  'qf',    'W91',     'W92',     '2026-07-11', '17:00', 'Hard Rock Stadium',       'Miami Gardens'],
+  [100, 'qf',    'W95',     'W96',     '2026-07-11', '21:00', 'Arrowhead Stadium',       'Kansas City'],
+
+  [101, 'sf',    'W97',     'W98',     '2026-07-14', '15:00', 'AT&T Stadium',            'Arlington'],
+  [102, 'sf',    'W99',     'W100',    '2026-07-15', '15:00', 'Mercedes-Benz Stadium',   'Atlanta'],
+
+  [103, 'third', 'L101',    'L102',    '2026-07-18', '17:00', 'Hard Rock Stadium',       'Miami Gardens'],
+  [104, 'final', 'W101',    'W102',    '2026-07-19', '15:00', 'MetLife Stadium',         'East Rutherford'],
+]
 
 // ── Generate all 104 matches ────────────────────────────────
 export function generateAllMatches(): MatchDef[] {
   const matches: MatchDef[] = []
-  let matchNum = 1
 
-  // ── GROUP STAGE (72 matches) ──
-  // June 11 – June 28, 2026
-  // 4 matches per day, 18 days
-  const groupStartDate = new Date('2026-06-11T16:00:00Z')
-  const kickoffTimes = ['16:00', '19:00', '22:00', '01:00'] // UTC slots (next day for 01:00)
-
-  // Generate all group pairings, interleaved across matchdays
-  const matchday1: { group: string; pair: [Team, Team] }[] = []
-  const matchday2: { group: string; pair: [Team, Team] }[] = []
-  const matchday3: { group: string; pair: [Team, Team] }[] = []
-
-  for (const group of GROUPS) {
-    const pairs = groupPairings(group.teams)
-    matchday1.push(
-      { group: group.letter, pair: pairs[0] },
-      { group: group.letter, pair: pairs[1] }
-    )
-    matchday2.push(
-      { group: group.letter, pair: pairs[2] },
-      { group: group.letter, pair: pairs[3] }
-    )
-    matchday3.push(
-      { group: group.letter, pair: pairs[4] },
-      { group: group.letter, pair: pairs[5] }
-    )
-  }
-
-  const allGroupMatches = [...matchday1, ...matchday2, ...matchday3]
-  let dayOffset = 0
-  let slotIndex = 0
-
-  for (const { group, pair } of allGroupMatches) {
-    const baseDate = new Date(groupStartDate)
-    baseDate.setDate(baseDate.getDate() + dayOffset)
-
-    const [hours, minutes] = kickoffTimes[slotIndex].split(':').map(Number)
-    const kickoff = new Date(baseDate)
-    kickoff.setUTCHours(hours, minutes, 0, 0)
-    // If 01:00 UTC, it's actually the next day
-    if (hours < 10) kickoff.setDate(kickoff.getDate() + 1)
-
-    const venue = VENUES[(matchNum - 1) % VENUES.length]
-
+  for (const [num, group, a, b, date, time, venue, city] of GROUP_SCHEDULE) {
     matches.push({
-      match_number: matchNum,
+      match_number: num,
       stage: 'group',
       group_letter: group,
-      team_a: pair[0],
-      team_b: pair[1],
-      kickoff: kickoff.toISOString(),
-      venue: venue.name,
-      city: venue.city,
+      team_a: TEAM_BY_CODE[a],
+      team_b: TEAM_BY_CODE[b],
+      kickoff: etToUtcISO(date, time),
+      venue,
+      city,
       multiplier: STAGE_MULTIPLIER.group,
     })
-
-    matchNum++
-    slotIndex++
-    if (slotIndex >= 4) {
-      slotIndex = 0
-      dayOffset++
-    }
   }
 
-  // ── KNOCKOUT STAGE (32 matches) ──
-  const TBD: Team = { name: 'TBD', code: 'TBD', flag: '🏳️' }
-
-  // Round of 32 — 16 matches (June 29 – July 2)
-  const r32Start = new Date('2026-06-29T16:00:00Z')
-  for (let i = 0; i < 16; i++) {
-    const dayOff = Math.floor(i / 4)
-    const slot = i % 4
-    const [hours, minutes] = kickoffTimes[slot].split(':').map(Number)
-    const kickoff = new Date(r32Start)
-    kickoff.setDate(kickoff.getDate() + dayOff)
-    kickoff.setUTCHours(hours, minutes, 0, 0)
-    if (hours < 10) kickoff.setDate(kickoff.getDate() + 1)
-
-    const venue = VENUES[i % VENUES.length]
+  for (const [num, stage, a, b, date, time, venue, city] of KO_SCHEDULE) {
     matches.push({
-      match_number: matchNum++,
-      stage: 'r32',
+      match_number: num,
+      stage,
       group_letter: null,
-      team_a: TBD,
-      team_b: TBD,
-      kickoff: kickoff.toISOString(),
-      venue: venue.name,
-      city: venue.city,
-      multiplier: STAGE_MULTIPLIER.r32,
+      team_a: tbdTeam(a),
+      team_b: tbdTeam(b),
+      kickoff: etToUtcISO(date, time),
+      venue,
+      city,
+      multiplier: STAGE_MULTIPLIER[stage],
     })
   }
-
-  // Round of 16 — 8 matches (July 3 – July 6)
-  const r16Start = new Date('2026-07-03T18:00:00Z')
-  for (let i = 0; i < 8; i++) {
-    const dayOff = Math.floor(i / 2)
-    const kickoff = new Date(r16Start)
-    kickoff.setDate(kickoff.getDate() + dayOff)
-    kickoff.setUTCHours(i % 2 === 0 ? 18 : 22, 0, 0, 0)
-
-    const venue = VENUES[i % VENUES.length]
-    matches.push({
-      match_number: matchNum++,
-      stage: 'r16',
-      group_letter: null,
-      team_a: TBD,
-      team_b: TBD,
-      kickoff: kickoff.toISOString(),
-      venue: venue.name,
-      city: venue.city,
-      multiplier: STAGE_MULTIPLIER.r16,
-    })
-  }
-
-  // Quarterfinals — 4 matches (July 8 – July 9)
-  const qfStart = new Date('2026-07-08T18:00:00Z')
-  for (let i = 0; i < 4; i++) {
-    const dayOff = Math.floor(i / 2)
-    const kickoff = new Date(qfStart)
-    kickoff.setDate(kickoff.getDate() + dayOff)
-    kickoff.setUTCHours(i % 2 === 0 ? 18 : 22, 0, 0, 0)
-
-    const venue = VENUES[i % VENUES.length]
-    matches.push({
-      match_number: matchNum++,
-      stage: 'qf',
-      group_letter: null,
-      team_a: TBD,
-      team_b: TBD,
-      kickoff: kickoff.toISOString(),
-      venue: venue.name,
-      city: venue.city,
-      multiplier: STAGE_MULTIPLIER.qf,
-    })
-  }
-
-  // Semifinals — 2 matches (July 12 – July 13)
-  for (let i = 0; i < 2; i++) {
-    const kickoff = new Date('2026-07-12T22:00:00Z')
-    kickoff.setDate(kickoff.getDate() + i)
-
-    matches.push({
-      match_number: matchNum++,
-      stage: 'sf',
-      group_letter: null,
-      team_a: TBD,
-      team_b: TBD,
-      kickoff: kickoff.toISOString(),
-      venue: i === 0 ? 'MetLife Stadium' : 'AT&T Stadium',
-      city: i === 0 ? 'New York/New Jersey' : 'Dallas',
-      multiplier: STAGE_MULTIPLIER.sf,
-    })
-  }
-
-  // Third place — 1 match (July 18)
-  matches.push({
-    match_number: matchNum++,
-    stage: 'third',
-    group_letter: null,
-    team_a: TBD,
-    team_b: TBD,
-    kickoff: '2026-07-18T20:00:00Z',
-    venue: 'Hard Rock Stadium',
-    city: 'Miami',
-    multiplier: STAGE_MULTIPLIER.third,
-  })
-
-  // Final — 1 match (July 19)
-  matches.push({
-    match_number: matchNum++,
-    stage: 'final',
-    group_letter: null,
-    team_a: TBD,
-    team_b: TBD,
-    kickoff: '2026-07-19T20:00:00Z',
-    venue: 'MetLife Stadium',
-    city: 'New York/New Jersey',
-    multiplier: STAGE_MULTIPLIER.final,
-  })
 
   return matches
 }
@@ -543,4 +519,4 @@ export function getH2H(codeA: string, codeB: string): H2HRecord | null {
 }
 
 // ── Scoring helpers ─────────────────────────────────────────
-export const LOCK_DEADLINE = new Date('2026-06-11T15:00:00Z') // 1 hour before first match
+export const LOCK_DEADLINE = new Date('2026-06-11T18:00:00Z') // 1 hour before MEX-RSA kickoff (Jun 11 15:00 ET)
