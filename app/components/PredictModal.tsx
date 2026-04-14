@@ -195,9 +195,15 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const handleUndo = () => {
     if (history.length === 0) return
     const last = history[history.length - 1]
-    setHistory((h) => h.slice(0, -1))
     const idx = queue.findIndex((m) => m.id === last.matchId)
-    if (idx >= 0) setCursor(idx)
+    if (idx < 0) return
+    setHistory((h) => h.slice(0, -1))
+    setCursor(idx)
+    // Re-seed drafts synchronously so the UI reflects the restored card
+    // even if the id-change effect hasn't flushed yet.
+    const existing = predictions[last.matchId]
+    setDraftA(existing?.score_a ?? null)
+    setDraftB(existing?.score_b ?? null)
   }
 
   if (!isOpen) return null
@@ -207,7 +213,7 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const predictedCount = Object.keys(predictions).length
 
   return (
-    <div className="fixed inset-0 z-50 bg-polla-bg flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-polla-bg flex flex-col">
       {/* ── Header ── */}
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <button
@@ -227,7 +233,7 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
         <button
           onClick={handleUndo}
           disabled={history.length === 0}
-          className="w-14 text-xs font-semibold text-polla-accent active:opacity-60 disabled:opacity-25"
+          className="h-10 px-2 -mr-2 text-xs font-semibold text-polla-accent active:opacity-60 disabled:opacity-25"
         >
           Undo
         </button>
@@ -254,9 +260,9 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       )}
 
       {/* ── Body ── */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 flex">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-3">
         {loading ? (
-          <div className="flex-1 flex items-center justify-center text-text-40 text-sm">
+          <div className="h-full flex items-center justify-center text-text-40 text-sm">
             Loading matches…
           </div>
         ) : isDone ? (
@@ -347,31 +353,31 @@ function MatchCard({
   const isTied = draftA !== null && draftB !== null && draftA === draftB
 
   return (
-    <div className="glow-card p-5 mx-auto w-full max-w-md self-center">
+    <div className="glow-card p-4 mx-auto w-full max-w-md">
       {/* Stage pill */}
-      <div className="flex items-center justify-center mb-4">
+      <div className="flex items-center justify-center mb-3">
         <span className="px-3 py-1 rounded-full bg-polla-accent/10 border border-polla-accent/25 text-polla-accent text-[10px] font-bold uppercase tracking-widest">
           {headline}
         </span>
       </div>
 
       {/* Date / venue */}
-      <div className="text-center mb-6">
-        <p className="text-text-70 text-xs font-semibold">
+      <div className="text-center mb-4">
+        <p className="text-text-70 text-[11px] font-semibold">
           {dateStr} · {timeStr}
         </p>
-        <p className="text-text-40 text-[10px] mt-0.5">
+        <p className="text-text-40 text-[9px] mt-0.5">
           {match.venue}, {match.city}
         </p>
         {match.multiplier > 1 && (
-          <p className="text-polla-gold text-[10px] mt-1 num font-bold">
+          <p className="text-polla-gold text-[9px] mt-0.5 num font-bold">
             {match.multiplier}x multiplier
           </p>
         )}
       </div>
 
       {/* Teams + score inputs */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <TeamScore
           team={resolved.teamA}
           label={resolved.labelA}
@@ -389,14 +395,14 @@ function MatchCard({
       </div>
 
       {/* Helper text */}
-      <div className="text-center min-h-[14px]">
+      <div className="text-center min-h-[12px]">
         {isKo && isTied && (
           <p className="text-polla-warning text-[10px] font-semibold">
-            Knockout matches can't end in a tie — pick a winner.
+            Knockouts can't end in a tie — pick a winner.
           </p>
         )}
         {!isKo && (
-          <p className="text-text-25 text-[10px]">
+          <p className="text-text-25 text-[9px]">
             Exact: 5pts · Result + GD: 3pts · Result: 2pts
           </p>
         )}
@@ -420,13 +426,23 @@ function TeamScore({
   onChange: (v: number | null) => void
   disabled: boolean
 }) {
+  const handleType = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '')
+    if (raw === '') {
+      onChange(null)
+      return
+    }
+    const n = parseInt(raw, 10)
+    if (Number.isFinite(n) && n >= 0 && n <= 20) onChange(n)
+  }
+
   return (
-    <div className="flex flex-col items-center gap-2">
-      <span className="text-5xl leading-none">{team?.flag ?? '🏳️'}</span>
-      <div className="text-center min-h-[32px] px-1">
+    <div className="flex flex-col items-center gap-1.5">
+      <span className="text-4xl leading-none">{team?.flag ?? '🏳️'}</span>
+      <div className="text-center min-h-[28px] px-1">
         {team ? (
           <>
-            <p className="text-white text-sm font-bold leading-tight">{team.code}</p>
+            <p className="text-white text-xs font-bold leading-tight">{team.code}</p>
             <p className="text-text-40 text-[9px] leading-tight mt-0.5 truncate max-w-[130px] mx-auto">
               {team.name}
             </p>
@@ -437,28 +453,42 @@ function TeamScore({
           </p>
         )}
       </div>
-      <div
-        className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-extrabold num border-2 transition-colors ${
-          value !== null
-            ? 'border-polla-accent bg-polla-accent/10 text-white'
-            : 'border-card-border bg-white/[0.04] text-text-25'
-        }`}
-      >
-        {value === null ? '–' : value}
-      </div>
-      <div className="flex items-center gap-2">
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={value === null ? '' : String(value)}
+        placeholder="–"
+        onChange={handleType}
+        disabled={disabled}
+        maxLength={2}
+        className={`w-14 h-14 rounded-2xl text-center text-3xl font-extrabold num border-2 outline-none transition-colors
+          placeholder:text-text-25
+          ${
+            value !== null
+              ? 'border-polla-accent bg-polla-accent/10 text-white'
+              : 'border-card-border bg-white/[0.04] text-text-25 focus:border-polla-accent/60'
+          }
+          disabled:opacity-40`}
+      />
+      <div className="flex items-center gap-1.5">
         <button
-          onClick={() => onChange(value === null ? 0 : Math.max(0, value - 1))}
+          type="button"
+          onClick={() => {
+            if (value === null || value === 0) return
+            onChange(Math.max(0, value - 1))
+          }}
           disabled={disabled || value === null || value === 0}
-          className="w-9 h-9 rounded-lg bg-white/[0.04] border border-card-border text-text-70 text-sm font-bold active:bg-polla-accent/20 disabled:opacity-30"
+          className="w-8 h-8 rounded-lg bg-white/[0.04] border border-card-border text-text-70 text-sm font-bold active:bg-polla-accent/20 disabled:opacity-30"
           aria-label="decrement"
         >
           −
         </button>
         <button
+          type="button"
           onClick={() => onChange((value ?? 0) + 1)}
           disabled={disabled}
-          className="w-9 h-9 rounded-lg bg-white/[0.04] border border-card-border text-text-70 text-sm font-bold active:bg-polla-accent/20 disabled:opacity-30"
+          className="w-8 h-8 rounded-lg bg-white/[0.04] border border-card-border text-text-70 text-sm font-bold active:bg-polla-accent/20 disabled:opacity-30"
           aria-label="increment"
         >
           +
