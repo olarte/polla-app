@@ -60,8 +60,10 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 ## Core Product Concepts
 
 ### Two Group Modes
-- **Free Groups:** No wallet needed. Phone auth only. Full experience. Primary acquisition.
-- **Paid Groups:** Stablecoin entry fee (5-500 cUSD). 5% service fee. 10-30% to global pool.
+- **Free Groups:** No wallet needed. Phone auth only. Full experience. Group-leaderboard-only — **free pools do not qualify for La Gran Polla** since they don't contribute financially to it. Primary acquisition channel.
+- **Paid Groups:** Stablecoin entry fee (any positive amount — no minimum). 5% service fee. 20% of the net group pool flows to the global pool. **Any paid entry — even $1 — grants La Gran Polla eligibility.** One user = one global-pool leaderboard entry, regardless of how many groups they join (predictions are keyed per user, not per group, so joining more pools does not create more shots at the global prize).
+
+This is deliberate: a low-stake player topping the global leaderboard is the most valuable marketing story the product can tell ("$5 entry, $15k win"), and the 80/20 split already insulates high-stake players — most of their money stays in their private group where they compete against peers of similar stake, with only 20% flowing to the shared global pool.
 
 ### Two Currencies
 - **Points:** Main polla predictions. Group leaderboard, global ranking, tier, payouts.
@@ -81,7 +83,7 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 | 🥇 Top 100 | 25% | 80 |
 | 🥈 Top 500 | 15% | 400 |
 
-Show user's current position on ladder with prize they'd earn now. Ladder sums to 100% — no reserved stage-bonus pool (TBD whether to reintroduce a separate knockout-performance pool in a later pass).
+Show user's current position on ladder with prize they'd earn now. Ladder sums to 100% — flat distribution, no reserved stage-bonus or knockout-performance pool. The prize ladder is the only global-pool payout mechanism.
 
 ### Tier System (percentile-based)
 | Tier | Percentile | Badge |
@@ -195,7 +197,9 @@ Tiered, exclusive. Pick the highest tier the prediction satisfies.
 
 Note: the "winner + one team's goals" tier can only fire when GD is wrong — if both GD and a team's goal count match, the exact score is reached by arithmetic. See `lib/scoring.ts` → `gradePrediction()`.
 
-Tournament-wide bonus predictions (champion, runner-up, top scorer, etc.) have been removed. All scoring comes from match-level grading above.
+**No stage multipliers.** Every match is worth the same — the Final and a Group A opener both max out at 10 pts. Multipliers were dropped because they let late-tournament variance overwrite careful group-stage work, and the 80/20 group-to-global pool split already gives knockout results outsized prize impact through the shared pool.
+
+**No tournament-wide bonus predictions.** Champion, runner-up, top scorer, golden ball, group winners — all removed. All scoring comes from match-level grading above. `bonus_predictions` table and `score_bonus_predictions()` function are dropped in migration 008.
 
 ---
 
