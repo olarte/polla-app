@@ -505,7 +505,7 @@ export default function PreviewLanding() {
                 lineHeight: 1.1,
               }}
             >
-              You bet other players,<br />
+              Predict against other players,<br />
               <span
                 style={{
                   color: '#FFC93C',
@@ -516,7 +516,7 @@ export default function PreviewLanding() {
               </span>
             </h3>
             <p style={{ color: 'rgba(255,245,220,0.55)', marginTop: '12px', fontSize: '0.95rem', lineHeight: 1.5 }}>
-              Sabi takes a 5% fee — that\u2019s it. No odds, no markup, no edge. Pools are split between everyone who called it right.
+              No odds, no markup, no edge. Pools are split between everyone who called it right. Sabi takes a 5% fee.
             </p>
 
             {/* Example ticket */}
@@ -533,29 +533,25 @@ export default function PreviewLanding() {
                 Example
               </div>
               <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#FFF5DC', marginTop: '4px' }}>
-                ⚽ Brazil vs Morocco
+                ⚽ Brazil vs Morocco · Total Goals
               </div>
               <div className="flex justify-between mt-4 text-sm" style={{ color: 'rgba(255,245,220,0.55)' }}>
                 <span>Total pool</span>
                 <span style={{ color: '#FFC93C', fontWeight: 800 }}>$100</span>
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div style={{ background: 'rgba(123,44,255,0.15)', padding: '10px', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,245,220,0.4)', fontWeight: 800, letterSpacing: '0.08em' }}>BRA</div>
-                  <div style={{ fontWeight: 900, color: '#FFF5DC', marginTop: '2px' }}>$60</div>
-                </div>
-                <div style={{ background: 'rgba(255,245,220,0.06)', padding: '10px', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,245,220,0.4)', fontWeight: 800, letterSpacing: '0.08em' }}>DRAW</div>
-                  <div style={{ fontWeight: 900, color: '#FFF5DC', marginTop: '2px' }}>$15</div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                <div style={{ background: 'rgba(20,184,166,0.15)', padding: '10px', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,245,220,0.4)', fontWeight: 800, letterSpacing: '0.08em' }}>OVER 2.5</div>
+                  <div style={{ fontWeight: 900, color: '#FFF5DC', marginTop: '2px' }}>$65</div>
                 </div>
                 <div style={{ background: 'rgba(255,61,110,0.15)', padding: '10px', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,245,220,0.4)', fontWeight: 800, letterSpacing: '0.08em' }}>MAR</div>
-                  <div style={{ fontWeight: 900, color: '#FFF5DC', marginTop: '2px' }}>$25</div>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,245,220,0.4)', fontWeight: 800, letterSpacing: '0.08em' }}>UNDER 2.5</div>
+                  <div style={{ fontWeight: 900, color: '#FFF5DC', marginTop: '2px' }}>$35</div>
                 </div>
               </div>
               <div className="mt-4 pt-4" style={{ borderTop: '1px dashed rgba(255,245,220,0.15)', fontSize: '0.85rem', color: 'rgba(255,245,220,0.7)', lineHeight: 1.6 }}>
-                Brazil wins → bettors split <strong style={{ color: '#FFC93C' }}>$95</strong> (after 5% fee).<br />
-                Your <strong style={{ color: '#FFF5DC' }}>$10</strong> bet → you get <strong style={{ color: '#14B8A6', fontSize: '1.1rem' }}>$15.83 💰</strong>
+                Final 3–1 → Over 2.5 wins. Winners split <strong style={{ color: '#FFC93C' }}>$95</strong> (after 5% fee).<br />
+                Your <strong style={{ color: '#FFF5DC' }}>$10</strong> on Over → you get <strong style={{ color: '#14B8A6', fontSize: '1.1rem' }}>$14.61 💰</strong>
               </div>
             </div>
           </div>
