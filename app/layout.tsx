@@ -6,6 +6,13 @@ export const metadata: Metadata = {
   description:
     'Predict football, win real money. Create pools, predict matches, win prizes.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/sabi_pwa.png', type: 'image/png' },
+    ],
+    shortcut: '/sabi_pwa.png',
+    apple: '/sabi_pwa.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -40,7 +47,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#0A0A12',
+  themeColor: '#0B0714',
 }
 
 export default function RootLayout({
