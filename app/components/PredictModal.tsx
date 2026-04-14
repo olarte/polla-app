@@ -41,6 +41,11 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const [predictions, setPredictions] = useState<PredictionMap>({})
   const [loading, setLoading] = useState(true)
   const [cursor, setCursor] = useState(0)
+  // catchupQueue is the explicit list of match IDs the catchup
+  // phase walks through. In regular mode it's all 72 group match
+  // IDs in order. In "finish groups" mode it's only the matches
+  // that were unpredicted when the user clicked the prompt.
+  const [catchupQueue, setCatchupQueue] = useState<string[]>([])
   const [history, setHistory] = useState<Action[]>([])
   const [draftA, setDraftA] = useState<number | null>(null)
   const [draftB, setDraftB] = useState<number | null>(null)
@@ -165,9 +170,11 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     if (groupsDone) {
       const hasKoPrediction = knockoutMatches.some((m) => predictions[m.id])
       setPhase(hasKoPrediction ? 'bracket' : 'review')
-      setCursor(72) // first knockout index in the queue
+      setCatchupQueue([])
+      setCursor(0)
     } else {
       setPhase('catchup')
+      setCatchupQueue(groupMatches.map((m) => m.id))
       const firstUnpredicted = groupMatches.findIndex((m) => !predictions[m.id])
       setCursor(firstUnpredicted >= 0 ? firstUnpredicted : 0)
     }
@@ -178,6 +185,7 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     if (isOpen) return
     initRef.current = false
     setCursor(0)
+    setCatchupQueue([])
     setHistory([])
     setEditMatchId(null)
     setPhase('catchup')
@@ -185,7 +193,11 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     setDraftB(null)
   }, [isOpen])
 
-  const current: Match | undefined = queue[cursor]
+  // The match currently shown in the catchup card stack.
+  const current: Match | undefined =
+    phase === 'catchup' && catchupQueue[cursor]
+      ? matches.find((m) => m.id === catchupQueue[cursor])
+      : undefined
 
   // ── Seed catchup draft when the current card changes ──
   useEffect(() => {
@@ -233,15 +245,24 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   )
 
   // ── Catchup actions ──
-  const advance = () => setCursor((c) => Math.min(c + 1, queue.length))
+  // Advancing past the end of the catchup queue auto-returns the
+  // user to the groups review screen — covers both "saved the last
+  // group match in the full 72" and "finished the last unpredicted
+  // match in Finish-groups mode".
+  const advance = () => {
+    setCursor((c) => {
+      const next = c + 1
+      if (next >= catchupQueue.length) {
+        setPhase('review')
+        return c
+      }
+      return next
+    })
+  }
 
   const handleSkip = () => {
     if (!current) return
     setHistory((h) => [...h, { matchId: current.id, kind: 'skip' }])
-    if (current.match_number === 72) {
-      setPhase('review')
-      return
-    }
     advance()
   }
 
@@ -251,23 +272,17 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
 
     const pred = { score_a: draftA, score_b: draftB }
     const matchId = current.id
-    const isLastGroupMatch = current.match_number === 72
 
     setPredictions((p) => ({ ...p, [matchId]: pred }))
     setHistory((h) => [...h, { matchId, kind: 'save' }])
     persistPrediction(matchId, pred.score_a, pred.score_b)
-
-    if (isLastGroupMatch && phase === 'catchup') {
-      setPhase('review')
-    } else {
-      advance()
-    }
+    advance()
   }
 
   const handleUndo = () => {
     if (history.length === 0) return
     const last = history[history.length - 1]
-    const idx = queue.findIndex((m) => m.id === last.matchId)
+    const idx = catchupQueue.indexOf(last.matchId)
     if (idx < 0) return
     setHistory((h) => h.slice(0, -1))
     setCursor(idx)
@@ -282,10 +297,18 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     setPhase('review')
   }
 
-  const goToCatchup = () => {
+  // "Finish groups →" — walks only the currently-unpredicted group
+  // matches, in order. Empty list is a no-op (shouldn't happen in
+  // practice since the button is hidden once all 72 are done).
+  const goToFinishGroups = () => {
     setEditMatchId(null)
-    const firstUnpredicted = groupMatches.findIndex((m) => !predictions[m.id])
-    setCursor(firstUnpredicted >= 0 ? firstUnpredicted : 0)
+    const unpredictedIds = groupMatches
+      .filter((m) => !predictions[m.id])
+      .map((m) => m.id)
+    if (unpredictedIds.length === 0) return
+    setCatchupQueue(unpredictedIds)
+    setCursor(0)
+    setHistory([])
     setPhase('catchup')
   }
 
@@ -335,7 +358,10 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     : null
   const groupsPredictedCount = groupMatches.filter((m) => predictions[m.id]).length
   const koPredictedCount = knockoutMatches.filter((m) => predictions[m.id]).length
-  const leftInCatchup = Math.max(0, 72 - groupsPredictedCount)
+  // "N Left" shows how many cards remain in the CURRENT catchup
+  // session — equals unpredicted matches in finish-groups mode,
+  // remaining-in-order matches in regular mode.
+  const leftInCatchup = Math.max(0, catchupQueue.length - cursor)
 
   return (
     <div className="fixed inset-0 z-[60] bg-polla-bg flex flex-col">
@@ -348,7 +374,6 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
         history,
         onClose,
         goToReview,
-        goToCatchup,
         handleUndo,
         closeEdit,
       })}
@@ -452,7 +477,7 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
           handleSave,
           saveEdit,
           closeEdit,
-          goToCatchup,
+          goToFinishGroups,
           goToBracket,
           onClose,
         })}
@@ -470,7 +495,6 @@ function renderHeader(args: {
   history: Action[]
   onClose: () => void
   goToReview: () => void
-  goToCatchup: () => void
   handleUndo: () => void
   closeEdit: () => void
 }) {
@@ -482,7 +506,6 @@ function renderHeader(args: {
     history,
     onClose,
     goToReview,
-    goToCatchup,
     handleUndo,
     closeEdit,
   } = args
@@ -549,12 +572,7 @@ function renderHeader(args: {
           ✕
         </button>
         <h2 className="text-sm font-bold text-white">Your Groups</h2>
-        <button
-          onClick={goToCatchup}
-          className="h-10 px-2 -mr-2 text-[11px] font-semibold text-polla-accent active:opacity-60"
-        >
-          Catch-up
-        </button>
+        <div className="w-10" />
       </div>
     )
   }
@@ -597,7 +615,7 @@ function renderFooter(args: {
   handleSave: () => void
   saveEdit: () => void
   closeEdit: () => void
-  goToCatchup: () => void
+  goToFinishGroups: () => void
   goToBracket: () => void
   onClose: () => void
 }) {
@@ -616,7 +634,7 @@ function renderFooter(args: {
     handleSave,
     saveEdit,
     closeEdit,
-    goToCatchup,
+    goToFinishGroups,
     goToBracket,
     onClose,
   } = args
@@ -682,7 +700,7 @@ function renderFooter(args: {
             <span className="num text-white">{groupsPredictedCount}</span> / 72 predicted
           </span>
           {groupsPredictedCount < 72 && (
-            <button onClick={goToCatchup} className="text-polla-accent font-semibold">
+            <button onClick={goToFinishGroups} className="text-polla-accent font-semibold">
               Finish groups →
             </button>
           )}
