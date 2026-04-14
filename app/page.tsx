@@ -703,7 +703,7 @@ export default function PreviewLanding() {
                 boxShadow: '0 12px 48px rgba(123,44,255,0.6)',
               }}
             >
-              Start predicting — free
+              Start predicting
             </Link>
           </div>
         </section>
@@ -717,7 +717,7 @@ export default function PreviewLanding() {
             </span>
           </div>
           <p style={{ color: 'rgba(255,245,220,0.45)', fontSize: '0.85rem' }}>
-            Predict football. Bet on matches. Compete with friends.
+            Predict the World Cup. Compete with friends. Win the World Pool.
           </p>
           <div className="flex items-center justify-center gap-4 mt-4" style={{ fontSize: '0.8rem', color: 'rgba(255,245,220,0.35)' }}>
             <a href="#">Terms</a>
