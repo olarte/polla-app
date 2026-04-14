@@ -432,94 +432,53 @@ export default function PreviewLanding() {
           </div>
         </section>
 
-        {/* ═══ DAILY PREDICTIONS (teal card) ═══ */}
-        <section className="px-4 py-12 max-w-[760px] mx-auto">
-          <div
-            className="relative overflow-hidden"
-            style={{
-              background: 'linear-gradient(160deg, #14B8A6, #0F766E)',
-              borderRadius: '32px',
-              padding: '36px 28px',
-              boxShadow: '0 30px 80px rgba(15,118,110,0.35)',
-            }}
-          >
-            <PillTag color="rgba(0,0,0,0.3)" text="#FFF5DC">🎯 Daily Predictions</PillTag>
-            <h3
-              style={{
-                fontSize: 'clamp(1.6rem, 4.5vw, 2.2rem)',
-                fontWeight: 900,
-                marginTop: '18px',
-                color: '#FFF5DC',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
-              }}
-            >
-              A fresh pool every match day.
-            </h3>
-            <p style={{ color: 'rgba(255,245,220,0.8)', marginTop: '12px', fontSize: '0.98rem', lineHeight: 1.55 }}>
-              Don&rsquo;t want to commit to a full World Cup Pool? Predict one match at a time. Each game has its own pari-mutuel pool — predict before kickoff, watch the match, winners split the pool.
+        {/* ═══ DAILY PREDICTIONS (step-grid, matches "How Sabi pools work") ═══ */}
+        <section className="px-4 py-12 max-w-[960px] mx-auto">
+          <div className="text-center mb-10">
+            <Chunky size="clamp(1.6rem, 4.5vw, 2.4rem)">A fresh pool every match day</Chunky>
+            <p className="mt-3" style={{ color: 'rgba(255,245,220,0.55)' }}>
+              Predict one match at a time. Each game has its own pari-mutuel pool.
             </p>
+          </div>
 
-            {/* Two markets */}
-            <div className="mt-6 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+            {[
+              { n: '01', emoji: '📝', title: 'Predict before kickoff', desc: 'Pick the match result and total goals before the game starts.', bg: '#0F766E', text: '#FFF5DC' },
+              { n: '02', emoji: '⚽', title: 'Watch the match', desc: 'Odds shift live as more players join the pool.', bg: '#FF7B54', text: '#1a0b05' },
+              { n: '03', emoji: '🏆', title: 'Winners split the pool', desc: 'Everyone who called it right splits the pool proportionally.', bg: '#FFC93C', text: '#1a1106' },
+              { n: '04', emoji: '💸', title: 'Tap claim', desc: 'One tap and the USDC lands straight in your wallet.', bg: '#FF3D6E', text: '#FFF5DC' },
+            ].map((step) => (
               <div
+                key={step.n}
+                className="relative overflow-hidden transition-transform hover:-translate-y-1"
                 style={{
-                  background: 'rgba(11,7,20,0.35)',
-                  border: '1px solid rgba(255,245,220,0.12)',
-                  borderRadius: '18px',
-                  padding: '18px',
+                  background: step.bg,
+                  color: step.text,
+                  borderRadius: '24px',
+                  padding: '22px',
+                  minHeight: '200px',
+                  boxShadow: `0 16px 40px ${step.bg}55`,
                 }}
               >
-                <div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,245,220,0.55)', textTransform: 'uppercase' }}>
-                  Market 1
-                </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#FFF5DC', marginTop: '4px' }}>
-                  🥅 Match Result
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'rgba(255,245,220,0.7)', marginTop: '6px', lineHeight: 1.5 }}>
-                  Home · Draw · Away. Pick the winner.
-                </div>
+                <PillTag color="rgba(0,0,0,0.25)" text={step.text}>
+                  Step {step.n}
+                </PillTag>
+                <div style={{ fontSize: '2.6rem', marginTop: '14px' }}>{step.emoji}</div>
+                <h4
+                  style={{
+                    fontSize: '1.15rem',
+                    fontWeight: 900,
+                    marginTop: '8px',
+                    letterSpacing: '-0.015em',
+                  }}
+                >
+                  {step.title}
+                </h4>
+                <p style={{ fontSize: '0.85rem', opacity: 0.75, marginTop: '6px', lineHeight: 1.45 }}>
+                  {step.desc}
+                </p>
               </div>
-              <div
-                style={{
-                  background: 'rgba(11,7,20,0.35)',
-                  border: '1px solid rgba(255,245,220,0.12)',
-                  borderRadius: '18px',
-                  padding: '18px',
-                }}
-              >
-                <div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,245,220,0.55)', textTransform: 'uppercase' }}>
-                  Market 2
-                </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#FFF5DC', marginTop: '4px' }}>
-                  ⚽ Total Goals
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'rgba(255,245,220,0.7)', marginTop: '6px', lineHeight: 1.5 }}>
-                  Over or under 2.5 goals in the match.
-                </div>
-              </div>
-            </div>
-
-            {/* Quick flow */}
-            <div
-              className="mt-5"
-              style={{
-                background: 'rgba(11,7,20,0.35)',
-                border: '1px solid rgba(255,245,220,0.12)',
-                borderRadius: '18px',
-                padding: '18px 20px',
-              }}
-            >
-              <div className="flex items-center flex-wrap gap-x-3 gap-y-2" style={{ fontSize: '0.9rem', color: 'rgba(255,245,220,0.85)', fontWeight: 700 }}>
-                <span>📝 Predict before kickoff</span>
-                <span style={{ color: 'rgba(255,245,220,0.35)' }}>→</span>
-                <span>⚽ Watch the match</span>
-                <span style={{ color: 'rgba(255,245,220,0.35)' }}>→</span>
-                <span>🏆 Winners split the pool</span>
-                <span style={{ color: 'rgba(255,245,220,0.35)' }}>→</span>
-                <span>💸 Tap claim</span>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
