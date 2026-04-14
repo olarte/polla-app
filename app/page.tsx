@@ -299,24 +299,7 @@ export default function PreviewLanding() {
                 minHeight: '240px',
               }}
             >
-              <div className="absolute top-5 right-5 text-5xl opacity-25">💰</div>
-              <div
-                className="absolute top-5 left-5"
-                style={{
-                  background: '#FFC93C',
-                  color: '#1a1106',
-                  fontSize: '0.6rem',
-                  fontWeight: 900,
-                  padding: '5px 10px',
-                  borderRadius: '100px',
-                  letterSpacing: '0.1em',
-                }}
-              >
-                USDC · CELO
-              </div>
-              <div style={{ marginTop: '32px' }}>
-                <PillTag color="rgba(0,0,0,0.3)" text="#FFF5DC">Predict a game before the kickoff</PillTag>
-              </div>
+              <PillTag color="rgba(0,0,0,0.3)" text="#FFF5DC">Predict a game before the kickoff</PillTag>
               <h3
                 style={{
                   fontSize: '1.8rem',
