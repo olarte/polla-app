@@ -688,7 +688,7 @@ export default function PreviewLanding() {
               </Chunky>
             </div>
             <p className="mt-4 max-w-[460px] mx-auto" style={{ color: 'rgba(255,245,220,0.55)' }}>
-              48 teams. 104 matches. One champion. Don\u2019t just watch — predict it.
+              48 teams. 104 matches. One champion. Don&rsquo;t just watch, predict it.
             </p>
             <Link
               href="/app"
