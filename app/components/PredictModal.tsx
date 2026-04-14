@@ -3,13 +3,14 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useAuth } from '../contexts/AuthContext'
-import { LOCK_DEADLINE, type Team } from '@/lib/world-cup-data'
+import { LOCK_DEADLINE, GROUPS, type Team } from '@/lib/world-cup-data'
 import {
   computeGroupStandings,
   buildGroupSlotMap,
   propagateKoResult,
   prettySlotLabel,
   type PredictionMap,
+  type TeamStanding,
 } from '@/lib/prediction-bracket'
 import type { Database } from '@/lib/database.types'
 
@@ -20,6 +21,7 @@ interface PredictModalProps {
   onClose: () => void
 }
 
+type Phase = 'catchup' | 'review' | 'bracket'
 type Action = { matchId: string; kind: 'save' | 'skip' }
 
 const STAGE_LABEL: Record<string, string> = {
@@ -42,29 +44,49 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const [history, setHistory] = useState<Action[]>([])
   const [draftA, setDraftA] = useState<number | null>(null)
   const [draftB, setDraftB] = useState<number | null>(null)
+  const [phase, setPhase] = useState<Phase>('catchup')
+  const [editMatchId, setEditMatchId] = useState<string | null>(null)
+  const [editDraftA, setEditDraftA] = useState<number | null>(null)
+  const [editDraftB, setEditDraftB] = useState<number | null>(null)
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
-  const initialized = useRef(false)
+  const initRef = useRef(false)
 
   const isLocked = new Date() >= LOCK_DEADLINE
 
-  // ── Queue: all 104 matches in play order (group 1→72, then knockouts 73→104) ──
+  // ── Derived collections ──
   const queue = useMemo(
     () => [...matches].sort((a, b) => a.match_number - b.match_number),
     [matches]
   )
+  const groupMatches = useMemo(
+    () =>
+      matches
+        .filter((m) => m.stage === 'group')
+        .sort((a, b) => a.match_number - b.match_number),
+    [matches]
+  )
+  const knockoutMatches = useMemo(
+    () =>
+      matches
+        .filter((m) => m.stage !== 'group')
+        .sort((a, b) => a.match_number - b.match_number),
+    [matches]
+  )
 
-  // ── Slot map: resolves bracket labels ('1A', '2B', '3ABCDF', 'W73'…) to real Teams ──
+  // ── Group standings + bracket slot map ──
+  const standings = useMemo(
+    () => computeGroupStandings(matches, predictions),
+    [matches, predictions]
+  )
+
   const slotMap = useMemo<Record<string, Team>>(() => {
-    const standings = computeGroupStandings(matches, predictions)
     let map = buildGroupSlotMap(standings)
-
-    const koMatches = matches
+    const ko = matches
       .filter(
         (m) => m.stage !== 'group' && m.match_number >= 73 && m.match_number <= 102
       )
       .sort((a, b) => a.match_number - b.match_number)
-
-    for (const m of koMatches) {
+    for (const m of ko) {
       const p = predictions[m.id]
       if (!p) continue
       const teamA = map[m.team_a_code]
@@ -81,50 +103,77 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       }
     }
     return map
-  }, [matches, predictions])
+  }, [matches, predictions, standings])
 
-  // ── Load matches + predictions on open ──
+  const resolveTeam = useCallback(
+    (m: Match, side: 'a' | 'b'): Team | null => {
+      if (m.stage === 'group') {
+        return side === 'a'
+          ? { name: m.team_a_name, code: m.team_a_code, flag: m.team_a_flag }
+          : { name: m.team_b_name, code: m.team_b_code, flag: m.team_b_flag }
+      }
+      const code = side === 'a' ? m.team_a_code : m.team_b_code
+      return slotMap[code] ?? null
+    },
+    [slotMap]
+  )
+
+  // ── Load matches + predictions whenever the modal opens ──
   useEffect(() => {
-    if (!isOpen || !user) return
-    async function load() {
-      setLoading(true)
+    if (!isOpen) return
+    if (!user) return
+    let cancelled = false
+    setLoading(true)
+    ;(async () => {
       const [mRes, pRes] = await Promise.all([
         supabase.from('matches').select('*').order('match_number'),
-        supabase.from('predictions').select('*').eq('user_id', user!.id),
+        supabase.from('predictions').select('*').eq('user_id', user.id),
       ])
-      if (mRes.data) setMatches(mRes.data)
-      if (pRes.data) {
-        const map: PredictionMap = {}
-        for (const p of pRes.data) {
-          map[p.match_id] = { score_a: p.score_a, score_b: p.score_b }
-        }
-        setPredictions(map)
+      if (cancelled) return
+      setMatches(mRes.data ?? [])
+      const map: PredictionMap = {}
+      for (const p of pRes.data ?? []) {
+        map[p.match_id] = { score_a: p.score_a, score_b: p.score_b }
       }
+      setPredictions(map)
       setLoading(false)
+    })()
+    return () => {
+      cancelled = true
     }
-    load()
   }, [isOpen, user, supabase])
 
-  // ── Jump cursor to first unpredicted match on first load ──
+  // ── Decide starting phase + cursor once data has loaded ──
   useEffect(() => {
-    if (loading || initialized.current || queue.length === 0) return
-    const firstUnpredicted = queue.findIndex((m) => !predictions[m.id])
-    setCursor(firstUnpredicted >= 0 ? firstUnpredicted : queue.length)
-    initialized.current = true
-  }, [loading, queue, predictions])
-
-  // ── Reset on close ──
-  useEffect(() => {
-    if (!isOpen) {
-      initialized.current = false
-      setCursor(0)
-      setHistory([])
+    if (loading || initRef.current || queue.length === 0) return
+    initRef.current = true
+    const groupsDone = groupMatches.every((m) => predictions[m.id])
+    if (groupsDone) {
+      const hasKoPrediction = knockoutMatches.some((m) => predictions[m.id])
+      setPhase(hasKoPrediction ? 'bracket' : 'review')
+      setCursor(72) // first knockout index in the queue
+    } else {
+      setPhase('catchup')
+      const firstUnpredicted = groupMatches.findIndex((m) => !predictions[m.id])
+      setCursor(firstUnpredicted >= 0 ? firstUnpredicted : 0)
     }
+  }, [loading, queue.length, groupMatches, knockoutMatches, predictions])
+
+  // ── Reset transient state on close so reopening starts fresh ──
+  useEffect(() => {
+    if (isOpen) return
+    initRef.current = false
+    setCursor(0)
+    setHistory([])
+    setEditMatchId(null)
+    setPhase('catchup')
+    setDraftA(null)
+    setDraftB(null)
   }, [isOpen])
 
   const current: Match | undefined = queue[cursor]
 
-  // ── Seed draft scores from existing prediction when card changes ──
+  // ── Seed catchup draft when the current card changes ──
   useEffect(() => {
     if (!current) {
       setDraftA(null)
@@ -134,62 +183,71 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     const existing = predictions[current.id]
     setDraftA(existing?.score_a ?? null)
     setDraftB(existing?.score_b ?? null)
-    // intentionally only re-seeding when the card itself changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id])
 
-  // ── Resolve teams for the current match ──
-  const resolveMatch = useCallback(
-    (m: Match): { teamA: Team | null; teamB: Team | null; labelA: string; labelB: string } => {
-      if (m.stage === 'group') {
-        return {
-          teamA: { name: m.team_a_name, code: m.team_a_code, flag: m.team_a_flag },
-          teamB: { name: m.team_b_name, code: m.team_b_code, flag: m.team_b_flag },
-          labelA: m.team_a_code,
-          labelB: m.team_b_code,
-        }
-      }
-      return {
-        teamA: slotMap[m.team_a_code] ?? null,
-        teamB: slotMap[m.team_b_code] ?? null,
-        labelA: m.team_a_code,
-        labelB: m.team_b_code,
-      }
+  // ── Seed edit-overlay draft when editMatchId changes ──
+  useEffect(() => {
+    if (!editMatchId) {
+      setEditDraftA(null)
+      setEditDraftB(null)
+      return
+    }
+    const existing = predictions[editMatchId]
+    setEditDraftA(existing?.score_a ?? null)
+    setEditDraftB(existing?.score_b ?? null)
+  }, [editMatchId, predictions])
+
+  // ── Debounced persistence ──
+  const persistPrediction = useCallback(
+    (matchId: string, scoreA: number, scoreB: number) => {
+      if (!user) return
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+      saveTimer.current = setTimeout(async () => {
+        await supabase.from('predictions').upsert(
+          {
+            user_id: user.id,
+            match_id: matchId,
+            score_a: scoreA,
+            score_b: scoreB,
+          },
+          { onConflict: 'user_id,match_id' }
+        )
+      }, 300)
     },
-    [slotMap]
+    [user, supabase]
   )
 
+  // ── Catchup actions ──
   const advance = () => setCursor((c) => Math.min(c + 1, queue.length))
 
   const handleSkip = () => {
     if (!current) return
     setHistory((h) => [...h, { matchId: current.id, kind: 'skip' }])
+    if (current.match_number === 72) {
+      setPhase('review')
+      return
+    }
     advance()
   }
 
   const handleSave = () => {
     if (!current || draftA === null || draftB === null) return
-    if (current.stage !== 'group' && draftA === draftB) return // knockouts can't tie
+    if (current.stage !== 'group' && draftA === draftB) return
 
     const pred = { score_a: draftA, score_b: draftB }
     const matchId = current.id
+    const isLastGroupMatch = current.match_number === 72
+
     setPredictions((p) => ({ ...p, [matchId]: pred }))
     setHistory((h) => [...h, { matchId, kind: 'save' }])
-    advance()
+    persistPrediction(matchId, pred.score_a, pred.score_b)
 
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(async () => {
-      if (!user) return
-      await supabase.from('predictions').upsert(
-        {
-          user_id: user.id,
-          match_id: matchId,
-          score_a: pred.score_a,
-          score_b: pred.score_b,
-        },
-        { onConflict: 'user_id,match_id' }
-      )
-    }, 300)
+    if (isLastGroupMatch && phase === 'catchup') {
+      setPhase('review')
+    } else {
+      advance()
+    }
   }
 
   const handleUndo = () => {
@@ -199,22 +257,256 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     if (idx < 0) return
     setHistory((h) => h.slice(0, -1))
     setCursor(idx)
-    // Re-seed drafts synchronously so the UI reflects the restored card
-    // even if the id-change effect hasn't flushed yet.
     const existing = predictions[last.matchId]
     setDraftA(existing?.score_a ?? null)
     setDraftB(existing?.score_b ?? null)
   }
 
+  // ── Phase navigation ──
+  const goToReview = () => {
+    setEditMatchId(null)
+    setPhase('review')
+  }
+
+  const goToCatchup = () => {
+    setEditMatchId(null)
+    const firstUnpredicted = groupMatches.findIndex((m) => !predictions[m.id])
+    setCursor(firstUnpredicted >= 0 ? firstUnpredicted : 0)
+    setPhase('catchup')
+  }
+
+  const goToBracket = () => {
+    setEditMatchId(null)
+    setPhase('bracket')
+  }
+
+  // ── Edit overlay actions ──
+  const openEdit = (matchId: string) => setEditMatchId(matchId)
+  const closeEdit = () => setEditMatchId(null)
+
+  const saveEdit = () => {
+    if (!editMatchId || editDraftA === null || editDraftB === null) return
+    const match = matches.find((m) => m.id === editMatchId)
+    if (!match) return
+    if (match.stage !== 'group' && editDraftA === editDraftB) return
+    const pred = { score_a: editDraftA, score_b: editDraftB }
+    setPredictions((p) => ({ ...p, [editMatchId]: pred }))
+    persistPrediction(editMatchId, pred.score_a, pred.score_b)
+    setEditMatchId(null)
+  }
+
   if (!isOpen) return null
 
-  const left = queue.length - cursor
-  const isDone = !loading && queue.length > 0 && cursor >= queue.length
-  const predictedCount = Object.keys(predictions).length
+  const editingMatch = editMatchId
+    ? matches.find((m) => m.id === editMatchId) ?? null
+    : null
+  const groupsPredictedCount = groupMatches.filter((m) => predictions[m.id]).length
+  const koPredictedCount = knockoutMatches.filter((m) => predictions[m.id]).length
+  const leftInCatchup = Math.max(0, 72 - groupsPredictedCount)
 
   return (
     <div className="fixed inset-0 z-[60] bg-polla-bg flex flex-col">
       {/* ── Header ── */}
+      {renderHeader({
+        phase,
+        loading,
+        editingMatch,
+        leftInCatchup,
+        history,
+        onClose,
+        goToReview,
+        goToCatchup,
+        handleUndo,
+        closeEdit,
+      })}
+
+      {/* Lock banner */}
+      {isLocked && !loading && (
+        <div className="mx-4 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-polla-accent/10 border border-polla-accent/20">
+          <span className="text-polla-accent text-xs">🔒</span>
+          <span className="text-polla-accent text-[11px]">Predictions are locked</span>
+        </div>
+      )}
+
+      {/* Catchup progress bar */}
+      {!loading && !editingMatch && phase === 'catchup' && (
+        <div className="px-4 pb-3">
+          <div className="w-full h-1 rounded-full bg-white/[0.06] overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-polla-accent to-polla-accent-dark transition-all duration-300"
+              style={{ width: `${(groupsPredictedCount / 72) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Body ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {loading ? (
+          <div className="h-full flex items-center justify-center text-text-40 text-sm">
+            Loading matches…
+          </div>
+        ) : editingMatch ? (
+          <div className="px-4 pt-2 pb-3">
+            <MatchCard
+              match={editingMatch}
+              teamA={resolveTeam(editingMatch, 'a')}
+              teamB={resolveTeam(editingMatch, 'b')}
+              labelA={editingMatch.team_a_code}
+              labelB={editingMatch.team_b_code}
+              scoreA={editDraftA}
+              scoreB={editDraftB}
+              setScoreA={setEditDraftA}
+              setScoreB={setEditDraftB}
+              isLocked={isLocked}
+            />
+          </div>
+        ) : phase === 'catchup' && current ? (
+          <div className="px-4 pt-2 pb-3">
+            <MatchCard
+              key={current.id}
+              match={current}
+              teamA={resolveTeam(current, 'a')}
+              teamB={resolveTeam(current, 'b')}
+              labelA={current.team_a_code}
+              labelB={current.team_b_code}
+              scoreA={draftA}
+              scoreB={draftB}
+              setScoreA={setDraftA}
+              setScoreB={setDraftB}
+              isLocked={isLocked}
+            />
+          </div>
+        ) : phase === 'review' ? (
+          <div className="px-4 pt-2 pb-3 space-y-3">
+            {GROUPS.map((g) => (
+              <GroupReviewCard
+                key={g.letter}
+                groupLetter={g.letter}
+                matches={groupMatches.filter((m) => m.group_letter === g.letter)}
+                standings={standings[g.letter] ?? []}
+                predictions={predictions}
+                onEdit={openEdit}
+              />
+            ))}
+          </div>
+        ) : phase === 'bracket' ? (
+          <div className="px-4 pt-2 pb-3 overflow-x-auto">
+            <KnockoutBracket
+              matches={knockoutMatches}
+              predictions={predictions}
+              resolveTeam={resolveTeam}
+              onEdit={openEdit}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {/* ── Footer ── */}
+      {!loading &&
+        renderFooter({
+          phase,
+          editingMatch,
+          current,
+          draftA,
+          draftB,
+          editDraftA,
+          editDraftB,
+          isLocked,
+          groupsPredictedCount,
+          koPredictedCount,
+          handleSkip,
+          handleSave,
+          saveEdit,
+          closeEdit,
+          goToCatchup,
+          goToBracket,
+          onClose,
+        })}
+    </div>
+  )
+}
+
+// ── Header renderer ─────────────────────────────────────────
+
+function renderHeader(args: {
+  phase: Phase
+  loading: boolean
+  editingMatch: Match | null
+  leftInCatchup: number
+  history: Action[]
+  onClose: () => void
+  goToReview: () => void
+  goToCatchup: () => void
+  handleUndo: () => void
+  closeEdit: () => void
+}) {
+  const {
+    phase,
+    loading,
+    editingMatch,
+    leftInCatchup,
+    history,
+    onClose,
+    goToReview,
+    goToCatchup,
+    handleUndo,
+    closeEdit,
+  } = args
+
+  if (editingMatch) {
+    return (
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+        <button
+          onClick={closeEdit}
+          className="h-10 px-2 -ml-2 text-xs font-semibold text-text-70 active:text-white"
+        >
+          Cancel
+        </button>
+        <h2 className="text-sm font-bold text-white">Edit prediction</h2>
+        <div className="w-14" />
+      </div>
+    )
+  }
+
+  if (phase === 'catchup') {
+    return (
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2">
+        <button
+          onClick={onClose}
+          className="w-10 h-10 -ml-2 flex items-center justify-center text-text-70 active:text-white text-lg"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <div className="flex-1 text-center">
+          {!loading && (
+            <span className="text-xs font-semibold text-text-70">
+              <span className="num text-white">{leftInCatchup}</span> Left
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goToReview}
+            className="h-10 px-2 text-[11px] font-semibold text-polla-accent active:opacity-60"
+          >
+            Groups
+          </button>
+          <button
+            onClick={handleUndo}
+            disabled={history.length === 0}
+            className="h-10 px-2 -mr-2 text-xs font-semibold text-polla-accent active:opacity-60 disabled:opacity-25"
+          >
+            Undo
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'review') {
+    return (
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <button
           onClick={onClose}
@@ -223,115 +515,199 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
         >
           ✕
         </button>
-        <div className="text-center">
-          {!loading && !isDone && (
-            <span className="text-xs font-semibold text-text-70">
-              <span className="num text-white">{left}</span> Left
-            </span>
-          )}
-        </div>
+        <h2 className="text-sm font-bold text-white">Your Groups</h2>
         <button
-          onClick={handleUndo}
-          disabled={history.length === 0}
-          className="h-10 px-2 -mr-2 text-xs font-semibold text-polla-accent active:opacity-60 disabled:opacity-25"
+          onClick={goToCatchup}
+          className="h-10 px-2 -mr-2 text-[11px] font-semibold text-polla-accent active:opacity-60"
         >
-          Undo
+          Catch-up
         </button>
       </div>
+    )
+  }
 
-      {/* ── Progress bar ── */}
-      {!loading && !isDone && queue.length > 0 && (
-        <div className="px-4 pb-3">
-          <div className="w-full h-1 rounded-full bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-polla-accent to-polla-accent-dark transition-all duration-300"
-              style={{ width: `${(cursor / queue.length) * 100}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ── Lock banner ── */}
-      {isLocked && !loading && (
-        <div className="mx-4 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-polla-accent/10 border border-polla-accent/20">
-          <span className="text-polla-accent text-xs">🔒</span>
-          <span className="text-polla-accent text-[11px]">Predictions are locked</span>
-        </div>
-      )}
-
-      {/* ── Body ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-3">
-        {loading ? (
-          <div className="h-full flex items-center justify-center text-text-40 text-sm">
-            Loading matches…
-          </div>
-        ) : isDone ? (
-          <AllDone
-            predicted={predictedCount}
-            total={queue.length}
-            onClose={onClose}
-          />
-        ) : current ? (
-          <MatchCard
-            key={current.id}
-            match={current}
-            resolved={resolveMatch(current)}
-            draftA={draftA}
-            draftB={draftB}
-            setDraftA={setDraftA}
-            setDraftB={setDraftB}
-            isLocked={isLocked}
-          />
-        ) : null}
-      </div>
-
-      {/* ── Footer ── */}
-      {!loading && !isDone && current && (
-        <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border flex gap-3">
-          <button
-            onClick={handleSkip}
-            disabled={isLocked}
-            className="flex-1 h-12 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70 disabled:opacity-30"
-          >
-            Skip for now
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={
-              isLocked ||
-              draftA === null ||
-              draftB === null ||
-              (current.stage !== 'group' && draftA === draftB)
-            }
-            className="flex-1 h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80 disabled:opacity-30"
-          >
-            Save
-          </button>
-        </div>
-      )}
+  // bracket
+  return (
+    <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+      <button
+        onClick={onClose}
+        className="w-10 h-10 -ml-2 flex items-center justify-center text-text-70 active:text-white text-lg"
+        aria-label="Close"
+      >
+        ✕
+      </button>
+      <h2 className="text-sm font-bold text-white">Knockout Bracket</h2>
+      <button
+        onClick={goToReview}
+        className="h-10 px-2 -mr-2 text-[11px] font-semibold text-polla-accent active:opacity-60"
+      >
+        Groups
+      </button>
     </div>
   )
 }
 
-// ── Match Card ──────────────────────────────────────────────
+// ── Footer renderer ─────────────────────────────────────────
+
+function renderFooter(args: {
+  phase: Phase
+  editingMatch: Match | null
+  current: Match | undefined
+  draftA: number | null
+  draftB: number | null
+  editDraftA: number | null
+  editDraftB: number | null
+  isLocked: boolean
+  groupsPredictedCount: number
+  koPredictedCount: number
+  handleSkip: () => void
+  handleSave: () => void
+  saveEdit: () => void
+  closeEdit: () => void
+  goToCatchup: () => void
+  goToBracket: () => void
+  onClose: () => void
+}) {
+  const {
+    phase,
+    editingMatch,
+    current,
+    draftA,
+    draftB,
+    editDraftA,
+    editDraftB,
+    isLocked,
+    groupsPredictedCount,
+    koPredictedCount,
+    handleSkip,
+    handleSave,
+    saveEdit,
+    closeEdit,
+    goToCatchup,
+    goToBracket,
+    onClose,
+  } = args
+
+  if (editingMatch) {
+    const isKo = editingMatch.stage !== 'group'
+    const saveDisabled =
+      isLocked ||
+      editDraftA === null ||
+      editDraftB === null ||
+      (isKo && editDraftA === editDraftB)
+    return (
+      <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border flex gap-3">
+        <button
+          onClick={closeEdit}
+          className="flex-1 h-12 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={saveEdit}
+          disabled={saveDisabled}
+          className="flex-1 h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80 disabled:opacity-30"
+        >
+          Save
+        </button>
+      </div>
+    )
+  }
+
+  if (phase === 'catchup' && current) {
+    const isKo = current.stage !== 'group'
+    const saveDisabled =
+      isLocked ||
+      draftA === null ||
+      draftB === null ||
+      (isKo && draftA === draftB)
+    return (
+      <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border flex gap-3">
+        <button
+          onClick={handleSkip}
+          disabled={isLocked}
+          className="flex-1 h-12 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70 disabled:opacity-30"
+        >
+          Skip for now
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saveDisabled}
+          className="flex-1 h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80 disabled:opacity-30"
+        >
+          Save
+        </button>
+      </div>
+    )
+  }
+
+  if (phase === 'review') {
+    return (
+      <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border">
+        <div className="flex items-center justify-between mb-2 text-[10px] text-text-40">
+          <span>
+            <span className="num text-white">{groupsPredictedCount}</span> / 72 predicted
+          </span>
+          {groupsPredictedCount < 72 && (
+            <button onClick={goToCatchup} className="text-polla-accent font-semibold">
+              Finish groups →
+            </button>
+          )}
+        </div>
+        <button
+          onClick={goToBracket}
+          className="w-full h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80"
+        >
+          Continue to Knockouts →
+        </button>
+      </div>
+    )
+  }
+
+  if (phase === 'bracket') {
+    return (
+      <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border flex items-center justify-between">
+        <span className="text-[10px] text-text-40">
+          <span className="num text-white">{koPredictedCount}</span> / 32 knockouts predicted
+        </span>
+        <button
+          onClick={onClose}
+          className="h-10 px-4 rounded-lg bg-polla-accent text-white text-xs font-bold active:opacity-80"
+        >
+          Done
+        </button>
+      </div>
+    )
+  }
+
+  return null
+}
+
+// ── Slack-style Match Card ──────────────────────────────────
 
 interface MatchCardProps {
   match: Match
-  resolved: { teamA: Team | null; teamB: Team | null; labelA: string; labelB: string }
-  draftA: number | null
-  draftB: number | null
-  setDraftA: (n: number | null) => void
-  setDraftB: (n: number | null) => void
+  teamA: Team | null
+  teamB: Team | null
+  labelA: string
+  labelB: string
+  scoreA: number | null
+  scoreB: number | null
+  setScoreA: (v: number | null) => void
+  setScoreB: (v: number | null) => void
   isLocked: boolean
 }
 
 function MatchCard({
   match,
-  resolved,
-  draftA,
-  draftB,
-  setDraftA,
-  setDraftB,
+  teamA,
+  teamB,
+  labelA,
+  labelB,
+  scoreA,
+  scoreB,
+  setScoreA,
+  setScoreB,
   isLocked,
 }: MatchCardProps) {
   const kickoff = new Date(match.kickoff)
@@ -350,18 +726,15 @@ function MatchCard({
       : STAGE_LABEL[match.stage] ?? match.stage
 
   const isKo = match.stage !== 'group'
-  const isTied = draftA !== null && draftB !== null && draftA === draftB
+  const isTied = scoreA !== null && scoreB !== null && scoreA === scoreB
 
   return (
     <div className="glow-card p-4 mx-auto w-full max-w-md">
-      {/* Stage pill */}
       <div className="flex items-center justify-center mb-3">
         <span className="px-3 py-1 rounded-full bg-polla-accent/10 border border-polla-accent/25 text-polla-accent text-[10px] font-bold uppercase tracking-widest">
           {headline}
         </span>
       </div>
-
-      {/* Date / venue */}
       <div className="text-center mb-4">
         <p className="text-text-70 text-[11px] font-semibold">
           {dateStr} · {timeStr}
@@ -375,30 +748,26 @@ function MatchCard({
           </p>
         )}
       </div>
-
-      {/* Teams + score inputs */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <TeamScore
-          team={resolved.teamA}
-          label={resolved.labelA}
-          value={draftA}
-          onChange={setDraftA}
+          team={teamA}
+          label={labelA}
+          value={scoreA}
+          onChange={setScoreA}
           disabled={isLocked}
         />
         <TeamScore
-          team={resolved.teamB}
-          label={resolved.labelB}
-          value={draftB}
-          onChange={setDraftB}
+          team={teamB}
+          label={labelB}
+          value={scoreB}
+          onChange={setScoreB}
           disabled={isLocked}
         />
       </div>
-
-      {/* Helper text */}
       <div className="text-center min-h-[12px]">
         {isKo && isTied && (
           <p className="text-polla-warning text-[10px] font-semibold">
-            Knockouts can't end in a tie — pick a winner.
+            Knockouts can&apos;t end in a tie — pick a winner.
           </p>
         )}
         {!isKo && (
@@ -410,8 +779,6 @@ function MatchCard({
     </div>
   )
 }
-
-// ── Team + Score column ─────────────────────────────────────
 
 function TeamScore({
   team,
@@ -462,14 +829,11 @@ function TeamScore({
         onChange={handleType}
         disabled={disabled}
         maxLength={2}
-        className={`w-14 h-14 rounded-2xl text-center text-3xl font-extrabold num border-2 outline-none transition-colors
-          placeholder:text-text-25
-          ${
-            value !== null
-              ? 'border-polla-accent bg-polla-accent/10 text-white'
-              : 'border-card-border bg-white/[0.04] text-text-25 focus:border-polla-accent/60'
-          }
-          disabled:opacity-40`}
+        className={`w-14 h-14 rounded-2xl text-center text-3xl font-extrabold num border-2 outline-none transition-colors placeholder:text-text-25 ${
+          value !== null
+            ? 'border-polla-accent bg-polla-accent/10 text-white'
+            : 'border-card-border bg-white/[0.04] text-text-25 focus:border-polla-accent/60'
+        } disabled:opacity-40`}
       />
       <div className="flex items-center gap-1.5">
         <button
@@ -498,59 +862,294 @@ function TeamScore({
   )
 }
 
-// ── All Done state ──────────────────────────────────────────
+// ── Group Review Card ───────────────────────────────────────
 
-function AllDone({
-  predicted,
-  total,
-  onClose,
+function GroupReviewCard({
+  groupLetter,
+  matches,
+  standings,
+  predictions,
+  onEdit,
 }: {
-  predicted: number
-  total: number
-  onClose: () => void
+  groupLetter: string
+  matches: Match[]
+  standings: TeamStanding[]
+  predictions: PredictionMap
+  onEdit: (id: string) => void
 }) {
+  const predictedCount = matches.filter((m) => predictions[m.id]).length
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-      <div className="text-7xl mb-4">🐔</div>
-      <h2 className="text-2xl font-extrabold mb-2">You're all set!</h2>
-      <p className="text-text-70 text-sm mb-6 max-w-xs">
-        Your prediction sheet is locked in. Good luck in the tournament.
-      </p>
-      <div className="flex gap-8 mb-10">
-        <Stat label="Predicted" value={predicted} accent />
-        <Stat label="Total" value={total} />
+    <div className="glass-card p-3">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-bold text-white">Group {groupLetter}</h3>
+        <span className="text-[10px] text-text-40 num">
+          {predictedCount}/{matches.length}
+        </span>
       </div>
-      <button
-        onClick={onClose}
-        className="w-full max-w-xs h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80"
-      >
-        Done
-      </button>
+
+      {/* Standings table */}
+      <div className="mb-3 rounded-lg bg-white/[0.02] border border-card-border overflow-hidden">
+        <div className="grid grid-cols-[24px_1fr_28px_32px_28px] text-[9px] font-bold uppercase tracking-wider text-text-40 px-2 py-1.5 border-b border-card-border">
+          <span>#</span>
+          <span>Team</span>
+          <span className="text-right">P</span>
+          <span className="text-right">GD</span>
+          <span className="text-right">GF</span>
+        </div>
+        {standings.map((s, i) => {
+          const advances = i < 2
+          return (
+            <div
+              key={s.team.code}
+              className={`grid grid-cols-[24px_1fr_28px_32px_28px] text-[11px] px-2 py-1.5 items-center ${
+                advances ? 'text-white' : 'text-text-40'
+              } ${i < standings.length - 1 ? 'border-b border-card-border/50' : ''}`}
+            >
+              <span
+                className={`num font-bold ${advances ? 'text-polla-success' : ''}`}
+              >
+                {i + 1}
+              </span>
+              <span className="flex items-center gap-1.5 truncate">
+                <span>{s.team.flag}</span>
+                <span className="font-semibold truncate">{s.team.code}</span>
+              </span>
+              <span className="num text-right font-bold">{s.points}</span>
+              <span className="num text-right">
+                {s.gd > 0 ? '+' : ''}
+                {s.gd}
+              </span>
+              <span className="num text-right">{s.gf}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Match rows */}
+      <div className="space-y-1">
+        {matches.map((m) => (
+          <MatchRow
+            key={m.id}
+            match={m}
+            prediction={predictions[m.id]}
+            onEdit={() => onEdit(m.id)}
+          />
+        ))}
+      </div>
     </div>
   )
 }
 
-function Stat({
-  label,
-  value,
-  accent,
+function MatchRow({
+  match,
+  prediction,
+  onEdit,
 }: {
+  match: Match
+  prediction?: { score_a: number; score_b: number }
+  onEdit: () => void
+}) {
+  const hasPred = !!prediction
+  return (
+    <button
+      onClick={onEdit}
+      className={`w-full grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 py-2 rounded-lg border text-left active:scale-[0.98] transition-transform ${
+        hasPred
+          ? 'bg-polla-success/5 border-polla-success/20'
+          : 'bg-white/[0.02] border-card-border'
+      }`}
+    >
+      <div className="flex items-center gap-1.5 justify-end truncate">
+        <span className="text-[11px] font-semibold truncate">
+          {match.team_a_code}
+        </span>
+        <span className="text-base">{match.team_a_flag}</span>
+      </div>
+      <div className="flex items-center gap-1.5 num font-extrabold text-sm min-w-[60px] justify-center">
+        {hasPred ? (
+          <>
+            <span className="text-white">{prediction!.score_a}</span>
+            <span className="text-text-25">-</span>
+            <span className="text-white">{prediction!.score_b}</span>
+          </>
+        ) : (
+          <span className="text-text-25 text-[9px] font-semibold">Tap to predict</span>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 truncate">
+        <span className="text-base">{match.team_b_flag}</span>
+        <span className="text-[11px] font-semibold truncate">
+          {match.team_b_code}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+// ── Knockout Bracket ────────────────────────────────────────
+
+const KO_ROUNDS: { stage: string; label: string; short: string }[] = [
+  { stage: 'r32', label: 'Round of 32', short: 'R32' },
+  { stage: 'r16', label: 'Round of 16', short: 'R16' },
+  { stage: 'qf', label: 'Quarterfinal', short: 'QF' },
+  { stage: 'sf', label: 'Semifinal', short: 'SF' },
+  { stage: 'final', label: 'Final', short: 'Final' },
+]
+
+function KnockoutBracket({
+  matches,
+  predictions,
+  resolveTeam,
+  onEdit,
+}: {
+  matches: Match[]
+  predictions: PredictionMap
+  resolveTeam: (m: Match, side: 'a' | 'b') => Team | null
+  onEdit: (id: string) => void
+}) {
+  const thirdPlace = matches.find((m) => m.stage === 'third') ?? null
+
+  return (
+    <div className="flex gap-3 items-start min-w-max pb-2">
+      {KO_ROUNDS.map((round) => {
+        const roundMatches = matches
+          .filter((m) => m.stage === round.stage)
+          .sort((a, b) => a.match_number - b.match_number)
+        return (
+          <div
+            key={round.stage}
+            className="flex flex-col gap-2 w-[210px] shrink-0"
+          >
+            <div className="text-[10px] font-bold uppercase tracking-widest text-text-40 text-center mb-1">
+              {round.label}
+            </div>
+            {roundMatches.map((m) => (
+              <BracketCell
+                key={m.id}
+                match={m}
+                teamA={resolveTeam(m, 'a')}
+                teamB={resolveTeam(m, 'b')}
+                prediction={predictions[m.id]}
+                onEdit={() => onEdit(m.id)}
+              />
+            ))}
+            {round.stage === 'final' && thirdPlace && (
+              <>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-40 text-center mt-4 mb-1">
+                  Third Place
+                </div>
+                <BracketCell
+                  match={thirdPlace}
+                  teamA={resolveTeam(thirdPlace, 'a')}
+                  teamB={resolveTeam(thirdPlace, 'b')}
+                  prediction={predictions[thirdPlace.id]}
+                  onEdit={() => onEdit(thirdPlace.id)}
+                />
+              </>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function BracketCell({
+  match,
+  teamA,
+  teamB,
+  prediction,
+  onEdit,
+}: {
+  match: Match
+  teamA: Team | null
+  teamB: Team | null
+  prediction?: { score_a: number; score_b: number }
+  onEdit: () => void
+}) {
+  const hasPred = !!prediction
+  const winnerSide =
+    hasPred && prediction && prediction.score_a !== prediction.score_b
+      ? prediction.score_a > prediction.score_b
+        ? 'a'
+        : 'b'
+      : null
+  return (
+    <button
+      onClick={onEdit}
+      className={`rounded-lg border px-2 py-1.5 text-left w-full active:scale-[0.98] transition-transform ${
+        hasPred
+          ? 'bg-polla-success/5 border-polla-success/20'
+          : 'bg-white/[0.02] border-card-border'
+      }`}
+    >
+      <BracketSide
+        team={teamA}
+        label={match.team_a_code}
+        score={prediction?.score_a}
+        isWinner={winnerSide === 'a'}
+        isLoser={winnerSide === 'b'}
+      />
+      <div className="border-t border-card-border/40 my-1" />
+      <BracketSide
+        team={teamB}
+        label={match.team_b_code}
+        score={prediction?.score_b}
+        isWinner={winnerSide === 'b'}
+        isLoser={winnerSide === 'a'}
+      />
+    </button>
+  )
+}
+
+function BracketSide({
+  team,
+  label,
+  score,
+  isWinner,
+  isLoser,
+}: {
+  team: Team | null
   label: string
-  value: number
-  accent?: boolean
+  score?: number
+  isWinner: boolean
+  isLoser: boolean
 }) {
   return (
-    <div className="text-center">
-      <p
-        className={`text-3xl font-extrabold num ${
-          accent ? 'text-polla-accent' : 'text-white'
+    <div className="flex items-center gap-2">
+      <span className={`text-base ${isLoser ? 'opacity-50' : ''}`}>
+        {team?.flag ?? '🏳️'}
+      </span>
+      <div className="flex-1 min-w-0">
+        {team ? (
+          <p
+            className={`text-[11px] font-bold truncate ${
+              isWinner
+                ? 'text-white'
+                : isLoser
+                  ? 'text-text-40'
+                  : 'text-text-70'
+            }`}
+          >
+            {team.code}
+          </p>
+        ) : (
+          <p className="text-[9px] text-text-40 font-semibold truncate">
+            {prettySlotLabel(label)}
+          </p>
+        )}
+      </div>
+      <span
+        className={`num text-sm font-extrabold w-5 text-right ${
+          isWinner
+            ? 'text-white'
+            : isLoser
+              ? 'text-text-40'
+              : 'text-text-25'
         }`}
       >
-        {value}
-      </p>
-      <p className="text-text-40 text-[10px] uppercase tracking-wider font-bold mt-1">
-        {label}
-      </p>
+        {score ?? '–'}
+      </span>
     </div>
   )
 }
