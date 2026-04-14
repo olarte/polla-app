@@ -23,37 +23,39 @@ html {
 @layer components {
   /* Glass card */
   .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
+    background: rgba(255, 245, 220, 0.04);
+    border: 1px solid rgba(255, 201, 60, 0.1);
+    border-radius: 20px;
   }
 
   /* Glow card variant */
   .glow-card {
-    background: linear-gradient(135deg, #0F3460, #1A1A4E, #16213E);
-    border: 1px solid #E94560;
-    border-radius: 14px;
+    background: linear-gradient(160deg, #15102A, #1F1538, #2A1F4A);
+    border: 1px solid rgba(255, 201, 60, 0.25);
+    border-radius: 22px;
+    box-shadow: 0 20px 60px rgba(123, 44, 255, 0.18);
   }
 
   /* Label style — 10px uppercase */
   .label {
     font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.12em;
+    color: rgba(255, 245, 220, 0.4);
+    font-weight: 800;
   }
 
   /* Bottom nav glassmorphism */
   .nav-glass {
-    background: rgba(10, 10, 18, 0.85);
+    background: rgba(11, 7, 20, 0.88);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 201, 60, 0.12);
   }
 
   /* Status bar mock */
   .status-bar {
-    background: #0A0A12;
+    background: #0B0714;
     height: env(safe-area-inset-top, 0px);
     min-height: 0px;
   }
