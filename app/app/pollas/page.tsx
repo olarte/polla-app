@@ -66,15 +66,15 @@ export default function PollasPage() {
     return () => clearTimeout(timeout)
   }, [])
 
-  // Hide bottom nav when payment modal is open
+  // Hide bottom nav when payment modal or create-pool modal is open
   useEffect(() => {
-    if (pendingPayment) {
+    if (pendingPayment || createOpen) {
       document.documentElement.setAttribute('data-hide-nav', 'true')
     } else {
       document.documentElement.removeAttribute('data-hide-nav')
     }
     return () => document.documentElement.removeAttribute('data-hide-nav')
-  }, [pendingPayment])
+  }, [pendingPayment, createOpen])
 
   const fetchPollas = useCallback(async () => {
     if (!user) {
