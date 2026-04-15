@@ -21,8 +21,12 @@ interface PredictModalProps {
   onClose: () => void
 }
 
-type Phase = 'catchup' | 'review' | 'bracket'
+type Phase = 'catchup' | 'review' | 'bracket' | 'complete'
 type Action = { matchId: string; kind: 'save' | 'skip' }
+
+// Total matches in a full bracket (used to detect "just completed
+// the 104th prediction" moments that trigger the celebration).
+const TOTAL_MATCHES = 104
 
 const STAGE_LABEL: Record<string, string> = {
   group: 'Group',
@@ -378,9 +382,20 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     }
     const matchId = current.id
 
+    // Did this save just complete the full bracket?
+    const wasUnpredicted = !predictions[matchId]
+    const willCompleteBracket =
+      wasUnpredicted &&
+      Object.keys(predictions).length === TOTAL_MATCHES - 1
+
     setPredictions((p) => ({ ...p, [matchId]: pred }))
     setHistory((h) => [...h, { matchId, kind: 'save' }])
     persistPrediction(matchId, pred.score_a, pred.score_b, penToSave)
+
+    if (willCompleteBracket) {
+      setPhase('complete')
+      return
+    }
     advance()
   }
 
@@ -460,9 +475,17 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       score_b: editDraftB,
       penalty_winner: penToSave,
     }
+
+    // Did this save complete the full bracket?
+    const wasUnpredicted = !predictions[editMatchId]
+    const willCompleteBracket =
+      wasUnpredicted &&
+      Object.keys(predictions).length === TOTAL_MATCHES - 1
+
     setPredictions((p) => ({ ...p, [editMatchId]: pred }))
     persistPrediction(editMatchId, pred.score_a, pred.score_b, penToSave)
     setEditMatchId(null)
+    if (willCompleteBracket) setPhase('complete')
   }
 
   if (!isOpen) return null
@@ -476,6 +499,18 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   // session — equals unpredicted matches in finish-groups mode,
   // remaining-in-order matches in regular mode.
   const leftInCatchup = Math.max(0, catchupQueue.length - cursor)
+
+  // "Save and Complete" button label triggers when saving THIS
+  // specific match would bring the user from 103→104 predictions.
+  const totalPredictedSoFar = Object.keys(predictions).length
+  const willCompleteCatchup =
+    current != null &&
+    totalPredictedSoFar === TOTAL_MATCHES - 1 &&
+    !predictions[current.id]
+  const willCompleteEdit =
+    editingMatch != null &&
+    totalPredictedSoFar === TOTAL_MATCHES - 1 &&
+    !predictions[editingMatch.id]
 
   return (
     <div className="fixed inset-0 z-[60] bg-polla-bg flex flex-col">
@@ -586,6 +621,8 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
               onEdit={openEdit}
             />
           </div>
+        ) : phase === 'complete' ? (
+          <CompletionScreen />
         ) : null}
       </div>
 
@@ -604,12 +641,15 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
           isLocked,
           groupsPredictedCount,
           koPredictedCount,
+          willCompleteCatchup,
+          willCompleteEdit,
           handleSkip,
           handleSave,
           saveEdit,
           closeEdit,
           goToFinishGroups,
           goToBracket,
+          goToReviewFromComplete: goToReview,
           onClose,
         })}
     </div>
@@ -708,7 +748,28 @@ function renderHeader(args: {
     )
   }
 
-  // bracket
+  if (phase === 'bracket') {
+    return (
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+        <button
+          onClick={onClose}
+          className="w-10 h-10 -ml-2 flex items-center justify-center text-text-70 active:text-white text-lg"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <h2 className="text-sm font-bold text-white">Knockout Bracket</h2>
+        <button
+          onClick={goToReview}
+          className="h-10 px-2 -mr-2 text-[11px] font-semibold text-polla-accent active:opacity-60"
+        >
+          Groups
+        </button>
+      </div>
+    )
+  }
+
+  // complete
   return (
     <div className="px-4 pt-3 pb-2 flex items-center justify-between">
       <button
@@ -718,13 +779,8 @@ function renderHeader(args: {
       >
         ✕
       </button>
-      <h2 className="text-sm font-bold text-white">Knockout Bracket</h2>
-      <button
-        onClick={goToReview}
-        className="h-10 px-2 -mr-2 text-[11px] font-semibold text-polla-accent active:opacity-60"
-      >
-        Groups
-      </button>
+      <div className="w-10" />
+      <div className="w-10" />
     </div>
   )
 }
@@ -744,12 +800,15 @@ function renderFooter(args: {
   isLocked: boolean
   groupsPredictedCount: number
   koPredictedCount: number
+  willCompleteCatchup: boolean
+  willCompleteEdit: boolean
   handleSkip: () => void
   handleSave: () => void
   saveEdit: () => void
   closeEdit: () => void
   goToFinishGroups: () => void
   goToBracket: () => void
+  goToReviewFromComplete: () => void
   onClose: () => void
 }) {
   const {
@@ -765,12 +824,15 @@ function renderFooter(args: {
     isLocked,
     groupsPredictedCount,
     koPredictedCount,
+    willCompleteCatchup,
+    willCompleteEdit,
     handleSkip,
     handleSave,
     saveEdit,
     closeEdit,
     goToFinishGroups,
     goToBracket,
+    goToReviewFromComplete,
     onClose,
   } = args
 
@@ -795,7 +857,7 @@ function renderFooter(args: {
           disabled={saveDisabled}
           className="flex-1 h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80 disabled:opacity-30"
         >
-          Save
+          {willCompleteEdit ? 'Save and Complete' : 'Save'}
         </button>
       </div>
     )
@@ -823,7 +885,7 @@ function renderFooter(args: {
           disabled={saveDisabled}
           className="flex-1 h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80 disabled:opacity-30"
         >
-          Save
+          {willCompleteCatchup ? 'Save and Complete' : 'Save'}
         </button>
       </div>
     )
@@ -883,7 +945,75 @@ function renderFooter(args: {
     )
   }
 
+  if (phase === 'complete') {
+    return (
+      <div className="px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 border-t border-card-border flex gap-3">
+        <button
+          onClick={goToReviewFromComplete}
+          className="flex-1 h-12 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70"
+        >
+          Review bracket
+        </button>
+        <button
+          onClick={onClose}
+          className="flex-1 h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80"
+        >
+          Done
+        </button>
+      </div>
+    )
+  }
+
   return null
+}
+
+// ── Completion celebration screen ───────────────────────────
+
+function CompletionScreen() {
+  // Display the opening-match kickoff in the user's local time
+  // zone. LOCK_DEADLINE sits at exact kickoff so the same Date
+  // drives both the deadline copy and the underlying lock logic.
+  const kickoffDate = LOCK_DEADLINE
+  const formattedKickoff = kickoffDate.toLocaleString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  })
+
+  return (
+    <div className="h-full flex flex-col items-center justify-center text-center px-6 py-8 gap-5">
+      <div className="text-7xl leading-none drop-shadow-[0_0_30px_rgba(233,69,96,0.35)]">
+        🏆
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-2xl font-extrabold text-white leading-tight">
+          Bracket complete!
+        </h2>
+        <p className="text-text-70 text-sm max-w-xs leading-relaxed mx-auto">
+          Congratulations — you&apos;ve completed the predictions for
+          all 104 World Cup 2026 games. 🎉
+        </p>
+      </div>
+
+      <div className="mt-2 w-full max-w-xs rounded-2xl bg-polla-accent/10 border border-polla-accent/25 p-4">
+        <p className="text-polla-accent text-[10px] font-bold uppercase tracking-widest mb-2">
+          Edit until the first match
+        </p>
+        <p className="text-white text-sm font-semibold leading-tight">
+          {formattedKickoff}
+        </p>
+        <p className="text-text-40 text-[10px] mt-2 leading-snug">
+          You can edit any prediction until Mexico vs South Africa
+          kicks off at Estadio Azteca. After that, your bracket is
+          locked in.
+        </p>
+      </div>
+    </div>
+  )
 }
 
 // ── Slack-style Match Card ──────────────────────────────────

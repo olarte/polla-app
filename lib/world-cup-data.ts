@@ -505,4 +505,6 @@ export function getH2H(codeA: string, codeB: string): H2HRecord | null {
 }
 
 // ── Scoring helpers ─────────────────────────────────────────
-export const LOCK_DEADLINE = new Date('2026-06-11T18:00:00Z') // 1 hour before MEX-RSA kickoff (Jun 11 15:00 ET)
+// Predictions lock at the exact kickoff of the opening match:
+// Mexico vs South Africa, Jun 11 2026, 15:00 ET (19:00 UTC).
+export const LOCK_DEADLINE = new Date('2026-06-11T19:00:00Z')
