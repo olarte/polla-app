@@ -236,34 +236,14 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     }
   }, [isOpen, userId, supabase, reloadTick])
 
-  // ── Resume-from-background handler ──
-  // When the tab/PWA regains visibility or focus, bump reloadTick
-  // so the load effect re-fires and we pick up a fresh snapshot.
-  //
-  // The 600ms debounce is important: Supabase's auth library
-  // tries to refresh the session on resume, and that takes a
-  // storage lock (navigator.locks). If we kick off a parallel
-  // fetch immediately, it competes for the same lock and one
-  // aborts with "Lock was stolen by another request". Waiting
-  // half a second lets auth settle before we try to refetch.
-  useEffect(() => {
-    if (!isOpen) return
-    let timer: ReturnType<typeof setTimeout> | null = null
-    const onResume = () => {
-      if (document.visibilityState !== 'visible') return
-      if (timer) clearTimeout(timer)
-      timer = setTimeout(() => {
-        setReloadTick((t) => t + 1)
-      }, 600)
-    }
-    document.addEventListener('visibilitychange', onResume)
-    window.addEventListener('focus', onResume)
-    return () => {
-      document.removeEventListener('visibilitychange', onResume)
-      window.removeEventListener('focus', onResume)
-      if (timer) clearTimeout(timer)
-    }
-  }, [isOpen])
+  // Deliberately NO visibility refetch here. React preserves
+  // the component tree across background/resume, so matches
+  // and predictions are still in memory when the user comes
+  // back. Refetching on resume was creating races with the
+  // Supabase auth lock and leaving the modal stuck on
+  // "Loading matches…". If the page actually reloads from
+  // scratch, the normal load effect above handles it with
+  // its retry loop.
 
   // ── Decide starting phase + cursor once data has loaded ──
   useEffect(() => {
