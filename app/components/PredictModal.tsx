@@ -187,9 +187,17 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       } catch (err) {
         if (cancelled) return
         clearTimeout(timeoutId)
-        setLoadError(
-          err instanceof Error ? err.message : 'Failed to load matches.'
-        )
+        const msg = err instanceof Error ? err.message : 'Failed to load matches.'
+        // Supabase's auth lock can abort an in-flight fetch if the
+        // internal token refresh wins the race on resume. These
+        // errors are transient — swallow them and schedule a
+        // single retry instead of showing the error state.
+        const isLockRace = /lock was stolen|aborterror/i.test(msg)
+        if (isLockRace) {
+          setTimeout(() => setReloadTick((t) => t + 1), 800)
+          return
+        }
+        setLoadError(msg)
         setLoading(false)
       }
     })()
@@ -203,20 +211,29 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   // ── Resume-from-background handler ──
   // When the tab/PWA regains visibility or focus, bump reloadTick
   // so the load effect re-fires and we pick up a fresh snapshot.
-  // This is the main fix for the "come back from screensaver,
-  // app is stuck on Loading…" bug.
+  //
+  // The 600ms debounce is important: Supabase's auth library
+  // tries to refresh the session on resume, and that takes a
+  // storage lock (navigator.locks). If we kick off a parallel
+  // fetch immediately, it competes for the same lock and one
+  // aborts with "Lock was stolen by another request". Waiting
+  // half a second lets auth settle before we try to refetch.
   useEffect(() => {
     if (!isOpen) return
+    let timer: ReturnType<typeof setTimeout> | null = null
     const onResume = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState !== 'visible') return
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
         setReloadTick((t) => t + 1)
-      }
+      }, 600)
     }
     document.addEventListener('visibilitychange', onResume)
     window.addEventListener('focus', onResume)
     return () => {
       document.removeEventListener('visibilitychange', onResume)
       window.removeEventListener('focus', onResume)
+      if (timer) clearTimeout(timer)
     }
   }, [isOpen])
 
