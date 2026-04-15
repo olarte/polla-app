@@ -55,6 +55,10 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const [editDraftA, setEditDraftA] = useState<number | null>(null)
   const [editDraftB, setEditDraftB] = useState<number | null>(null)
   const [editDraftPen, setEditDraftPen] = useState<'a' | 'b' | null>(null)
+  // Bumped on resume-from-background (visibilitychange) + on Retry
+  // tap. Drives the load effect so stale/hung connections recover.
+  const [reloadTick, setReloadTick] = useState(0)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
   const initRef = useRef(false)
   // Scroll-position memory for when the user dives into the edit
@@ -132,41 +136,89 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   )
 
   // ── Load matches + predictions whenever the modal opens ──
+  // Keyed on user?.id (not `user`) so transient auth-context
+  // re-renders from TOKEN_REFRESHED don't thrash this effect.
+  // reloadTick lets us re-fire on resume-from-background.
+  const userId = user?.id
   useEffect(() => {
     if (!isOpen) return
-    if (!user) return
+    if (!userId) return
     let cancelled = false
     setLoading(true)
-    ;(async () => {
-      const [mRes, pRes] = await Promise.all([
-        // Scope to the real 104 WC matches. Dev seed scripts can leave
-        // test rows with match_number >= 201 that would otherwise
-        // pollute the group review screens.
-        supabase
-          .from('matches')
-          .select('*')
-          .gte('match_number', 1)
-          .lte('match_number', 104)
-          .order('match_number'),
-        supabase.from('predictions').select('*').eq('user_id', user.id),
-      ])
+    setLoadError(null)
+
+    // Hard timeout in case a fetch hangs after the app was
+    // backgrounded for a while and the Supabase client's
+    // connection is stuck. Surfaces an error + retry button
+    // instead of leaving the user on "Loading matches…" forever.
+    const timeoutId = setTimeout(() => {
       if (cancelled) return
-      setMatches(mRes.data ?? [])
-      const map: PredictionMap = {}
-      for (const p of pRes.data ?? []) {
-        map[p.match_id] = {
-          score_a: p.score_a,
-          score_b: p.score_b,
-          penalty_winner: p.penalty_winner ?? null,
-        }
-      }
-      setPredictions(map)
+      cancelled = true
+      setLoadError('Connection timed out — tap to retry.')
       setLoading(false)
+    }, 12000)
+
+    ;(async () => {
+      try {
+        const [mRes, pRes] = await Promise.all([
+          supabase
+            .from('matches')
+            .select('*')
+            .gte('match_number', 1)
+            .lte('match_number', 104)
+            .order('match_number'),
+          supabase.from('predictions').select('*').eq('user_id', userId),
+        ])
+        if (cancelled) return
+        clearTimeout(timeoutId)
+        if (mRes.error) throw new Error(mRes.error.message)
+        if (pRes.error) throw new Error(pRes.error.message)
+        setMatches(mRes.data ?? [])
+        const map: PredictionMap = {}
+        for (const p of pRes.data ?? []) {
+          map[p.match_id] = {
+            score_a: p.score_a,
+            score_b: p.score_b,
+            penalty_winner: p.penalty_winner ?? null,
+          }
+        }
+        setPredictions(map)
+        setLoading(false)
+      } catch (err) {
+        if (cancelled) return
+        clearTimeout(timeoutId)
+        setLoadError(
+          err instanceof Error ? err.message : 'Failed to load matches.'
+        )
+        setLoading(false)
+      }
     })()
+
     return () => {
       cancelled = true
+      clearTimeout(timeoutId)
     }
-  }, [isOpen, user, supabase])
+  }, [isOpen, userId, supabase, reloadTick])
+
+  // ── Resume-from-background handler ──
+  // When the tab/PWA regains visibility or focus, bump reloadTick
+  // so the load effect re-fires and we pick up a fresh snapshot.
+  // This is the main fix for the "come back from screensaver,
+  // app is stuck on Loading…" bug.
+  useEffect(() => {
+    if (!isOpen) return
+    const onResume = () => {
+      if (document.visibilityState === 'visible') {
+        setReloadTick((t) => t + 1)
+      }
+    }
+    document.addEventListener('visibilitychange', onResume)
+    window.addEventListener('focus', onResume)
+    return () => {
+      document.removeEventListener('visibilitychange', onResume)
+      window.removeEventListener('focus', onResume)
+    }
+  }, [isOpen])
 
   // ── Decide starting phase + cursor once data has loaded ──
   useEffect(() => {
@@ -197,6 +249,9 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     setPhase('catchup')
     setDraftA(null)
     setDraftB(null)
+    setDraftPen(null)
+    setLoadError(null)
+    setReloadTick(0)
   }, [isOpen])
 
   // The match currently shown in the catchup card stack.
@@ -434,7 +489,18 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
 
       {/* ── Body ── */}
       <div ref={bodyScrollRef} className="flex-1 min-h-0 overflow-y-auto">
-        {loading ? (
+        {loadError ? (
+          <div className="h-full flex flex-col items-center justify-center gap-3 px-6 text-center">
+            <span className="text-3xl">⚠️</span>
+            <p className="text-text-70 text-sm max-w-xs">{loadError}</p>
+            <button
+              onClick={() => setReloadTick((t) => t + 1)}
+              className="h-10 px-5 rounded-lg bg-polla-accent text-white text-xs font-bold active:opacity-80"
+            >
+              Retry
+            </button>
+          </div>
+        ) : loading ? (
           <div className="h-full flex items-center justify-center text-text-40 text-sm">
             Loading matches…
           </div>
