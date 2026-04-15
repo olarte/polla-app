@@ -97,6 +97,60 @@ const THIRD_SLOTS: { label: string; allowed: string[] }[] = [
   { label: '3DEIJL', allowed: ['D', 'E', 'I', 'J', 'L'] },
 ]
 
+// Assign the top 8 third-placed teams to the 8 R32 "best third"
+// slots using backtracking. Every slot has an allowed-groups
+// constraint; a team can only fill a slot if its group is in
+// that slot's allowed set. The old greedy heuristic could strand
+// later slots with no valid pick even when a valid assignment
+// existed — this searches the full space and is guaranteed to
+// find one if it exists.
+function assignThirdPlaceSlots(
+  topEight: { letter: string; standing: TeamStanding }[],
+  slots: { label: string; allowed: string[] }[]
+): Record<string, Team> | null {
+  const n = slots.length
+  if (topEight.length < n) return null
+
+  // Pre-compute which team indices are eligible for each slot,
+  // ordered by team rank so the first solution the search finds
+  // is rank-biased (higher-ranked thirds get their slot first).
+  const eligible: number[][] = slots.map((slot) =>
+    topEight
+      .map((t, i) => (slot.allowed.includes(t.letter) ? i : -1))
+      .filter((i) => i >= 0)
+  )
+
+  // Fail fast if any slot has no candidates at all.
+  if (eligible.some((e) => e.length === 0)) return null
+
+  const assignment: (number | null)[] = new Array(n).fill(null)
+  const used = new Array(topEight.length).fill(false)
+
+  function backtrack(slotIdx: number): boolean {
+    if (slotIdx === n) return true
+    for (const i of eligible[slotIdx]) {
+      if (used[i]) continue
+      used[i] = true
+      assignment[slotIdx] = i
+      if (backtrack(slotIdx + 1)) return true
+      used[i] = false
+      assignment[slotIdx] = null
+    }
+    return false
+  }
+
+  if (!backtrack(0)) return null
+
+  const result: Record<string, Team> = {}
+  for (let s = 0; s < n; s++) {
+    const teamIdx = assignment[s]
+    if (teamIdx != null) {
+      result[slots[s].label] = topEight[teamIdx].standing.team
+    }
+  }
+  return result
+}
+
 export function buildGroupSlotMap(
   standings: Record<string, TeamStanding[]>
 ): Record<string, Team> {
@@ -114,20 +168,9 @@ export function buildGroupSlotMap(
     .sort((a, b) => sortStandings(a.standing, b.standing))
 
   const topEight = thirds.slice(0, 8)
+  const assignment = assignThirdPlaceSlots(topEight, THIRD_SLOTS)
+  if (assignment) Object.assign(map, assignment)
 
-  // Greedy assignment: walk R32 fixture slots in order and pick the
-  // highest-ranked qualifying third whose group hasn't been used yet.
-  // Not 100% FIFA-matrix-correct in edge cases but stable and legible.
-  const used = new Set<string>()
-  for (const slot of THIRD_SLOTS) {
-    const pick = topEight.find(
-      (t) => slot.allowed.includes(t.letter) && !used.has(t.letter)
-    )
-    if (pick) {
-      map[slot.label] = pick.standing.team
-      used.add(pick.letter)
-    }
-  }
   return map
 }
 
