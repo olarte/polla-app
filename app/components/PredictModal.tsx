@@ -40,7 +40,7 @@ const STAGE_LABEL: Record<string, string> = {
 
 export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const [supabase] = useState(() => createClient())
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [matches, setMatches] = useState<Match[]>([])
   const [predictions, setPredictions] = useState<PredictionMap>({})
   const [loading, setLoading] = useState(true)
@@ -72,7 +72,12 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   const bodyScrollRef = useRef<HTMLDivElement>(null)
   const savedScrollTop = useRef(0)
 
-  const isLocked = new Date() >= LOCK_DEADLINE
+  // Predictions lock when (a) the tournament-wide deadline
+  // passes, or (b) the user has pressed Hold-to-Submit from the
+  // Home card and frozen their bracket.
+  const bracketSubmittedAt = profile?.bracket_submitted_at ?? null
+  const isLocked =
+    new Date() >= LOCK_DEADLINE || bracketSubmittedAt !== null
 
   // ── Derived collections ──
   const queue = useMemo(
@@ -253,8 +258,18 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   useEffect(() => {
     if (loading || initRef.current || queue.length === 0) return
     initRef.current = true
+    const allMatches = [...groupMatches, ...knockoutMatches]
+    const totalDone = allMatches.filter((m) => predictions[m.id]).length
+    const bracketFullyPredicted = totalDone === TOTAL_MATCHES
     const groupsDone = groupMatches.every((m) => predictions[m.id])
-    if (groupsDone) {
+
+    if (bracketFullyPredicted && !bracketSubmittedAt) {
+      // All 104 predicted but not yet locked in — land on the
+      // celebration so the user can submit or review.
+      setPhase('complete')
+      setCatchupQueue([])
+      setCursor(0)
+    } else if (groupsDone) {
       const hasKoPrediction = knockoutMatches.some((m) => predictions[m.id])
       setPhase(hasKoPrediction ? 'bracket' : 'review')
       setCatchupQueue([])
@@ -262,10 +277,19 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
     } else {
       setPhase('catchup')
       setCatchupQueue(groupMatches.map((m) => m.id))
-      const firstUnpredicted = groupMatches.findIndex((m) => !predictions[m.id])
+      const firstUnpredicted = groupMatches.findIndex(
+        (m) => !predictions[m.id]
+      )
       setCursor(firstUnpredicted >= 0 ? firstUnpredicted : 0)
     }
-  }, [loading, queue.length, groupMatches, knockoutMatches, predictions])
+  }, [
+    loading,
+    queue.length,
+    groupMatches,
+    knockoutMatches,
+    predictions,
+    bracketSubmittedAt,
+  ])
 
   // ── Reset transient state on close so reopening starts fresh ──
   useEffect(() => {

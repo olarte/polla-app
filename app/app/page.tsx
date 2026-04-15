@@ -7,6 +7,7 @@ import Label from '../components/Label'
 import TierBadge from '../components/TierBadge'
 import WhatsAppBtn from '../components/WhatsAppBtn'
 import PredictModal from '../components/PredictModal'
+import SubmitHoldButton from '../components/SubmitHoldButton'
 import { useAuth } from '../contexts/AuthContext'
 import { createClient } from '@/lib/supabase-browser'
 
@@ -50,6 +51,123 @@ function Skeleton({ className = '' }: { className?: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Predict the World Cup CTA card — state-aware
+// ---------------------------------------------------------------------------
+
+function PredictCtaCard({
+  predictionCount,
+  predictionProgress,
+  bracketSubmittedAt,
+  onOpen,
+  onSubmit,
+}: {
+  predictionCount: number
+  predictionProgress: number
+  bracketSubmittedAt: string | null
+  onOpen: () => void
+  onSubmit: () => Promise<void>
+}) {
+  const isComplete = predictionCount >= TOTAL_MATCHES
+  const isSubmitted = !!bracketSubmittedAt
+
+  // State 1: submitted — locked in, view only
+  if (isComplete && isSubmitted) {
+    const submittedDate = new Date(bracketSubmittedAt)
+    const formatted = submittedDate.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    return (
+      <Card glow className="text-center">
+        <div className="text-3xl mb-2">🔒</div>
+        <p className="text-lg font-bold mb-1">Bracket Locked In</p>
+        <p className="text-text-40 text-xs mb-4">
+          Submitted on {formatted}. No more edits — good luck.
+        </p>
+        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-4">
+          <div
+            className="h-full rounded-full bg-polla-success"
+            style={{ width: '100%' }}
+          />
+        </div>
+        <button
+          onClick={onOpen}
+          className="w-full py-3 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70"
+        >
+          View Bracket
+        </button>
+      </Card>
+    )
+  }
+
+  // State 2: complete but not submitted — celebrate + allow edit + Submit
+  if (isComplete && !isSubmitted) {
+    return (
+      <Card glow className="text-center">
+        <div className="text-3xl mb-2">🏆</div>
+        <p className="text-lg font-bold mb-1">Bracket Complete!</p>
+        <p className="text-text-40 text-xs mb-4 leading-snug">
+          You&apos;ve predicted all <span className="num text-white font-bold">104</span> matches.
+          Edit any prediction before the first match, or lock it in now.
+        </p>
+        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-4">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark"
+            style={{ width: '100%' }}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={onOpen}
+            className="w-full py-3 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70"
+          >
+            Edit Predictions
+          </button>
+          <SubmitHoldButton
+            onSubmit={onSubmit}
+            idleLabel="Hold to Submit"
+            holdingLabel="Keep holding…"
+            submittingLabel="Locking in…"
+          />
+          <p className="text-text-25 text-[9px] mt-1">
+            Press and hold for 2.5 seconds to lock your bracket in.
+          </p>
+        </div>
+      </Card>
+    )
+  }
+
+  // State 3: in-progress (existing behavior)
+  return (
+    <Card glow className="text-center active:scale-[0.98] transition-transform">
+      <p className="text-lg font-bold mb-1">Predict the World Cup</p>
+      <p className="text-text-40 text-sm mb-3">
+        104 matches. Predict every score. Climb the leaderboard.
+      </p>
+      <div className="flex items-center justify-between mb-2">
+        <Label>Progress</Label>
+        <span className="text-text-70 text-xs num">
+          {predictionCount}/{TOTAL_MATCHES} ({predictionProgress}%)
+        </span>
+      </div>
+      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark transition-all"
+          style={{ width: `${predictionProgress}%` }}
+        />
+      </div>
+      <button
+        onClick={onOpen}
+        className="mt-4 w-full py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform"
+      >
+        {predictionCount === 0 ? 'Start Predicting' : 'Continue Predicting'}
+      </button>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -80,7 +198,7 @@ function formatCurrency(amount: number): string {
 export default function HomePage() {
   const [predictOpen, setPredictOpen] = useState(false)
   const [unclaimed, setUnclaimed] = useState<{ total: number; count: number } | null>(null)
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
 
   // Data states
   const [groups, setGroups] = useState<GroupWithMembership[]>([])
@@ -269,30 +387,21 @@ export default function HomePage() {
       {loading ? (
         <Skeleton className="h-[180px]" />
       ) : (
-        <Card glow className="text-center active:scale-[0.98] transition-transform">
-          <p className="text-lg font-bold mb-1">Predict the World Cup</p>
-          <p className="text-text-40 text-sm mb-3">
-            104 matches. Predict every score. Climb the leaderboard.
-          </p>
-          <div className="flex items-center justify-between mb-2">
-            <Label>Progress</Label>
-            <span className="text-text-70 text-xs num">
-              {predictionCount}/{TOTAL_MATCHES} ({predictionProgress}%)
-            </span>
-          </div>
-          <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark transition-all"
-              style={{ width: `${predictionProgress}%` }}
-            />
-          </div>
-          <button
-            onClick={() => setPredictOpen(true)}
-            className="mt-4 w-full py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform"
-          >
-            {predictionCount === 0 ? 'Start Predicting' : predictionCount >= TOTAL_MATCHES ? '✓ Complete' : 'Continue Predicting'}
-          </button>
-        </Card>
+        <PredictCtaCard
+          predictionCount={predictionCount}
+          predictionProgress={predictionProgress}
+          bracketSubmittedAt={profile?.bracket_submitted_at ?? null}
+          onOpen={() => setPredictOpen(true)}
+          onSubmit={async () => {
+            if (!user) return
+            const supabase = createClient()
+            const { error } = await supabase
+              .from('users')
+              .update({ bracket_submitted_at: new Date().toISOString() })
+              .eq('id', user.id)
+            if (!error) await refreshProfile()
+          }}
+        />
       )}
 
       {/* -- Global Pool Card -- */}

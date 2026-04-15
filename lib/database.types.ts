@@ -25,6 +25,7 @@ export interface Database {
           auth_method: string
           last_login_date: string | null
           onboarding_completed: boolean
+          bracket_submitted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -43,6 +44,7 @@ export interface Database {
           auth_method?: string
           last_login_date?: string | null
           onboarding_completed?: boolean
+          bracket_submitted_at?: string | null
         }
         Update: {
           id?: string
@@ -59,6 +61,7 @@ export interface Database {
           auth_method?: string
           last_login_date?: string | null
           onboarding_completed?: boolean
+          bracket_submitted_at?: string | null
         }
         Relationships: []
       }
