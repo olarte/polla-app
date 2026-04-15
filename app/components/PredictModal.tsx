@@ -139,72 +139,100 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
   // Keyed on user?.id (not `user`) so transient auth-context
   // re-renders from TOKEN_REFRESHED don't thrash this effect.
   // reloadTick lets us re-fire on resume-from-background.
+  //
+  // Uses an AbortController + Supabase's .abortSignal() so that
+  // zombie fetches from before a resume are actually killed,
+  // not just ignored. Auto-retries up to 2 times on abort/lock
+  // races before surfacing a user-visible error.
   const userId = user?.id
   useEffect(() => {
     if (!isOpen) return
     if (!userId) return
-    let cancelled = false
+
+    const controller = new AbortController()
+    let settled = false
+    let attempt = 0
+    const MAX_ATTEMPTS = 3
+    const TIMEOUT_MS = 8000
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let retryId: ReturnType<typeof setTimeout> | null = null
+
     setLoading(true)
     setLoadError(null)
 
-    // Hard timeout in case a fetch hangs after the app was
-    // backgrounded for a while and the Supabase client's
-    // connection is stuck. Surfaces an error + retry button
-    // instead of leaving the user on "Loading matches…" forever.
-    const timeoutId = setTimeout(() => {
-      if (cancelled) return
-      cancelled = true
-      setLoadError('Connection timed out — tap to retry.')
-      setLoading(false)
-    }, 12000)
+    const tryLoad = () => {
+      attempt += 1
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        if (settled) return
+        // Abort the in-flight fetch so the socket is released
+        // and the Supabase client can start a fresh one.
+        controller.abort()
+      }, TIMEOUT_MS)
 
-    ;(async () => {
-      try {
-        const [mRes, pRes] = await Promise.all([
-          supabase
-            .from('matches')
-            .select('*')
-            .gte('match_number', 1)
-            .lte('match_number', 104)
-            .order('match_number'),
-          supabase.from('predictions').select('*').eq('user_id', userId),
-        ])
-        if (cancelled) return
-        clearTimeout(timeoutId)
-        if (mRes.error) throw new Error(mRes.error.message)
-        if (pRes.error) throw new Error(pRes.error.message)
-        setMatches(mRes.data ?? [])
-        const map: PredictionMap = {}
-        for (const p of pRes.data ?? []) {
-          map[p.match_id] = {
-            score_a: p.score_a,
-            score_b: p.score_b,
-            penalty_winner: p.penalty_winner ?? null,
+      Promise.all([
+        supabase
+          .from('matches')
+          .select('*')
+          .gte('match_number', 1)
+          .lte('match_number', 104)
+          .order('match_number')
+          .abortSignal(controller.signal),
+        supabase
+          .from('predictions')
+          .select('*')
+          .eq('user_id', userId)
+          .abortSignal(controller.signal),
+      ])
+        .then(([mRes, pRes]) => {
+          if (settled) return
+          if (timeoutId) clearTimeout(timeoutId)
+          if (mRes.error) throw new Error(mRes.error.message)
+          if (pRes.error) throw new Error(pRes.error.message)
+          settled = true
+          setMatches(mRes.data ?? [])
+          const map: PredictionMap = {}
+          for (const p of pRes.data ?? []) {
+            map[p.match_id] = {
+              score_a: p.score_a,
+              score_b: p.score_b,
+              penalty_winner: p.penalty_winner ?? null,
+            }
           }
-        }
-        setPredictions(map)
-        setLoading(false)
-      } catch (err) {
-        if (cancelled) return
-        clearTimeout(timeoutId)
-        const msg = err instanceof Error ? err.message : 'Failed to load matches.'
-        // Supabase's auth lock can abort an in-flight fetch if the
-        // internal token refresh wins the race on resume. These
-        // errors are transient — swallow them and schedule a
-        // single retry instead of showing the error state.
-        const isLockRace = /lock was stolen|aborterror/i.test(msg)
-        if (isLockRace) {
-          setTimeout(() => setReloadTick((t) => t + 1), 800)
-          return
-        }
-        setLoadError(msg)
-        setLoading(false)
-      }
-    })()
+          setPredictions(map)
+          setLoading(false)
+        })
+        .catch((err) => {
+          if (settled) return
+          if (timeoutId) clearTimeout(timeoutId)
+          const msg =
+            err instanceof Error ? err.message : 'Failed to load matches.'
+          // Transient errors we can recover from by retrying —
+          // timeout aborts, auth-lock races, generic aborts.
+          const isTransient =
+            /lock was stolen|aborterror|signal.*abort|the operation was aborted/i.test(
+              msg
+            )
+          if (isTransient && attempt < MAX_ATTEMPTS) {
+            // Exponential-ish backoff so we don't hammer a
+            // still-recovering connection.
+            const delay = 500 * attempt
+            retryId = setTimeout(tryLoad, delay)
+            return
+          }
+          settled = true
+          setLoadError(msg)
+          setLoading(false)
+        })
+    }
+
+    tryLoad()
 
     return () => {
-      cancelled = true
-      clearTimeout(timeoutId)
+      settled = true
+      controller.abort()
+      if (timeoutId) clearTimeout(timeoutId)
+      if (retryId) clearTimeout(retryId)
     }
   }, [isOpen, userId, supabase, reloadTick])
 
