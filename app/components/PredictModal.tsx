@@ -245,23 +245,16 @@ export default function PredictModal({ isOpen, onClose }: PredictModalProps) {
       if (!user) return
       if (saveTimer.current) clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(async () => {
-        // Only include penalty_winner in the payload when it's
-        // actually set. This lets the existing group-match +
-        // non-tied-knockout save path keep working even if
-        // migration 009 hasn't added the column yet. Tied-KO
-        // saves will error loudly until the column exists.
-        const payload: Record<string, unknown> = {
-          user_id: user.id,
-          match_id: matchId,
-          score_a: scoreA,
-          score_b: scoreB,
-        }
-        if (penaltyWinner !== null) {
-          payload.penalty_winner = penaltyWinner
-        }
-        await supabase.from('predictions').upsert(payload as never, {
-          onConflict: 'user_id,match_id',
-        })
+        await supabase.from('predictions').upsert(
+          {
+            user_id: user.id,
+            match_id: matchId,
+            score_a: scoreA,
+            score_b: scoreB,
+            penalty_winner: penaltyWinner,
+          },
+          { onConflict: 'user_id,match_id' }
+        )
       }, 300)
     },
     [user, supabase]
