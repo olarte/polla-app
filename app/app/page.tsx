@@ -32,17 +32,6 @@ interface LeaderboardEntry {
   tier: string
 }
 
-interface NextMatch {
-  id: string
-  team_a_name: string
-  team_a_flag: string
-  team_b_name: string
-  team_b_flag: string
-  group_letter: string | null
-  stage: string
-  kickoff: string
-}
-
 interface DayMatch {
   id: string
   match_number: number
@@ -294,21 +283,74 @@ function BracketCompleteCard({
 }
 
 // ---------------------------------------------------------------------------
+// Upcoming Matches (grouped by day)
+// ---------------------------------------------------------------------------
+
+function UpcomingMatches({ matches }: { matches: DayMatch[] }) {
+  // Group matches by calendar date
+  const byDay = matches.reduce((acc, match) => {
+    const date = new Date(match.kickoff)
+    const key = date.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    })
+    if (!acc[key]) acc[key] = []
+    acc[key].push(match)
+    return acc
+  }, {} as Record<string, DayMatch[]>)
+
+  return (
+    <div className="space-y-5">
+      {Object.entries(byDay).map(([dayLabel, dayMatches]) => (
+        <div key={dayLabel}>
+          <Label>{dayLabel}</Label>
+          <div className="space-y-2.5 mt-3">
+            {dayMatches.map((match) => {
+              const kickoff = new Date(match.kickoff)
+              const time = kickoff.toLocaleTimeString(undefined, {
+                hour: 'numeric',
+                minute: '2-digit',
+                timeZoneName: 'short',
+              })
+              return (
+                <Card key={match.id} className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{match.team_a_flag}</span>
+                        <span className="text-sm font-semibold">{match.team_a_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-base">{match.team_b_flag}</span>
+                        <span className="text-sm font-semibold">{match.team_b_name}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-text-70 text-xs font-semibold">{time}</p>
+                      <p className="text-text-40 text-[10px] mt-0.5">
+                        {match.group_letter ? `Group ${match.group_letter}` : match.stage}
+                      </p>
+                      <p className="text-text-25 text-[10px] mt-0.5 max-w-[120px] truncate">
+                        {match.venue}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const TOTAL_MATCHES = 104
-
-function formatCountdown(target: Date): string | null {
-  const diff = target.getTime() - Date.now()
-  if (diff <= 0) return null
-  const days = Math.floor(diff / 86400000)
-  const hours = Math.floor((diff % 86400000) / 3600000)
-  const mins = Math.floor((diff % 3600000) / 60000)
-  if (days > 0) return `${days}d ${hours}h`
-  if (hours > 0) return `${hours}h ${mins}m`
-  return `${mins} min`
-}
 
 function formatCurrency(amount: number): string {
   if (Number.isInteger(amount)) {
@@ -333,7 +375,6 @@ export default function HomePage() {
   const [groups, setGroups] = useState<GroupWithMembership[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry | null>(null)
   const [predictionCount, setPredictionCount] = useState(0)
-  const [nextMatch, setNextMatch] = useState<NextMatch | null>(null)
   const [globalPool, setGlobalPool] = useState(0)
   const [dayMatches, setDayMatches] = useState<DayMatch[]>([])
   const [loading, setLoading] = useState(true)
@@ -362,7 +403,6 @@ export default function HomePage() {
           groupsRes,
           leaderboardRes,
           predictionsRes,
-          nextMatchRes,
           poolTotalRes,
           dayMatchesRes,
         ] = await Promise.all([
@@ -385,28 +425,19 @@ export default function HomePage() {
             .select('id', { count: 'exact', head: true })
             .eq('user_id', user!.id),
 
-          // 4. Next scheduled match
-          supabase
-            .from('matches')
-            .select('id, team_a_name, team_a_flag, team_b_name, team_b_flag, group_letter, stage, kickoff')
-            .eq('status', 'scheduled')
-            .order('kickoff', { ascending: true })
-            .limit(1)
-            .single(),
-
-          // 5. Global pool from running total
+          // 4. Global pool from running total
           supabase
             .from('global_pool_totals')
             .select('total_amount')
             .eq('id', true)
             .single(),
 
-          // 6. Opening day matches (June 11, 2026)
+          // 5. First two days of matches (June 11-12, 2026)
           supabase
             .from('matches')
             .select('id, match_number, team_a_name, team_a_code, team_a_flag, team_b_name, team_b_code, team_b_flag, group_letter, stage, kickoff, venue, city, status')
             .gte('kickoff', '2026-06-11T00:00:00Z')
-            .lt('kickoff', '2026-06-12T00:00:00Z')
+            .lt('kickoff', '2026-06-13T00:00:00Z')
             .order('kickoff', { ascending: true }),
         ])
 
@@ -426,11 +457,6 @@ export default function HomePage() {
         // Process prediction count
         if (predictionsRes.count !== null && predictionsRes.count !== undefined) {
           setPredictionCount(predictionsRes.count)
-        }
-
-        // Process next match
-        if (nextMatchRes.data) {
-          setNextMatch(nextMatchRes.data)
         }
 
         // Process global pool from running total
@@ -461,20 +487,6 @@ export default function HomePage() {
       })
       .catch(() => {})
   }, [])
-
-  // Refresh countdown every minute
-  const [, setTick] = useState(0)
-  useEffect(() => {
-    if (!nextMatch) return
-    const id = setInterval(() => setTick((t) => t + 1), 60_000)
-    return () => clearInterval(id)
-  }, [nextMatch])
-
-  // Recompute countdown on tick
-  const liveCountdown = useMemo(() => {
-    if (!nextMatch) return null
-    return formatCountdown(new Date(nextMatch.kickoff))
-  }, [nextMatch, /* eslint-disable-next-line react-hooks/exhaustive-deps */ setTick])
 
   // ---------- Tier helpers ----------
   const tierName = leaderboard?.tier || 'bronze'
@@ -579,27 +591,6 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* -- Next Match Countdown -- */}
-      {loading ? (
-        <Skeleton className="h-[80px]" />
-      ) : nextMatch && liveCountdown ? (
-        <Card className="active:scale-[0.98] transition-transform">
-          <Label>Next Match</Label>
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-sm font-semibold">
-              {nextMatch.team_a_flag} {nextMatch.team_a_name} vs {nextMatch.team_b_name} {nextMatch.team_b_flag}
-            </span>
-            <span className="text-text-40 text-xs">
-              {nextMatch.group_letter ? `Group ${nextMatch.group_letter}` : nextMatch.stage}
-            </span>
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-text-40 text-xs">Starts in</span>
-            <span className="num text-lg font-bold">{liveCountdown}</span>
-          </div>
-        </Card>
-      ) : null}
-
       {/* -- Create / Join Pool -- */}
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -618,46 +609,9 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* -- Opening Day Matches -- */}
+      {/* -- Upcoming Matches (grouped by day) -- */}
       {!loading && dayMatches.length > 0 && (
-        <div>
-          <Label>Opening Day — June 11</Label>
-          <div className="space-y-2.5 mt-3">
-            {dayMatches.map((match) => {
-              const kickoff = new Date(match.kickoff)
-              const time = kickoff.toLocaleTimeString(undefined, {
-                hour: 'numeric',
-                minute: '2-digit',
-                timeZoneName: 'short',
-              })
-              return (
-                <Card key={match.id} className="py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{match.team_a_flag}</span>
-                        <span className="text-sm font-semibold">{match.team_a_name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-base">{match.team_b_flag}</span>
-                        <span className="text-sm font-semibold">{match.team_b_name}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-text-70 text-xs font-semibold">{time}</p>
-                      <p className="text-text-40 text-[10px] mt-0.5">
-                        {match.group_letter ? `Group ${match.group_letter}` : match.stage}
-                      </p>
-                      <p className="text-text-25 text-[10px] mt-0.5 max-w-[120px] truncate">
-                        {match.venue}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
+        <UpcomingMatches matches={dayMatches} />
       )}
 
       {/* -- Modals -- */}
