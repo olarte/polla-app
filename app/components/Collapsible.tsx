@@ -3,7 +3,7 @@
 import { useState, ReactNode } from 'react'
 
 interface CollapsibleProps {
-  title: string
+  title: ReactNode
   children: ReactNode
   defaultOpen?: boolean
 }

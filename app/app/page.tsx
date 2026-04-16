@@ -5,7 +5,9 @@ import Link from 'next/link'
 import Card from '../components/Card'
 import Label from '../components/Label'
 import TierBadge from '../components/TierBadge'
+import { useRouter } from 'next/navigation'
 import PredictModal from '../components/PredictModal'
+import CreatePollaModal from '../components/CreatePollaModal'
 import SubmitHoldButton from '../components/SubmitHoldButton'
 import { useAuth } from '../contexts/AuthContext'
 import { createClient } from '@/lib/supabase-browser'
@@ -154,7 +156,98 @@ function PredictCtaCard({
 }
 
 // ---------------------------------------------------------------------------
-// Bracket Complete Card (with tiebreaker input)
+// Join Pool Modal
+// ---------------------------------------------------------------------------
+
+function JoinPoolModal({
+  isOpen,
+  onClose,
+  onJoined,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onJoined: (groupId: string) => void
+}) {
+  const [code, setCode] = useState('')
+  const [joining, setJoining] = useState(false)
+  const [error, setError] = useState('')
+
+  if (!isOpen) return null
+
+  async function handleJoin() {
+    if (!code.trim()) return
+    setJoining(true)
+    setError('')
+    try {
+      const res = await fetch('/api/groups/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite_code: code.trim(), tx_hash: 'pending' }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Failed to join')
+        return
+      }
+      onJoined(data.group_id)
+    } catch {
+      setError('Something went wrong. Try again.')
+    } finally {
+      setJoining(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 animate-fade-in" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-t-2xl bg-polla-bg border-t border-card-border p-5 pb-[max(20px,env(safe-area-inset-bottom))]"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">Join a Pool</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-text-40 text-sm"
+          >
+            &times;
+          </button>
+        </div>
+
+        <p className="text-text-40 text-xs mb-4">
+          Paste the 6-character invite code shared by the pool creator.
+        </p>
+
+        <input
+          type="text"
+          value={code}
+          onChange={e => {
+            setCode(e.target.value.toUpperCase())
+            setError('')
+          }}
+          placeholder="INVITE CODE"
+          maxLength={6}
+          autoFocus
+          className="w-full h-12 bg-white/[0.03] border border-card-border rounded-xl px-4 text-center text-lg text-white font-bold tracking-[0.3em] placeholder:text-text-25 placeholder:tracking-[0.2em] placeholder:text-sm placeholder:font-normal outline-none focus:border-polla-accent/40 transition-colors uppercase num"
+        />
+
+        {error && (
+          <p className="text-polla-accent text-xs mt-2">{error}</p>
+        )}
+
+        <button
+          onClick={handleJoin}
+          disabled={joining || code.trim().length < 4}
+          className="mt-4 w-full h-12 rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark text-sm font-bold text-white active:opacity-80 disabled:opacity-40 transition-opacity"
+        >
+          {joining ? 'Joining...' : 'Join Pool'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Bracket Complete Card
 // ---------------------------------------------------------------------------
 
 function BracketCompleteCard({
@@ -229,7 +322,10 @@ function formatCurrency(amount: number): string {
 // ---------------------------------------------------------------------------
 
 export default function HomePage() {
+  const router = useRouter()
   const [predictOpen, setPredictOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [joinOpen, setJoinOpen] = useState(false)
   const [unclaimed, setUnclaimed] = useState<{ total: number; count: number } | null>(null)
   const { user, profile, refreshProfile } = useAuth()
 
@@ -506,49 +602,21 @@ export default function HomePage() {
 
       {/* -- Create / Join Pool -- */}
       <div className="grid grid-cols-2 gap-3">
-        <Link href="/app/pollas?action=create" className="block active:scale-[0.97] transition-transform">
-          <div className="h-[72px] rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark flex flex-col items-center justify-center gap-1">
-            <span className="text-xl">🐔</span>
-            <span className="text-sm font-bold text-white">Create Pool</span>
-          </div>
-        </Link>
-        <Link href="/app/pollas?action=join" className="block active:scale-[0.97] transition-transform">
-          <div className="h-[72px] rounded-xl border border-card-border bg-card flex flex-col items-center justify-center gap-1">
-            <span className="text-xl">🔗</span>
-            <span className="text-sm font-bold text-text-70">Join Pool</span>
-          </div>
-        </Link>
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="h-[72px] rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark flex flex-col items-center justify-center gap-1 active:scale-[0.97] transition-transform"
+        >
+          <span className="text-xl">🐔</span>
+          <span className="text-sm font-bold text-white">Create Pool</span>
+        </button>
+        <button
+          onClick={() => setJoinOpen(true)}
+          className="h-[72px] rounded-xl border border-card-border bg-card flex flex-col items-center justify-center gap-1 active:scale-[0.97] transition-transform"
+        >
+          <span className="text-xl">🔗</span>
+          <span className="text-sm font-bold text-text-70">Join Pool</span>
+        </button>
       </div>
-
-      {/* -- My Pools -- */}
-      {!loading && groups.length > 0 && (
-        <div>
-          <Label>My Pools</Label>
-          <div className="space-y-2.5 mt-3">
-            {groups.map((group) => (
-              <Link
-                key={group.id}
-                href={`/app/pollas/${group.id}`}
-                className="block active:scale-[0.98] transition-transform"
-              >
-                <Card className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xl">{group.emoji || '⚽'}</span>
-                    <div>
-                      <p className="text-sm font-semibold">{group.name}</p>
-                      <p className="text-text-40 text-xs mt-0.5">
-                        {group.member_count} {group.member_count === 1 ? 'member' : 'members'} ·{' '}
-                        {formatCurrency(group.entry_fee)} entry
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-text-25 text-sm">→</span>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* -- Opening Day Matches -- */}
       {!loading && dayMatches.length > 0 && (
@@ -592,8 +660,24 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* -- Predict Modal -- */}
+      {/* -- Modals -- */}
       <PredictModal isOpen={predictOpen} onClose={() => setPredictOpen(false)} />
+      <CreatePollaModal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(group) => {
+          setCreateOpen(false)
+          router.push(`/app/pollas/${group.id}`)
+        }}
+      />
+      <JoinPoolModal
+        isOpen={joinOpen}
+        onClose={() => setJoinOpen(false)}
+        onJoined={(groupId) => {
+          setJoinOpen(false)
+          router.push(`/app/pollas/${groupId}`)
+        }}
+      />
     </div>
   )
 }
