@@ -442,32 +442,6 @@ export default function GlobalPage() {
         </div>
       </Card>
 
-      {/* ── Tiebreaker ── */}
-      <Card>
-        <div className="flex items-center justify-between">
-          <div>
-            <Label>Tiebreaker</Label>
-            <p className="text-text-40 text-[10px] mt-0.5">
-              Tied on points? Closest to actual total goals wins.
-            </p>
-          </div>
-          <div className="text-right">
-            {tiebreaker !== null ? (
-              <p className="num text-lg font-bold">{tiebreaker}</p>
-            ) : (
-              <p className="text-text-25 text-xs">Not set</p>
-            )}
-            <p className="text-text-25 text-[10px]">Your prediction</p>
-          </div>
-        </div>
-        {actualGoals !== null && actualGoals > 0 && (
-          <div className="mt-2 pt-2 border-t border-card-border flex items-center justify-between">
-            <p className="text-text-40 text-[10px]">Actual goals so far</p>
-            <p className="num text-sm font-semibold">{actualGoals}</p>
-          </div>
-        )}
-      </Card>
-
       {/* ── Prize Ladder ── */}
       <div>
         <Label>Prize Ladder</Label>

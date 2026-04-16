@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Card from '../components/Card'
 import Label from '../components/Label'
 import TierBadge from '../components/TierBadge'
-import WhatsAppBtn from '../components/WhatsAppBtn'
 import PredictModal from '../components/PredictModal'
 import SubmitHoldButton from '../components/SubmitHoldButton'
 import { useAuth } from '../contexts/AuthContext'
@@ -40,6 +39,23 @@ interface NextMatch {
   group_letter: string | null
   stage: string
   kickoff: string
+}
+
+interface DayMatch {
+  id: string
+  match_number: number
+  team_a_name: string
+  team_a_code: string
+  team_a_flag: string
+  team_b_name: string
+  team_b_code: string
+  team_b_flag: string
+  group_letter: string | null
+  stage: string
+  kickoff: string
+  venue: string
+  city: string
+  status: string
 }
 
 // ---------------------------------------------------------------------------
@@ -148,41 +164,6 @@ function BracketCompleteCard({
   onOpen: () => void
   onSubmit: () => Promise<void>
 }) {
-  const [tiebreakerGoals, setTiebreakerGoals] = useState<string>('')
-  const [tiebreakerSaved, setTiebreakerSaved] = useState(false)
-  const [tiebreakerSaving, setTiebreakerSaving] = useState(false)
-  const loaded = useRef(false)
-
-  useEffect(() => {
-    if (loaded.current) return
-    loaded.current = true
-    fetch('/api/global/tiebreaker')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.tiebreaker_goals !== null && d?.tiebreaker_goals !== undefined) {
-          setTiebreakerGoals(String(d.tiebreaker_goals))
-          setTiebreakerSaved(true)
-        }
-      })
-      .catch(() => {})
-  }, [])
-
-  const saveTiebreaker = useCallback(async () => {
-    const parsed = Number(tiebreakerGoals)
-    if (!tiebreakerGoals || !Number.isInteger(parsed) || parsed < 0 || parsed > 999) return
-    setTiebreakerSaving(true)
-    try {
-      const res = await fetch('/api/global/tiebreaker', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goals: parsed }),
-      })
-      if (res.ok) setTiebreakerSaved(true)
-    } finally {
-      setTiebreakerSaving(false)
-    }
-  }, [tiebreakerGoals])
-
   return (
     <Card glow className="text-center">
       <div className="text-3xl mb-2">🏆</div>
@@ -196,47 +177,6 @@ function BracketCompleteCard({
           className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark"
           style={{ width: '100%' }}
         />
-      </div>
-
-      {/* Tiebreaker */}
-      <div className="rounded-xl bg-white/[0.03] border border-card-border p-3 mb-4 text-left">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-polla-gold text-[10px] font-bold uppercase tracking-widest">
-            Tiebreaker
-          </p>
-          {tiebreakerSaved && (
-            <span className="text-polla-success text-[10px] font-semibold">Saved</span>
-          )}
-        </div>
-        <p className="text-text-40 text-[10px] leading-snug mb-2">
-          Total goals across all 104 matches. Closest guess breaks ties.
-        </p>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={999}
-            placeholder="e.g. 280"
-            value={tiebreakerGoals}
-            onChange={e => {
-              setTiebreakerGoals(e.target.value)
-              setTiebreakerSaved(false)
-            }}
-            className="flex-1 h-9 rounded-lg bg-white/[0.06] border border-card-border text-center text-white num text-sm font-bold placeholder:text-text-25 focus:outline-none focus:border-polla-accent"
-          />
-          <button
-            onClick={saveTiebreaker}
-            disabled={tiebreakerSaving || tiebreakerSaved || !tiebreakerGoals}
-            className={`h-9 px-3 rounded-lg text-xs font-bold transition-colors ${
-              tiebreakerSaved
-                ? 'bg-polla-success/20 text-polla-success'
-                : 'bg-polla-accent/20 text-polla-accent active:opacity-80'
-            } disabled:opacity-40`}
-          >
-            {tiebreakerSaving ? '...' : tiebreakerSaved ? 'Saved' : 'Save'}
-          </button>
-        </div>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -299,6 +239,7 @@ export default function HomePage() {
   const [predictionCount, setPredictionCount] = useState(0)
   const [nextMatch, setNextMatch] = useState<NextMatch | null>(null)
   const [globalPool, setGlobalPool] = useState(0)
+  const [dayMatches, setDayMatches] = useState<DayMatch[]>([])
   const [loading, setLoading] = useState(true)
 
   // Derived
@@ -326,7 +267,8 @@ export default function HomePage() {
           leaderboardRes,
           predictionsRes,
           nextMatchRes,
-          globalPoolRes,
+          poolTotalRes,
+          dayMatchesRes,
         ] = await Promise.all([
           // 1. User's groups via group_members join
           supabase
@@ -356,11 +298,20 @@ export default function HomePage() {
             .limit(1)
             .single(),
 
-          // 5. Global pool sum (all paid groups)
+          // 5. Global pool from running total
           supabase
-            .from('groups')
-            .select('pool_amount')
-            .eq('is_paid', true),
+            .from('global_pool_totals')
+            .select('total_amount')
+            .eq('id', true)
+            .single(),
+
+          // 6. Opening day matches (June 11, 2026)
+          supabase
+            .from('matches')
+            .select('id, match_number, team_a_name, team_a_code, team_a_flag, team_b_name, team_b_code, team_b_flag, group_letter, stage, kickoff, venue, city, status')
+            .gte('kickoff', '2026-06-11T00:00:00Z')
+            .lt('kickoff', '2026-06-12T00:00:00Z')
+            .order('kickoff', { ascending: true }),
         ])
 
         // Process groups
@@ -386,13 +337,14 @@ export default function HomePage() {
           setNextMatch(nextMatchRes.data)
         }
 
-        // Process global pool
-        if (globalPoolRes.data) {
-          const total = globalPoolRes.data.reduce(
-            (sum: number, g: { pool_amount: number }) => sum + (g.pool_amount || 0),
-            0
-          )
-          setGlobalPool(total)
+        // Process global pool from running total
+        if (poolTotalRes.data) {
+          setGlobalPool(Number(poolTotalRes.data.total_amount) || 0)
+        }
+
+        // Process opening day matches
+        if (dayMatchesRes.data) {
+          setDayMatches(dayMatchesRes.data as DayMatch[])
         }
       } catch (err) {
         console.error('Home fetch error:', err)
@@ -552,33 +504,27 @@ export default function HomePage() {
         </Card>
       ) : null}
 
-      {/* -- My Pools -- */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <Label>My Pools</Label>
-          <div className="flex items-center gap-3">
-            <Link href="/app/pollas" className="text-text-40 text-xs underline underline-offset-2">
-              Join with code
-            </Link>
-            <Link href="/app/pollas" className="text-polla-accent text-xs font-semibold">
-              + Create
-            </Link>
+      {/* -- Create / Join Pool -- */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/app/pollas?action=create" className="block active:scale-[0.97] transition-transform">
+          <div className="h-[72px] rounded-xl bg-gradient-to-r from-polla-accent to-polla-accent-dark flex flex-col items-center justify-center gap-1">
+            <span className="text-xl">🐔</span>
+            <span className="text-sm font-bold text-white">Create Pool</span>
           </div>
-        </div>
+        </Link>
+        <Link href="/app/pollas?action=join" className="block active:scale-[0.97] transition-transform">
+          <div className="h-[72px] rounded-xl border border-card-border bg-card flex flex-col items-center justify-center gap-1">
+            <span className="text-xl">🔗</span>
+            <span className="text-sm font-bold text-text-70">Join Pool</span>
+          </div>
+        </Link>
+      </div>
 
-        {loading ? (
-          <div className="space-y-2.5">
-            <Skeleton className="h-[64px]" />
-            <Skeleton className="h-[64px]" />
-            <Skeleton className="h-[64px]" />
-          </div>
-        ) : groups.length === 0 ? (
-          <Card className="text-center py-8">
-            <p className="text-text-40 text-sm">No pools yet</p>
-            <p className="text-text-25 text-xs mt-1">Create or join a pool to compete</p>
-          </Card>
-        ) : (
-          <div className="space-y-2.5">
+      {/* -- My Pools -- */}
+      {!loading && groups.length > 0 && (
+        <div>
+          <Label>My Pools</Label>
+          <div className="space-y-2.5 mt-3">
             {groups.map((group) => (
               <Link
                 key={group.id}
@@ -601,16 +547,50 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* -- Share -- */}
-      <div className="flex justify-center">
-        <WhatsAppBtn
-          text="Invite Friends"
-          message="Join me on Sabi! Predict the World Cup 2026 ⚽🏆 https://sabi.gg"
-        />
-      </div>
+      {/* -- Opening Day Matches -- */}
+      {!loading && dayMatches.length > 0 && (
+        <div>
+          <Label>Opening Day — June 11</Label>
+          <div className="space-y-2.5 mt-3">
+            {dayMatches.map((match) => {
+              const kickoff = new Date(match.kickoff)
+              const time = kickoff.toLocaleTimeString(undefined, {
+                hour: 'numeric',
+                minute: '2-digit',
+                timeZoneName: 'short',
+              })
+              return (
+                <Card key={match.id} className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{match.team_a_flag}</span>
+                        <span className="text-sm font-semibold">{match.team_a_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-base">{match.team_b_flag}</span>
+                        <span className="text-sm font-semibold">{match.team_b_name}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-text-70 text-xs font-semibold">{time}</p>
+                      <p className="text-text-40 text-[10px] mt-0.5">
+                        {match.group_letter ? `Group ${match.group_letter}` : match.stage}
+                      </p>
+                      <p className="text-text-25 text-[10px] mt-0.5 max-w-[120px] truncate">
+                        {match.venue}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* -- Predict Modal -- */}
       <PredictModal isOpen={predictOpen} onClose={() => setPredictOpen(false)} />
