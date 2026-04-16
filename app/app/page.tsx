@@ -287,22 +287,33 @@ function BracketCompleteCard({
 // ---------------------------------------------------------------------------
 
 function UpcomingMatches({ matches }: { matches: DayMatch[] }) {
-  // Group matches by calendar date
-  const byDay = matches.reduce((acc, match) => {
-    const date = new Date(match.kickoff)
-    const key = date.toLocaleDateString(undefined, {
+  // Group matches by calendar date in ET (UTC-4 in June)
+  // This ensures matches at e.g. 01:00 UTC on June 13 (= 9pm ET June 12)
+  // group under June 12, matching the schedule intent.
+  const ET_OFFSET = 4 * 60 * 60 * 1000
+  const byDay: [string, DayMatch[]][] = []
+  const dayMap = new Map<string, DayMatch[]>()
+
+  for (const match of matches) {
+    const utc = new Date(match.kickoff).getTime()
+    const et = new Date(utc - ET_OFFSET)
+    const key = et.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC', // we already shifted to ET
     })
-    if (!acc[key]) acc[key] = []
-    acc[key].push(match)
-    return acc
-  }, {} as Record<string, DayMatch[]>)
+    if (!dayMap.has(key)) {
+      dayMap.set(key, [])
+      byDay.push([key, dayMap.get(key)!])
+    }
+    dayMap.get(key)!.push(match)
+  }
 
   return (
     <div className="space-y-5">
-      {Object.entries(byDay).map(([dayLabel, dayMatches]) => (
+      {byDay.map(([dayLabel, dayMatches]) => (
         <div key={dayLabel}>
           <Label>{dayLabel}</Label>
           <div className="space-y-2.5 mt-3">
@@ -404,7 +415,6 @@ export default function HomePage() {
           leaderboardRes,
           predictionsRes,
           poolTotalRes,
-          dayMatchesRes,
         ] = await Promise.all([
           // 1. User's groups via group_members join
           supabase
@@ -431,15 +441,35 @@ export default function HomePage() {
             .select('total_amount')
             .eq('id', true)
             .single(),
+        ])
 
-          // 5. First two days of matches (June 11-12, 2026)
-          supabase
+        // 5. Upcoming matches: find next match date, then fetch 2 days from it
+        const { data: firstMatch } = await supabase
+          .from('matches')
+          .select('kickoff')
+          .gte('kickoff', new Date().toISOString())
+          .order('kickoff', { ascending: true })
+          .limit(1)
+          .single()
+
+        if (firstMatch) {
+          // Start of that match's calendar day (ET, UTC-4 in June)
+          // Use the match's UTC date, back up to midnight UTC of that day
+          const matchDate = new Date(firstMatch.kickoff)
+          const dayStart = new Date(Date.UTC(matchDate.getUTCFullYear(), matchDate.getUTCMonth(), matchDate.getUTCDate()))
+          const twoDaysLater = new Date(dayStart.getTime() + 2 * 86400000)
+
+          const { data: upcomingMatches } = await supabase
             .from('matches')
             .select('id, match_number, team_a_name, team_a_code, team_a_flag, team_b_name, team_b_code, team_b_flag, group_letter, stage, kickoff, venue, city, status')
-            .gte('kickoff', '2026-06-11T00:00:00Z')
-            .lt('kickoff', '2026-06-13T00:00:00Z')
-            .order('kickoff', { ascending: true }),
-        ])
+            .gte('kickoff', dayStart.toISOString())
+            .lt('kickoff', twoDaysLater.toISOString())
+            .order('kickoff', { ascending: true })
+
+          if (upcomingMatches) {
+            setDayMatches(upcomingMatches as DayMatch[])
+          }
+        }
 
         // Process groups
         if (groupsRes.data) {
@@ -462,11 +492,6 @@ export default function HomePage() {
         // Process global pool from running total
         if (poolTotalRes.data) {
           setGlobalPool(Number(poolTotalRes.data.total_amount) || 0)
-        }
-
-        // Process opening day matches
-        if (dayMatchesRes.data) {
-          setDayMatches(dayMatchesRes.data as DayMatch[])
         }
       } catch (err) {
         console.error('Home fetch error:', err)
