@@ -188,7 +188,7 @@ interface GroupDef {
 
 const GROUP_DEFS: GroupDef[] = [
   {
-    name: 'Naija Ballers 🇳🇬', emoji: '🇳🇬', isPaid: false, entryFee: 0,
+    name: 'Naija Ballers 🇳🇬', emoji: '🇳🇬', isPaid: true, entryFee: 5,
     payoutModel: 'podium_split', globalAlloc: 20, code: 'SEED01', creatorName: 'Chidi',
     memberNames: ['Chidi', 'Amara', 'Kelechi', 'Ngozi', 'Emeka', 'Funke', 'Obinna', 'Adaeze', 'Tunde', 'Yemi', 'Chioma', 'James'],
   },
@@ -199,7 +199,7 @@ const GROUP_DEFS: GroupDef[] = [
   },
   {
     name: 'São Paulo FC Fans ⚽', emoji: '⚽', isPaid: true, entryFee: 10,
-    payoutModel: 'proportional', globalAlloc: 20, code: 'SEED03', creatorName: 'Lucas',
+    payoutModel: 'podium_split', globalAlloc: 20, code: 'SEED03', creatorName: 'Lucas',
     memberNames: ['Lucas', 'Camila', 'Rafael', 'Isabela', 'Thiago', 'Fernanda', 'Gustavo', 'Larissa', 'Matheus', 'Juliana', 'Carlos', 'Lucia', 'Fatima', 'Yuki', 'Kwame'],
   },
   {
@@ -208,7 +208,7 @@ const GROUP_DEFS: GroupDef[] = [
     memberNames: ['Kwame', 'James', 'Carlos', 'Thiago', 'Andres', 'Emeka'],
   },
   {
-    name: 'World Cup Newbies 🌍', emoji: '🌍', isPaid: false, entryFee: 0,
+    name: 'World Cup Newbies 🌍', emoji: '🌍', isPaid: true, entryFee: 5,
     payoutModel: 'podium_split', globalAlloc: 20, code: 'SEED05', creatorName: 'James',
     memberNames: [
       'James', 'Fatima', 'Yuki', 'Kwame', 'Lucia', 'Carlos', 'Amina',

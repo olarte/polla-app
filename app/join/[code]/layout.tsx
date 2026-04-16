@@ -18,16 +18,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: group } = await supabase
     .from('groups')
-    .select('name, emoji, is_paid, entry_fee, member_count:group_members(count)')
+    .select('name, emoji, entry_fee, member_count:group_members(count)')
     .eq('invite_code', code)
     .single()
 
   const groupName = group?.name || 'Pool'
   const emoji = group?.emoji || '⛱️'
   const title = `Join ${emoji} ${groupName} on Sabi`
-  const description = group?.is_paid
+  const description = group
     ? `$${group.entry_fee} entry • Predict the World Cup 2026 with friends`
-    : 'Free to play • Predict the World Cup 2026 with friends'
+    : 'Predict the World Cup 2026 with friends'
 
   const ogImageUrl = `${baseUrl}/api/share/generate?template=invite&group_name=${encodeURIComponent(groupName)}`
 

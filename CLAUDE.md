@@ -1,7 +1,7 @@
 # CLAUDE.md — Polla (polla.football) Production MVP
 
 ## Project Overview
-Polla is a social prediction game for the FIFA World Cup 2026. Players predict match outcomes, compete in private groups and on a global leaderboard, earn XP through daily match predictions, and collect cards via booster packs. The platform accepts stablecoin deposits (USDC/USDT) across multiple chains and maintains an off-chain balance system. Free play serves as the primary acquisition channel.
+Polla is a social prediction game for the FIFA World Cup 2026. Players predict match outcomes, compete in private groups and on a global leaderboard. Every pool has a stablecoin entry fee — there is no free-play mode. The platform accepts stablecoin deposits (USDC/USDT) across multiple chains and maintains an off-chain balance system.
 
 **Domain:** polla.football
 **Launch:** Before June 11, 2026 (World Cup kickoff)
@@ -15,7 +15,9 @@ These are intentional, debated choices. Do not relitigate without a deliberate r
 
 1. **One user, one set of predictions.** Predictions are keyed on `(user_id, match_id)` in the schema and apply to every pool the user has joined, including the global leaderboard. Joining more pools never creates more shots at a prize — the same bracket is scored everywhere. This is the guardrail that makes "no minimum entry fee" defensible, closes the spam-pool gaming vector, and keeps the mental model simple (March Madness analogue, not fantasy football).
 
-2. **No minimum entry fee for global-pool eligibility.** Any paid pool — even $1 — qualifies a user for La Gran Polla. Free pools compete on their group leaderboard only (they don't contribute financially to the global pool). The underdog narrative ("$5 entry, $15k win") is the most valuable marketing asset a skill-based contest has, and the 80/20 group-to-global split structurally insulates whales — most of their money stays in their private group where they compete against peers.
+2. **No minimum entry fee for global-pool eligibility.** Any pool — even $1 — qualifies a user for La Gran Polla. The underdog narrative ("$5 entry, $15k win") is the most valuable marketing asset a skill-based contest has, and the 80/20 group-to-global split structurally insulates whales — most of their money stays in their private group where they compete against peers.
+
+6. **Paid-only. No free pools, no XP.** Every pool is paid. MiniPay wallet connection is required to sign up and to join any pool. There is no XP currency, no streaks, no booster packs, no card album tied to engagement — leaderboards are driven solely by points earned from group-stage and knockout match predictions. Daily mini-predictions stay as a separate entertainment surface and will become paid in a future session; they do not contribute to the main leaderboard.
 
 3. **No stage multipliers.** Every match is worth the same, regardless of stage. The Final and a Group A opener both max out at 10 pts. Multipliers let late-tournament variance overwrite careful group-stage work, and the 80/20 pool split already gives knockout results outsized prize impact through the shared pool.
 
@@ -43,9 +45,9 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 ### Bottom Nav (4 tabs)
 | Tab | Icon | Screen | Purpose |
 |-----|------|--------|---------|
-| Home | ⚽ | Home | Global pool, XP summary, Predict CTA, group list, next match |
+| Home | ⚽ | Home | Global pool, Predict CTA, group list, next match |
 | Pollas | 🐔 | My Pollas | List of user's groups → tap for group detail |
-| Daily | 🎯 | Daily Predictions | Today's matches, XP game, card album, packs |
+| Daily | 🎯 | Daily Predictions | Today's matches, per-match mini-predictions (will become paid in a later session) |
 | Global | 🌍 | Global | Prize ladder, tier distribution |
 
 ### Additional Screens (not in nav)
@@ -55,10 +57,8 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 | Predict Modal | CTA on Home or Profile | Full-screen prediction experience with match intelligence |
 | Match Detail | "Details" on any match in Predict Modal | Team stats, form, H2H, qualifiers |
 | Polla Detail | Tap polla card in My Pollas | Group stats, payout, announcements, standings |
-| Mini-Predictions | Tap match in Daily | 5 per-match XP predictions |
-| Card Album | 🃏 button in Daily header | Collection grid, Panini-style |
-| Pack Opening | 🎁 button in Card Album | XP milestone progress, pack opening |
-| FAQ | Collapsible in Profile | How Polla works, 11 Q&A items |
+| Mini-Predictions | Tap match in Daily | Per-match mini-predictions (non-leaderboard) |
+| FAQ | Collapsible in Profile | How Polla works, Q&A items |
 
 ### Screen State Adaptations
 **Polla cards on My Pollas page:**
@@ -75,20 +75,17 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 
 ## Core Product Concepts
 
-### Two Group Modes
-- **Free Groups:** No wallet needed. Phone auth only. Full experience. Group-leaderboard-only — **free pools do not qualify for La Gran Polla** since they don't contribute financially to it. Primary acquisition channel.
-- **Paid Groups:** Stablecoin entry fee (any positive amount — no minimum). 5% service fee. 20% of the net group pool flows to the global pool. **Any paid entry — even $1 — grants La Gran Polla eligibility.** One user = one global-pool leaderboard entry, regardless of how many groups they join (predictions are keyed per user, not per group, so joining more pools does not create more shots at the global prize).
+### Pools (paid only)
+Every pool has a stablecoin entry fee — any positive amount, minimum $1. 5% service fee. 20% of the net group pool flows to the global pool. **Every entry — even $1 — grants La Gran Polla eligibility.** One user = one global-pool leaderboard entry, regardless of how many groups they join (predictions are keyed per user, not per group, so joining more pools does not create more shots at the global prize).
 
 This is deliberate: a low-stake player topping the global leaderboard is the most valuable marketing story the product can tell ("$5 entry, $15k win"), and the 80/20 split already insulates high-stake players — most of their money stays in their private group where they compete against peers of similar stake, with only 20% flowing to the shared global pool.
 
-### Two Currencies
-- **Points:** Main polla predictions. Group leaderboard, global ranking, tier, payouts.
-- **XP:** Engagement (daily mini-predictions, polla predictions, logins, shares, streaks). Unlocks booster packs. Works for free AND paid users.
+### Points
+Points are the only currency. Earned from correct match predictions on the 104 World Cup matches (group stage + knockouts). Drive the group leaderboard, global ranking, tier, and payouts. Daily mini-predictions are a separate entertainment surface and do not contribute to the leaderboard.
 
-### Three Payout Models (immutable after first prediction)
+### Two Payout Models (immutable after first prediction)
 - **Winner Takes All:** 100% to 1st. Small groups (3-5).
-- **Podium Split:** 60/25/15 to top 3. Medium groups (6-15).
-- **Proportional:** Pro-rata by points. Large groups (15+).
+- **Podium Split:** 60/25/15 to top 3. All other groups.
 
 ### Global Prize Ladder (La Gran Polla)
 | Position | % of Pool | Players |
@@ -176,10 +173,10 @@ Next.js 14 App Router, TypeScript, Tailwind CSS, PWA installable
 Supabase: Postgres + RLS + Auth + Edge Functions + Realtime
 
 ### Auth
-WhatsApp OTP via Twilio (primary). Google, Apple, Email (fallback). MiniPay auto-detect.
+MiniPay wallet connection is the sole auth path. A user's identity = their Celo wallet address + chosen username + chosen avatar emoji. No phone OTP, no email/Google/Apple fallback — the wallet is the account.
 
-### Wallet Infrastructure (Blockradar)
-Wallet creation, deposit detection, auto-sweep, payouts. Master wallets per chain. Non-MiniPay users get Blockradar addresses. MiniPay users use existing Celo address.
+### Wallet Infrastructure
+MiniPay (Celo USDC) is the default and is assumed for every user. Wallet connection happens at signup; no Blockradar fallback is required because there is no non-wallet entry point.
 
 ### Chains & Tokens
 | Chain | Token |
@@ -219,37 +216,16 @@ Note: the "winner + one team's goals" tier can only fire when GD is wrong — if
 
 ---
 
-## XP & Engagement System
-
-### XP Sources
-| Action | XP |
-|--------|-----|
-| Correct mini-prediction | 10 |
-| Perfect Match (5/5) | 25 bonus |
-| Correct polla prediction | 5 |
-| Exact score in polla | 15 |
-| Daily login | 5 |
-| WhatsApp share | 10 (max 3/day) |
-| Invite friend | 50 |
-| Complete prediction sheet | 100 |
-| Day streak | 5 × streak count |
-
-### Booster Pack Milestones
-Pack 1: 100 XP. Pack 2: 250. Pack 3: 500. Pack 4: 750. Pack 5: 1000. Pack 6: 1500. Pack 7 (Rare+): 2000. Pack 8 (Epic+): 3000. Plus tournament milestone packs.
-
-### Cards
-85 total: 48 Common (national jerseys), 20 Rare (football moments), 12 Epic (cultural costumes), 5 Legendary. Panini album grid. All in Supabase, no blockchain.
-
----
-
 ## Predict the World Cup (Immersive Modal)
 
-Launched from Home CTA or Profile CTA. Full-screen with group tabs (A-L) + KO tab, match cards with score inputs + "Details ↗" button. Match Detail shows: prediction input, recent form (W/D/L), qualification stats, recent matches, head-to-head history. Free value for all users.
+Launched from Home CTA or Profile CTA. Full-screen with group tabs (A-L) + KO tab, match cards with score inputs + "Details ↗" button. Match Detail shows: prediction input, recent form (W/D/L), qualification stats, recent matches, head-to-head history. Paid users only — wallet is connected at signup.
 
 ---
 
 ## Database Schema
-See tables: users, groups, group_members, matches, predictions, mini_predictions, scores, group_leaderboards, global_leaderboard, pools, payouts, deposits, balances, cards, user_cards, booster_packs, xp_events. User table includes avatar_emoji, total_xp, packs_earned, cards_collected, streak_days.
+Active tables: users, groups, group_members, matches, predictions, mini_predictions, scores, group_leaderboards, global_leaderboard, pools, payouts, deposits, balances. User table stores avatar_emoji, username, wallet_address.
+
+**Deprecated tables and fields (not used by app code — kept in schema until a migration drops them):** `xp_events`, `cards`, `user_cards`, `booster_packs`, and the user fields `total_xp`, `packs_earned`, `cards_collected`, `streak_days`. These exist because XP, cards, and free-play were removed post-schema; app code no longer reads or writes them.
 
 ---
 
@@ -285,21 +261,19 @@ The landing page has its own palette derived from the logo, distinct from the da
 - Both imported via Google Fonts CDN.
 
 ### Sections (top to bottom)
-1. **Hero:** Full-viewport. Logo with float animation + golden drop-shadow. "PREDICT THE WORLD CUP 2026" in gold Lilita One. Subtitle. Two CoC-style 3D buttons (green primary "Start Predicting — Free", wood secondary "See Prizes"). Live countdown to June 11. Floating emoji particles (⚽🐔🏆⭐🥇🎯🃏) drift upward in background.
+1. **Hero:** Full-viewport. Logo with float animation + golden drop-shadow. "PREDICT THE WORLD CUP 2026" in gold Lilita One. Subtitle. Two CoC-style 3D buttons (green primary "Join a Pool", wood secondary "See Prizes"). Live countdown to June 11. Floating emoji particles (⚽🐔🏆⭐🥇🎯) drift upward in background.
 2. **Flag Marquee:** Infinite horizontal scroll of 20 national flag emojis.
-3. **How It Works:** 4 step cards (Sign Up → Predict → Create Polla → Win). Each card has ghosted step number, large emoji, gold title, muted description. Cards lift on hover.
-4. **Features:** 8 feature cards in 2-column grid. Shield-style icon box + title + description. Covers: Free to Play, Real Prize Pools, Global Competition, Daily Predictions, Collect Cards, Match Intelligence, WhatsApp Sharing, Multi-Chain Deposits.
+3. **How It Works:** 4 step cards (Connect MiniPay → Predict → Create Polla → Win). Each card has ghosted step number, large emoji, gold title, muted description. Cards lift on hover.
+4. **Features:** Feature cards in 2-column grid. Shield-style icon box + title + description. Covers: Low Entry Fees ($1+), Real Prize Pools, Global Competition, Match Intelligence, WhatsApp Sharing, Multi-Chain Deposits.
 5. **La Gran Polla (Global Prize Pool):** Glowing gold-bordered card showing "$228,456" in massive Lilita One. Prize tier table below (Champion → Top 500) with icons, labels, player counts, and gold amounts.
-6. **Collect Them All:** 5 showcase cards (2 common, 1 rare, 1 epic, 1 legendary) with rarity-colored borders and glow effects. Legendary card pulses. Wooden divider. "XP Unlocks Everything" explainer text.
-7. **Final CTA:** Host country flags (🇺🇸🇲🇽🇨🇦). "THE WORLD CUP ONLY HAPPENS EVERY 4 YEARS". Large green CTA button.
-8. **Footer:** Polla hen emoji, "POLLA.FOOTBALL" in gold Lilita One, tagline, Terms/Privacy/FAQ links, copyright disclaimer.
+6. **Final CTA:** Host country flags (🇺🇸🇲🇽🇨🇦). "THE WORLD CUP ONLY HAPPENS EVERY 4 YEARS". Large green CTA button.
+7. **Footer:** Polla hen emoji, "POLLA.FOOTBALL" in gold Lilita One, tagline, Terms/Privacy/FAQ links, copyright disclaimer.
 
 ### Component Patterns
 - **GameBtn:** 3D press-effect button with gradient fill, white inner border, dark bottom shadow. Shadow compresses on mousedown for tactile feel. Colors: green (primary), wood (secondary), gold (accent), red (danger).
 - **WoodDivider:** Horizontal wooden plank gradient (transparent → wood → transparent) with inner highlight and bottom shadow.
 - **SectionTitle:** Gold Lilita One text with dark text-shadow, optional subtitle in Nunito muted.
 - **FeatureCard:** Glass card with gold border hint, icon box left, text right. Lifts on hover.
-- **ShowcaseCard:** 100×140px card with rarity-specific gradient background, colored border, glow shadow. Legendary animates glow.
 - **PrizeTier:** Row layout — icon, label, player count, gold amount. Bottom border separator.
 - **FlagMarquee:** Doubled flag array with CSS translateX animation for seamless infinite scroll.
 - **Particles:** 18 emoji particles with randomized position, size, duration, delay. Float upward with rotation and fade.

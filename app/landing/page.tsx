@@ -7,21 +7,19 @@ const WORLD_CUP_DATE = new Date('2026-06-11T00:00:00Z')
 
 const FLAGS = ['🇧🇷','🇦🇷','🇫🇷','🇩🇪','🇪🇸','🇵🇹','🇮🇹','🇳🇱','🇬🇧','🇺🇸','🇲🇽','🇨🇦','🇯🇵','🇰🇷','🇸🇦','🇦🇺','🇳🇬','🇸🇳','🇲🇦','🇨🇴']
 
-const PARTICLES = ['⚽','🏆','⭐','🥇','🎯','🃏','🌸']
+const PARTICLES = ['⚽','🏆','⭐','🥇','🎯','🌸']
 
 const STEPS = [
-  { emoji: '📱', title: 'Sign Up', desc: 'Create your account with WhatsApp or Google in seconds' },
+  { emoji: '📱', title: 'Connect MiniPay', desc: 'Your MiniPay wallet is your account — connect in seconds' },
   { emoji: '🔮', title: 'Predict', desc: 'Predict scores for all 104 World Cup matches' },
-  { emoji: '⛱️', title: 'Create a Pool', desc: 'Start a pool with friends and set your entry fee' },
+  { emoji: '⛱️', title: 'Create a Pool', desc: 'Start a pool with friends and set your entry fee (from $1)' },
   { emoji: '🏆', title: 'Win Prizes', desc: 'Top predictors win from the group and global prize pools' },
 ]
 
 const FEATURES = [
-  { icon: '🆓', title: 'Free to Play', desc: 'No wallet needed. Play for free and earn XP, cards, and bragging rights.' },
-  { icon: '💰', title: 'Real Prize Pools', desc: 'Paid groups with USDC/USDT entry fees. Winner takes all or podium split.' },
+  { icon: '💵', title: 'Low Entry Fees', desc: 'Pools start at just $1. Any entry qualifies for La Gran Polla.' },
+  { icon: '💰', title: 'Real Prize Pools', desc: 'USDC/USDT entry fees. Winner takes all or podium split.' },
   { icon: '🌍', title: 'Global Competition', desc: 'Compete on the global leaderboard. Climb tiers from Bronze to Mythic.' },
-  { icon: '🎯', title: 'Daily Predictions', desc: '5 mini-predictions per match day. Earn XP and unlock booster packs.' },
-  { icon: '🃏', title: 'Collect Cards', desc: '85 unique cards across 4 rarities. Complete your Panini-style album.' },
   { icon: '📊', title: 'Match Intelligence', desc: 'Team form, head-to-head stats, and qualification data for every match.' },
   { icon: '💬', title: 'WhatsApp Sharing', desc: 'Invite friends, share predictions, and trash talk — all via WhatsApp.' },
   { icon: '⛓️', title: 'Multi-Chain Deposits', desc: 'Deposit USDC on Celo, Base, Polygon, Ethereum, or USDT on Tron.' },
@@ -33,14 +31,6 @@ const PRIZE_TIERS = [
   { icon: '⭐', label: 'Top 20', players: '15', amount: '$3,808' },
   { icon: '🥇', label: 'Top 100', players: '80', amount: '$714' },
   { icon: '🥈', label: 'Top 500', players: '400', amount: '$85' },
-]
-
-const SHOWCASE_CARDS = [
-  { name: 'Brazil Jersey', rarity: 'common', bg: 'linear-gradient(135deg, #2d2d2d, #1a1a1a)', border: 'rgba(255,255,255,0.25)', glow: 'none' },
-  { name: 'Germany Jersey', rarity: 'common', bg: 'linear-gradient(135deg, #2d2d2d, #1a1a1a)', border: 'rgba(255,255,255,0.25)', glow: 'none' },
-  { name: 'Golden Goal', rarity: 'rare', bg: 'linear-gradient(135deg, #0d47a1, #1565c0)', border: '#4FC3F7', glow: '0 0 12px rgba(79,195,247,0.4)' },
-  { name: 'Samba Dance', rarity: 'epic', bg: 'linear-gradient(135deg, #4a148c, #7b1fa2)', border: '#CE93D8', glow: '0 0 12px rgba(206,147,216,0.4)' },
-  { name: 'The GOAT', rarity: 'legendary', bg: 'linear-gradient(135deg, #b8860b, #daa520)', border: '#FFD700', glow: '' },
 ]
 
 /* ─── Components ─── */
@@ -131,15 +121,15 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: 'Is there a minimum entry fee to compete for the big prize?',
-    a: 'No. Any paid pool qualifies you for La Gran Polla, even one that costs a dollar. We want the underdog story — a casual player topping the leaderboard and winning big — to be possible. Free pools compete on their own group leaderboard only, since they don\u2019t contribute to the global prize pool.',
+    a: 'The minimum is $1. Any pool entry — even a dollar — qualifies you for La Gran Polla. We want the underdog story — a casual player topping the leaderboard and winning big — to be possible.',
   },
   {
     q: 'How are the global prizes distributed?',
     a: 'The global prize pool is split across the top 500 ranked players: 15% to the Champion, 20% to positions 2\u20135, 25% to positions 6\u201320, 25% to positions 21\u2013100, and 15% to positions 101\u2013500. Flat and final — no held-back side pools, no perfect-bracket jackpots.',
   },
   {
-    q: 'What\u2019s the difference between free and paid pools?',
-    a: 'Free pools are the full experience — predict every match, see your score, compete with friends on a group leaderboard. They\u2019re a zero-risk way to learn the product and build a streak. Paid pools add a stablecoin entry fee (any amount you like), put real money in the group prize pool, and qualify you for La Gran Polla. You pick the stakes that feel right for your circle.',
+    q: 'Do I need a wallet to play?',
+    a: 'Yes. Polla uses MiniPay (Celo USDC) as the sole sign-up and payment method — your wallet is your account. Every pool has a stablecoin entry fee, starting at $1, so wallet connection happens the moment you sign up.',
   },
   {
     q: 'Is this gambling?',
@@ -215,7 +205,7 @@ export default function LandingPage() {
 
         {/* Buttons */}
         <div className="flex flex-wrap justify-center gap-4 mb-10">
-          <GameBtn color="green">Start Predicting — Free</GameBtn>
+          <GameBtn color="green">Join a Pool</GameBtn>
           <GameBtn color="wood" onClick={() => {
             document.getElementById('prizes')?.scrollIntoView({ behavior: 'smooth' })
           }}>
@@ -352,58 +342,6 @@ export default function LandingPage() {
 
       <WoodDivider />
 
-      {/* ═══ COLLECT THEM ALL ═══ */}
-      <section className="py-20 px-4">
-        <div className="max-w-[800px] mx-auto">
-          <SectionTitle title="Collect Them All" subtitle="85 unique cards across 4 rarities" />
-
-          <div className="flex flex-wrap justify-center gap-5 mb-10">
-            {SHOWCASE_CARDS.map((card, i) => (
-              <div
-                key={i}
-                className={`w-[100px] h-[140px] rounded-xl flex flex-col items-center justify-center
-                  ${card.rarity === 'legendary' ? 'animate-legendary-pulse' : ''}`}
-                style={{
-                  background: card.bg,
-                  border: `2px solid ${card.border}`,
-                  boxShadow: card.rarity === 'legendary' ? undefined : card.glow,
-                }}
-              >
-                <span className="text-3xl mb-2">
-                  {card.rarity === 'common' ? '👕' : card.rarity === 'rare' ? '⚽' : card.rarity === 'epic' ? '💃' : '🐐'}
-                </span>
-                <span className="font-body text-white/70 text-[10px] text-center px-1">{card.name}</span>
-                <span className="font-body uppercase text-[8px] tracking-wider mt-1"
-                  style={{
-                    color: card.rarity === 'common' ? 'rgba(255,255,255,0.4)' :
-                      card.rarity === 'rare' ? '#4FC3F7' :
-                      card.rarity === 'epic' ? '#CE93D8' : '#FFD700'
-                  }}
-                >
-                  {card.rarity}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <WoodDivider />
-
-          <div className="text-center mt-8">
-            <h3 className="font-display text-cream uppercase text-xl mb-3"
-              style={{ textShadow: '0 2px 0 rgba(0,0,0,0.3)' }}
-            >
-              XP Unlocks Everything
-            </h3>
-            <p className="font-body text-white/50 text-sm max-w-md mx-auto leading-relaxed">
-              Earn XP from daily predictions, streaks, shares, and pool predictions.
-              Hit milestones to unlock booster packs and discover new cards.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <WoodDivider />
-
       {/* ═══ FAQ ═══ */}
       <section id="faq" className="py-20 px-4">
         <div className="max-w-[760px] mx-auto">
@@ -447,7 +385,7 @@ export default function LandingPage() {
             Don&apos;t miss your chance to predict, compete, and win.
           </p>
           <GameBtn color="green" className="text-xl px-12 py-5">
-            Start Predicting — Free
+            Join a Pool
           </GameBtn>
         </div>
       </section>

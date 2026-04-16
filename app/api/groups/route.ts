@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, emoji, is_paid, entry_fee, payout_model, global_allocation } = body
+    const { name, emoji, entry_fee, payout_model, global_allocation } = body
 
     if (!name || name.length < 2 || name.length > 40) {
       return NextResponse.json({ error: 'Name must be 2-40 characters' }, { status: 400 })
@@ -46,27 +46,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate invite code' }, { status: 500 })
     }
 
-    // Validate paid group params
-    const fee = is_paid ? Number(entry_fee) : 0
-    if (is_paid) {
-      if (fee < 5 || fee > 500) {
-        return NextResponse.json({ error: 'Entry fee must be $5-$500' }, { status: 400 })
-      }
-
-      // For paid groups, check wallet is connected (actual payment handled on-chain in P3)
-      const { data: user } = await supabaseAdmin
-        .from('users')
-        .select('wallet_connected')
-        .eq('id', session.user.id)
-        .single()
-
-      if (!user?.wallet_connected) {
-        return NextResponse.json({ error: 'Wallet not connected', needs_wallet: true }, { status: 400 })
-      }
+    const fee = Number(entry_fee)
+    if (!Number.isFinite(fee) || fee < 1) {
+      return NextResponse.json({ error: 'Entry fee must be at least $1' }, { status: 400 })
     }
 
-    const model = is_paid ? (payout_model || 'podium_split') : 'podium_split'
-    const allocation = is_paid ? (global_allocation || 20) : 20
+    // Every pool is paid — require a connected wallet (MiniPay).
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_connected')
+      .eq('id', session.user.id)
+      .single()
+
+    if (!user?.wallet_connected) {
+      return NextResponse.json({ error: 'Wallet not connected', needs_wallet: true }, { status: 400 })
+    }
+
+    const model = payout_model || 'podium_split'
+    const allocation = global_allocation || 20
 
     // Create group
     const { data: group, error: groupError } = await supabaseAdmin
@@ -75,7 +72,7 @@ export async function POST(req: NextRequest) {
         name,
         emoji: emoji || '⚽',
         created_by: session.user.id,
-        is_paid: !!is_paid,
+        is_paid: true,
         entry_fee: fee,
         payout_model: model,
         global_allocation: allocation,

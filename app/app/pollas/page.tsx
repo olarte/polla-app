@@ -45,7 +45,6 @@ export default function PollasPage() {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
   const [pollas, setPollas] = useState<GroupWithMembers[]>([])
-  const [filter, setFilter] = useState<'all' | 'free' | 'paid'>('all')
   const [loading, setLoading] = useState(true)
   const [createOpen, setCreateOpen] = useState(false)
   const [joinCode, setJoinCode] = useState('')
@@ -261,11 +260,7 @@ export default function PollasPage() {
     }
   }
 
-  const filtered = pollas.filter((p) => {
-    if (filter === 'free') return !p.is_paid
-    if (filter === 'paid') return p.is_paid
-    return true
-  })
+  const filtered = pollas
 
   const MEDALS = ['🥇', '🥈', '🥉']
 
@@ -287,23 +282,6 @@ export default function PollasPage() {
         >
           + New
         </button>
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex gap-2">
-        {(['all', 'free', 'paid'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              filter === tab
-                ? 'bg-polla-accent/20 text-polla-accent border border-polla-accent/30'
-                : 'bg-card border border-card-border text-text-40'
-            }`}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
       </div>
 
       {/* Pool cards */}
@@ -338,10 +316,6 @@ export default function PollasPage() {
             Create Your First Pool
           </button>
         </div>
-      ) : filtered.length === 0 ? (
-        <Card className="text-center py-8">
-          <p className="text-text-40 text-sm">No {filter} pools</p>
-        </Card>
       ) : (
         <div className="space-y-3">
           {filtered.map((polla) => (
@@ -515,7 +489,7 @@ function PollaCard({ polla, phase, predictionProgress, medals }: PollaCardProps)
             <div>
               <p className="text-sm font-bold">{polla.name}</p>
               <p className="text-text-40 text-xs mt-0.5">
-                {polla.member_count} members · {polla.is_paid ? `$${Number(polla.entry_fee).toFixed(0)} entry` : 'FREE 🎮'}
+                {polla.member_count} members · ${Number(polla.entry_fee).toFixed(0)} entry
               </p>
             </div>
           </div>
@@ -557,7 +531,7 @@ function PollaCard({ polla, phase, predictionProgress, medals }: PollaCardProps)
             <div>
               <p className="text-sm font-bold">{polla.name}</p>
               <p className="text-text-40 text-xs mt-0.5">
-                {polla.member_count} members · {polla.is_paid ? `$${Number(polla.entry_fee).toFixed(0)} entry` : 'FREE 🎮'}
+                {polla.member_count} members · ${Number(polla.entry_fee).toFixed(0)} entry
               </p>
             </div>
           </div>
@@ -577,14 +551,9 @@ function PollaCard({ polla, phase, predictionProgress, medals }: PollaCardProps)
         {/* Payout earned */}
         <div className="mt-3 pt-3 border-t border-card-border flex items-center justify-between">
           <span className="text-text-40 text-xs">{polla.my_points} pts final</span>
-          {polla.is_paid && (
-            <span className="num text-sm font-bold text-polla-gold">
-              ${Number(polla.pool_amount).toFixed(0)} pool
-            </span>
-          )}
-          {!polla.is_paid && (
-            <span className="text-xs text-text-40">Completed</span>
-          )}
+          <span className="num text-sm font-bold text-polla-gold">
+            ${Number(polla.pool_amount).toFixed(0)} pool
+          </span>
         </div>
       </Card>
     )
@@ -600,7 +569,7 @@ function PollaCard({ polla, phase, predictionProgress, medals }: PollaCardProps)
           <div>
             <p className="text-sm font-bold">{polla.name}</p>
             <p className="text-text-40 text-xs mt-0.5">
-              {polla.member_count} members · {polla.is_paid ? `$${Number(polla.entry_fee).toFixed(0)} entry` : 'FREE 🎮'}
+              {polla.member_count} members · ${Number(polla.entry_fee).toFixed(0)} entry
             </p>
           </div>
         </div>
@@ -631,11 +600,9 @@ function PollaCard({ polla, phase, predictionProgress, medals }: PollaCardProps)
       {/* Footer: pool amount */}
       <div className="mt-3 pt-3 border-t border-card-border flex items-center justify-between">
         <span className="text-text-40 text-xs">{polla.my_points} pts</span>
-        {polla.is_paid && (
-          <span className="num text-xs text-polla-gold">
-            ${Number(polla.pool_amount).toFixed(0)} pool
-          </span>
-        )}
+        <span className="num text-xs text-polla-gold">
+          ${Number(polla.pool_amount).toFixed(0)} pool
+        </span>
       </div>
     </Card>
   )

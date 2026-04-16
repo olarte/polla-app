@@ -22,7 +22,6 @@ type GroupPreview = {
 const PAYOUT_LABELS: Record<string, string> = {
   winner_takes_all: 'Winner Takes All',
   podium_split: 'Podium Split (60/25/15)',
-  proportional: 'Proportional',
 }
 
 export default function JoinPage() {
@@ -137,23 +136,17 @@ export default function JoinPage() {
               <span className="font-semibold">{group.member_count}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-text-40">Type</span>
-              <span className="font-semibold">
-                {group.is_paid ? `💰 $${Number(group.entry_fee).toFixed(0)} entry` : '🎮 Free'}
-              </span>
+              <span className="text-text-40">Entry Fee</span>
+              <span className="font-semibold">💰 ${Number(group.entry_fee).toFixed(0)}</span>
             </div>
-            {group.is_paid && (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-40">Payout</span>
-                  <span className="font-semibold">{PAYOUT_LABELS[group.payout_model] || group.payout_model}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-40">Prize Pool</span>
-                  <span className="num font-semibold text-polla-gold">${Number(group.pool_amount).toFixed(0)}</span>
-                </div>
-              </>
-            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-text-40">Payout</span>
+              <span className="font-semibold">{PAYOUT_LABELS[group.payout_model] || group.payout_model}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-text-40">Prize Pool</span>
+              <span className="num font-semibold text-polla-gold">${Number(group.pool_amount).toFixed(0)}</span>
+            </div>
             <div className="flex justify-between text-sm">
               <span className="text-text-40">Status</span>
               <span className={`font-semibold ${group.status === 'open' ? 'text-polla-success' : 'text-text-40'}`}>
@@ -175,7 +168,7 @@ export default function JoinPage() {
             disabled={joining}
             className="w-full py-3.5 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform disabled:opacity-50"
           >
-            {joining ? 'Joining...' : group.is_paid ? `Join — $${Number(group.entry_fee).toFixed(0)}` : 'Join Pool'}
+            {joining ? 'Joining...' : `Join — $${Number(group.entry_fee).toFixed(0)}`}
           </button>
         ) : (
           <div className="text-center">

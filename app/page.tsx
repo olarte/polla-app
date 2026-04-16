@@ -27,12 +27,12 @@ const PRIZE_TIERS = [
 ]
 
 const FAQS = [
-  { q: 'Is Sabi free?', a: 'Yes. Predict all 104 matches, join free pools, compete on the global leaderboard — all without a wallet. Connect a wallet only for real-money features.' },
+  { q: 'Do I need a wallet to play?', a: 'Yes. Sabi uses MiniPay (Celo USDC) as the sole sign-up and payment method. Every pool has a stablecoin entry fee starting at $1, so a wallet is connected at signup.' },
   { q: 'What is MiniPay?', a: 'A mobile wallet built into Opera Mini, running on Celo with USDC. Available in 10+ countries across Africa and beyond.' },
   { q: 'How do bets work?', a: 'Pari-mutuel: everyone bets into a pool, winners split it proportionally. Odds shift in real time based on how people bet. A 5% fee is deducted from winnings.' },
   { q: 'What can I bet on?', a: 'Two markets per match — result (home/draw/away) and total goals (over/under 2.5). Clean and simple.' },
   { q: 'How do I get my winnings?', a: 'After a match finishes, winning bets show a Claim button. Tap it and USDC goes straight to your MiniPay wallet.' },
-  { q: 'What are pools?', a: 'Private prediction groups. Create one, invite friends with a link. Free for bragging rights, paid for real prize pools.' },
+  { q: 'What are pools?', a: 'Private prediction groups. Create one, invite friends with a link, set your entry fee (from $1). Every pool pays out a real stablecoin prize.' },
   { q: 'Is this gambling?', a: 'Sabi is a skill-based prediction contest. No house-set odds. You compete against other players based on football knowledge — similar to fantasy sports.' },
   { q: 'What if a match is cancelled?', a: 'All bets fully refunded, no fee charged. You\u2019ll see a Refund button for your original amount.' },
   { q: 'Will Sabi work for other tournaments?', a: 'World Cup is first. Copa Am\u00e9rica, Champions League, and Premier League are on the roadmap.' },

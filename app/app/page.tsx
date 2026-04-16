@@ -499,7 +499,7 @@ export default function HomePage() {
                       <p className="text-sm font-semibold">{group.name}</p>
                       <p className="text-text-40 text-xs mt-0.5">
                         {group.member_count} {group.member_count === 1 ? 'member' : 'members'} ·{' '}
-                        {group.is_paid ? formatCurrency(group.entry_fee) + ' entry' : 'Free'}
+                        {formatCurrency(group.entry_fee)} entry
                       </p>
                     </div>
                   </div>

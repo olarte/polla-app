@@ -15,17 +15,14 @@ const POOL_EMOJIS = ['⚽', '🏆', '🔥', '🎯', '👑', '🦁', '🐉', '�
 const PAYOUT_MODELS = [
   { value: 'winner_takes_all', label: 'Winner Takes All', desc: '100% to 1st', icon: '👑' },
   { value: 'podium_split', label: 'Podium Split', desc: '60/25/15 top 3', icon: '🏅' },
-  { value: 'proportional', label: 'Proportional', desc: 'Pro-rata by points', icon: '📊' },
 ]
 
 export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreatePollaModalProps) {
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('⚽')
-  const [isPaid, setIsPaid] = useState(false)
   const [entryFee, setEntryFee] = useState('10')
   const [payoutModel, setPayoutModel] = useState('podium_split')
-  const [globalAlloc, setGlobalAlloc] = useState(20)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,10 +32,8 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
     setStep(1)
     setName('')
     setEmoji('⚽')
-    setIsPaid(false)
     setEntryFee('10')
     setPayoutModel('podium_split')
-    setGlobalAlloc(20)
     setError('')
   }
 
@@ -58,10 +53,9 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
         body: JSON.stringify({
           name,
           emoji,
-          is_paid: isPaid,
-          entry_fee: isPaid ? Number(entryFee) : 0,
-          payout_model: isPaid ? payoutModel : 'podium_split',
-          global_allocation: isPaid ? globalAlloc : 20,
+          entry_fee: Number(entryFee),
+          payout_model: payoutModel,
+          global_allocation: 20,
         }),
       })
 
@@ -130,32 +124,6 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
               </div>
             </div>
 
-            <div>
-              <Label>Type</Label>
-              <div className="mt-1.5 flex gap-2">
-                <button
-                  onClick={() => setIsPaid(false)}
-                  className={`flex-1 py-3 rounded-lg text-sm font-semibold transition-all ${
-                    !isPaid
-                      ? 'bg-polla-success/20 border-2 border-polla-success text-polla-success'
-                      : 'bg-white/[0.03] border border-card-border text-text-40'
-                  }`}
-                >
-                  🎮 Free
-                </button>
-                <button
-                  onClick={() => setIsPaid(true)}
-                  className={`flex-1 py-3 rounded-lg text-sm font-semibold transition-all ${
-                    isPaid
-                      ? 'bg-polla-gold/20 border-2 border-polla-gold text-polla-gold'
-                      : 'bg-white/[0.03] border border-card-border text-text-40'
-                  }`}
-                >
-                  💰 Paid
-                </button>
-              </div>
-            </div>
-
             <button
               onClick={() => {
                 if (name.length < 2) {
@@ -163,16 +131,16 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
                   return
                 }
                 setError('')
-                setStep(isPaid ? 2 : 3)
+                setStep(2)
               }}
               className="w-full py-3 rounded-xl bg-btn-primary text-sm font-bold active:scale-[0.97] transition-transform"
             >
-              {isPaid ? 'Next' : 'Review'}
+              Next
             </button>
           </div>
         )}
 
-        {/* Step 2: Paid settings */}
+        {/* Step 2: Entry fee + payout */}
         {step === 2 && (
           <div className="space-y-4">
             <div>
@@ -183,12 +151,11 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
                   type="number"
                   value={entryFee}
                   onChange={(e) => setEntryFee(e.target.value)}
-                  min={5}
-                  max={500}
+                  min={1}
                   className="flex-1 bg-white/[0.03] border border-card-border rounded-lg px-3 py-2.5 text-sm text-text-70 outline-none focus:border-polla-accent/40 transition-colors num"
                 />
               </div>
-              <p className="text-text-25 text-[10px] mt-1">$5 – $500. 5% service fee applied.</p>
+              <p className="text-text-25 text-[10px] mt-1">A 5% service fee is deducted from the pool.</p>
             </div>
 
             <div>
@@ -214,22 +181,6 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
               </div>
             </div>
 
-            <div>
-              <Label>Global Pool Allocation</Label>
-              <div className="mt-1.5 flex items-center gap-3">
-                <input
-                  type="range"
-                  min={10}
-                  max={30}
-                  value={globalAlloc}
-                  onChange={(e) => setGlobalAlloc(Number(e.target.value))}
-                  className="flex-1 accent-polla-accent"
-                />
-                <span className="num text-sm text-text-70 w-10 text-right">{globalAlloc}%</span>
-              </div>
-              <p className="text-text-25 text-[10px] mt-1">% of net pool contributed to the Grand Pool</p>
-            </div>
-
             <div className="flex gap-2">
               <button
                 onClick={() => setStep(1)}
@@ -240,8 +191,8 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
               <button
                 onClick={() => {
                   const fee = Number(entryFee)
-                  if (fee < 5 || fee > 500) {
-                    setError('Entry fee must be $5-$500')
+                  if (!Number.isFinite(fee) || fee < 1) {
+                    setError('Entry fee must be at least $1')
                     return
                   }
                   setError('')
@@ -265,37 +216,29 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-text-40">Type</span>
-                  <span className="font-semibold">{isPaid ? '💰 Paid' : '🎮 Free'}</span>
+                  <span className="text-text-40">Entry Fee</span>
+                  <span className="num font-semibold">${Number(entryFee).toFixed(2)}</span>
                 </div>
-                {isPaid && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-text-40">Entry Fee</span>
-                      <span className="num font-semibold">${Number(entryFee).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-40">Payout</span>
-                      <span className="font-semibold">
-                        {PAYOUT_MODELS.find((m) => m.value === payoutModel)?.label}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-40">Global Pool</span>
-                      <span className="num font-semibold">{globalAlloc}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-40">Service Fee</span>
-                      <span className="num font-semibold text-text-35">5%</span>
-                    </div>
-                  </>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-text-40">Payout</span>
+                  <span className="font-semibold">
+                    {PAYOUT_MODELS.find((m) => m.value === payoutModel)?.label}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-40">Global Pool</span>
+                  <span className="num font-semibold">20%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-40">Service Fee</span>
+                  <span className="num font-semibold text-text-35">5%</span>
+                </div>
               </div>
             </Card>
 
             <div className="flex gap-2">
               <button
-                onClick={() => setStep(isPaid ? 2 : 1)}
+                onClick={() => setStep(2)}
                 className="flex-1 py-3 rounded-xl bg-card border border-card-border text-sm font-semibold text-text-40 active:scale-[0.97] transition-transform"
               >
                 Back

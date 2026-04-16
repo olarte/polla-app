@@ -53,19 +53,11 @@ const PAYOUT_INFO: Record<string, { title: string; desc: string; splits: { label
       { label: '3rd Place', pct: '15%' },
     ],
   },
-  proportional: {
-    title: 'Proportional',
-    desc: 'Prize distributed proportionally by points earned',
-    splits: [
-      { label: 'All players', pct: 'Pro-rata' },
-    ],
-  },
 }
 
 const PAYOUT_ICONS: Record<string, string> = {
   winner_takes_all: '👑',
   podium_split: '🏅',
-  proportional: '📊',
 }
 
 const MEDAL_COLORS = ['text-polla-gold', 'text-polla-silver', 'text-polla-bronze']
@@ -122,7 +114,7 @@ function generateAnnouncements(group: GroupData, members: MemberRow[], phase: st
     // Show exact score achievements
     announcements.push({
       icon: '🎯',
-      text: 'Daily predictions are live — earn XP on today\'s matches!',
+      text: 'Daily predictions are live — check today\'s matches!',
       time: 'Today',
       type: 'reminder',
     })
@@ -138,14 +130,12 @@ function generateAnnouncements(group: GroupData, members: MemberRow[], phase: st
       type: 'score',
     })
   }
-  if (group.is_paid) {
-    announcements.push({
-      icon: '💰',
-      text: 'Payouts have been distributed. Check your balance.',
-      time: 'Payout',
-      type: 'info',
-    })
-  }
+  announcements.push({
+    icon: '💰',
+    text: 'Payouts have been distributed. Check your balance.',
+    time: 'Payout',
+    type: 'info',
+  })
 
   return announcements
 }
@@ -273,8 +263,8 @@ export default function PollaDetailPage() {
 
   const payout = PAYOUT_INFO[group.payout_model] || PAYOUT_INFO.podium_split
   const payoutIcon = PAYOUT_ICONS[group.payout_model] || '🏅'
-  const serviceFee = group.is_paid ? Number(group.entry_fee) * 0.05 : 0
-  const netEntry = group.is_paid ? Number(group.entry_fee) - serviceFee : 0
+  const serviceFee = Number(group.entry_fee) * 0.05
+  const netEntry = Number(group.entry_fee) - serviceFee
   const globalContrib = netEntry * (group.global_allocation / 100)
   const announcements = generateAnnouncements(group, members, phase)
 
@@ -294,36 +284,32 @@ export default function PollaDetailPage() {
         <div>
           <h1 className="text-xl font-bold">{group.name}</h1>
           <p className="text-text-40 text-xs mt-0.5">
-            {group.member_count} members · {group.is_paid ? `$${Number(group.entry_fee).toFixed(0)} entry` : 'FREE 🎮'}
+            {group.member_count} members · ${Number(group.entry_fee).toFixed(0)} entry
           </p>
         </div>
       </div>
 
-      {/* Stats row (paid only) */}
-      {group.is_paid && (
-        <div className="flex gap-2">
-          <Card className="flex-1 text-center">
-            <Label>Entry Fee</Label>
-            <p className="num text-lg font-extrabold mt-0.5">${Math.round(Number(group.entry_fee)).toLocaleString()}</p>
-          </Card>
-          <Card className="flex-1 text-center">
-            <Label>Prize Pool</Label>
-            <p className="num text-lg font-extrabold text-polla-gold mt-0.5">${Math.round(Number(group.pool_amount)).toLocaleString()}</p>
-          </Card>
-          <Card className="flex-1 text-center">
-            <Label>Global</Label>
-            <p className="num text-lg font-extrabold text-polla-accent mt-0.5">${Math.round(globalContrib).toLocaleString()}</p>
-          </Card>
-        </div>
-      )}
+      {/* Stats row */}
+      <div className="flex gap-2">
+        <Card className="flex-1 text-center">
+          <Label>Entry Fee</Label>
+          <p className="num text-lg font-extrabold mt-0.5">${Math.round(Number(group.entry_fee)).toLocaleString()}</p>
+        </Card>
+        <Card className="flex-1 text-center">
+          <Label>Prize Pool</Label>
+          <p className="num text-lg font-extrabold text-polla-gold mt-0.5">${Math.round(Number(group.pool_amount)).toLocaleString()}</p>
+        </Card>
+        <Card className="flex-1 text-center">
+          <Label>Global</Label>
+          <p className="num text-lg font-extrabold text-polla-accent mt-0.5">${Math.round(globalContrib).toLocaleString()}</p>
+        </Card>
+      </div>
 
       {/* Payout model card */}
       <Card>
-        <Label>{group.is_paid ? 'Payout Model' : 'Competition'}</Label>
+        <Label>Payout Model</Label>
         <div className="mt-2">
-          {group.is_paid ? (
-            <>
-              <p className="text-sm font-bold">{payoutIcon} {payout.title}</p>
+          <p className="text-sm font-bold">{payoutIcon} {payout.title}</p>
               <p className="text-text-40 text-xs mt-1">{payout.desc}</p>
 
               {/* Visual payout breakdown */}
@@ -367,20 +353,7 @@ export default function PollaDetailPage() {
                     </div>
                   )
                 })}
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-bold">🎮 Bragging Rights</p>
-              <p className="text-text-40 text-xs mt-1">
-                No prizes — just glory and leaderboard position
-              </p>
-              <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-polla-success/10 border border-polla-success/15">
-                <span className="text-sm">✅</span>
-                <span className="text-polla-success text-xs">Free to play — no wallet needed</span>
-              </div>
-            </>
-          )}
+          </div>
         </div>
       </Card>
 

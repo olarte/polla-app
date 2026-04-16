@@ -45,32 +45,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Already a member', group_id: group.id }, { status: 400 })
     }
 
-    // For paid groups: verify wallet connection + payment tx
-    if (group.is_paid && group.entry_fee > 0) {
-      const { data: user } = await supabaseAdmin
-        .from('users')
-        .select('wallet_connected')
-        .eq('id', session.user.id)
-        .single()
+    // Every pool is paid — verify wallet connection + payment tx
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_connected')
+      .eq('id', session.user.id)
+      .single()
 
-      if (!user?.wallet_connected) {
-        return NextResponse.json(
-          { error: 'Wallet not connected', needs_wallet: true },
-          { status: 400 }
-        )
-      }
-
-      if (!tx_hash) {
-        return NextResponse.json(
-          { error: 'Payment required', needs_payment: true, entry_fee: group.entry_fee },
-          { status: 400 }
-        )
-      }
-
-      // Record the payment tx_hash (on-chain verification is handled by the
-      // USDC Transfer event — the tx_hash serves as proof of payment)
-      // In production, you'd verify the tx on-chain via RPC before accepting
+    if (!user?.wallet_connected) {
+      return NextResponse.json(
+        { error: 'Wallet not connected', needs_wallet: true },
+        { status: 400 }
+      )
     }
+
+    if (!tx_hash) {
+      return NextResponse.json(
+        { error: 'Payment required', needs_payment: true, entry_fee: group.entry_fee },
+        { status: 400 }
+      )
+    }
+
+    // Record the payment tx_hash (on-chain verification is handled by the
+    // USDC Transfer event — the tx_hash serves as proof of payment)
+    // In production, you'd verify the tx on-chain via RPC before accepting
 
     // Add member
     const { error: joinError } = await supabaseAdmin
@@ -85,26 +83,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: joinError.message }, { status: 500 })
     }
 
-    // For paid groups: increment pool + member count, record deposit
-    if (group.is_paid && group.entry_fee > 0 && tx_hash) {
-      const netEntry = group.entry_fee * 0.95 // 5% service fee
-      const globalAlloc = netEntry * (group.global_allocation / 100)
-      const groupPool = netEntry - globalAlloc
+    // Increment pool + member count from the paid entry
+    const netEntry = group.entry_fee * 0.95 // 5% service fee
+    const globalAlloc = netEntry * (group.global_allocation / 100)
+    const groupPool = netEntry - globalAlloc
 
-      await supabaseAdmin
-        .from('groups')
-        .update({
-          pool_amount: (group.pool_amount || 0) + groupPool,
-          member_count: (group.member_count || 0) + 1,
-        })
-        .eq('id', group.id)
-    } else {
-      // Free group: just increment member count
-      await supabaseAdmin
-        .from('groups')
-        .update({ member_count: (group.member_count || 0) + 1 })
-        .eq('id', group.id)
-    }
+    await supabaseAdmin
+      .from('groups')
+      .update({
+        pool_amount: (group.pool_amount || 0) + groupPool,
+        member_count: (group.member_count || 0) + 1,
+      })
+      .eq('id', group.id)
 
     return NextResponse.json({ group_id: group.id })
   } catch (err) {
