@@ -462,16 +462,22 @@ export default function HomePage() {
           .single()
 
         if (firstMatch) {
-          // Start of that match's calendar day (ET, UTC-4 in June)
-          // Use the match's UTC date, back up to midnight UTC of that day
-          const matchDate = new Date(firstMatch.kickoff)
-          const dayStart = new Date(Date.UTC(matchDate.getUTCFullYear(), matchDate.getUTCMonth(), matchDate.getUTCDate()))
-          const twoDaysLater = new Date(dayStart.getTime() + 2 * 86400000)
+          // Schedule times are ET (UTC-4 in June). Compute the ET calendar
+          // day of the first match, then span 2 full ET days.
+          // ET midnight = UTC 04:00, so shift by 4h before taking the date.
+          const ET_OFFSET_MS = 4 * 60 * 60 * 1000
+          const matchUtc = new Date(firstMatch.kickoff).getTime()
+          const matchEt = new Date(matchUtc - ET_OFFSET_MS)
+          // Midnight ET of that day = midnight UTC of the shifted date + offset back
+          const dayStartUtc = new Date(
+            Date.UTC(matchEt.getUTCFullYear(), matchEt.getUTCMonth(), matchEt.getUTCDate()) + ET_OFFSET_MS
+          )
+          const twoDaysLater = new Date(dayStartUtc.getTime() + 2 * 86400000)
 
           const { data: upcomingMatches } = await supabase
             .from('matches')
             .select('id, match_number, team_a_name, team_a_code, team_a_flag, team_b_name, team_b_code, team_b_flag, group_letter, stage, kickoff, venue, city, status')
-            .gte('kickoff', dayStart.toISOString())
+            .gte('kickoff', dayStartUtc.toISOString())
             .lt('kickoff', twoDaysLater.toISOString())
             .order('kickoff', { ascending: true })
 
