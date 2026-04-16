@@ -187,9 +187,9 @@ function JoinPoolModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/60 animate-fade-in" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-t-2xl bg-polla-bg border-t border-card-border p-5 pb-[max(20px,env(safe-area-inset-bottom))]"
+        className="w-[calc(100%-2rem)] max-w-md rounded-2xl bg-polla-bg border border-card-border p-5"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -215,7 +215,6 @@ function JoinPoolModal({
           }}
           placeholder="INVITE CODE"
           maxLength={6}
-          autoFocus
           className="w-full h-12 bg-white/[0.03] border border-card-border rounded-xl px-4 text-center text-lg text-white font-bold tracking-[0.3em] placeholder:text-text-25 placeholder:tracking-[0.2em] placeholder:text-sm placeholder:font-normal outline-none focus:border-polla-accent/40 transition-colors uppercase num"
         />
 
@@ -389,6 +388,16 @@ export default function HomePage() {
   const [globalPool, setGlobalPool] = useState(0)
   const [dayMatches, setDayMatches] = useState<DayMatch[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Hide bottom nav when modals are open
+  useEffect(() => {
+    if (createOpen || joinOpen) {
+      document.documentElement.setAttribute('data-hide-nav', 'true')
+    } else {
+      document.documentElement.removeAttribute('data-hide-nav')
+    }
+    return () => document.documentElement.removeAttribute('data-hide-nav')
+  }, [createOpen, joinOpen])
 
   // Derived
   const predictionProgress = useMemo(

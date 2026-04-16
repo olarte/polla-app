@@ -265,18 +265,14 @@ export default function ProfilePage() {
           />
         </div>
         <p className="text-text-25 text-[10px] mt-1">{accuracy}% accuracy ({totalPoints} of {maxPossible} possible pts)</p>
-        <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-card-border">
+        <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-card-border">
           <div className="text-center">
             <p className="num text-lg font-bold">{matchesPredicted}</p>
-            <p className="text-text-35 text-[10px]">Scored</p>
+            <p className="text-text-35 text-[10px]">Matches Scored</p>
           </div>
           <div className="text-center">
             <p className="num text-lg font-bold">{exactScores}</p>
-            <p className="text-text-35 text-[10px]">Exact</p>
-          </div>
-          <div className="text-center">
-            <p className="num text-lg font-bold">{predictionCount}</p>
-            <p className="text-text-35 text-[10px]">Predicted</p>
+            <p className="text-text-35 text-[10px]">Exact Scores</p>
           </div>
         </div>
       </Card>
