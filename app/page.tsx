@@ -388,7 +388,7 @@ export default function PreviewLanding() {
               Every paid pool feeds the Grand Pool.
             </h3>
             <p style={{ color: 'rgba(26,17,6,0.7)', marginTop: '10px', fontSize: '0.95rem' }}>
-              20% of every pool joins a global prize, split across the top 500 finishers on the world leaderboard.
+              15% of every pool joins a global prize, split across the top 500 finishers on the world leaderboard.
             </p>
 
             <div

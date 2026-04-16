@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Card from '../components/Card'
 import Label from '../components/Label'
@@ -101,40 +101,10 @@ function PredictCtaCard({
     )
   }
 
-  // State 2: complete but not submitted — celebrate + allow edit + Submit
+  // State 2: complete but not submitted — celebrate + tiebreaker + allow edit + Submit
   if (isComplete && !isSubmitted) {
     return (
-      <Card glow className="text-center">
-        <div className="text-3xl mb-2">🏆</div>
-        <p className="text-lg font-bold mb-1">Bracket Complete!</p>
-        <p className="text-text-40 text-xs mb-4 leading-snug">
-          You&apos;ve predicted all <span className="num text-white font-bold">104</span> matches.
-          Edit any prediction before the first match, or lock it in now.
-        </p>
-        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-4">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark"
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={onOpen}
-            className="w-full py-3 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70"
-          >
-            Edit Predictions
-          </button>
-          <SubmitHoldButton
-            onSubmit={onSubmit}
-            idleLabel="Hold to Submit"
-            holdingLabel="Keep holding…"
-            submittingLabel="Locking in…"
-          />
-          <p className="text-text-25 text-[9px] mt-1">
-            Press and hold for 2.5 seconds to lock your bracket in.
-          </p>
-        </div>
-      </Card>
+      <BracketCompleteCard onOpen={onOpen} onSubmit={onSubmit} />
     )
   }
 
@@ -163,6 +133,129 @@ function PredictCtaCard({
       >
         {predictionCount === 0 ? 'Start Predicting' : 'Continue Predicting'}
       </button>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Bracket Complete Card (with tiebreaker input)
+// ---------------------------------------------------------------------------
+
+function BracketCompleteCard({
+  onOpen,
+  onSubmit,
+}: {
+  onOpen: () => void
+  onSubmit: () => Promise<void>
+}) {
+  const [tiebreakerGoals, setTiebreakerGoals] = useState<string>('')
+  const [tiebreakerSaved, setTiebreakerSaved] = useState(false)
+  const [tiebreakerSaving, setTiebreakerSaving] = useState(false)
+  const loaded = useRef(false)
+
+  useEffect(() => {
+    if (loaded.current) return
+    loaded.current = true
+    fetch('/api/global/tiebreaker')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.tiebreaker_goals !== null && d?.tiebreaker_goals !== undefined) {
+          setTiebreakerGoals(String(d.tiebreaker_goals))
+          setTiebreakerSaved(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const saveTiebreaker = useCallback(async () => {
+    const parsed = Number(tiebreakerGoals)
+    if (!tiebreakerGoals || !Number.isInteger(parsed) || parsed < 0 || parsed > 999) return
+    setTiebreakerSaving(true)
+    try {
+      const res = await fetch('/api/global/tiebreaker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goals: parsed }),
+      })
+      if (res.ok) setTiebreakerSaved(true)
+    } finally {
+      setTiebreakerSaving(false)
+    }
+  }, [tiebreakerGoals])
+
+  return (
+    <Card glow className="text-center">
+      <div className="text-3xl mb-2">🏆</div>
+      <p className="text-lg font-bold mb-1">Bracket Complete!</p>
+      <p className="text-text-40 text-xs mb-4 leading-snug">
+        You&apos;ve predicted all <span className="num text-white font-bold">104</span> matches.
+        Edit any prediction before the first match, or lock it in now.
+      </p>
+      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-4">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-polla-accent to-polla-accent-dark"
+          style={{ width: '100%' }}
+        />
+      </div>
+
+      {/* Tiebreaker */}
+      <div className="rounded-xl bg-white/[0.03] border border-card-border p-3 mb-4 text-left">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-polla-gold text-[10px] font-bold uppercase tracking-widest">
+            Tiebreaker
+          </p>
+          {tiebreakerSaved && (
+            <span className="text-polla-success text-[10px] font-semibold">Saved</span>
+          )}
+        </div>
+        <p className="text-text-40 text-[10px] leading-snug mb-2">
+          Total goals across all 104 matches. Closest guess breaks ties.
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={999}
+            placeholder="e.g. 280"
+            value={tiebreakerGoals}
+            onChange={e => {
+              setTiebreakerGoals(e.target.value)
+              setTiebreakerSaved(false)
+            }}
+            className="flex-1 h-9 rounded-lg bg-white/[0.06] border border-card-border text-center text-white num text-sm font-bold placeholder:text-text-25 focus:outline-none focus:border-polla-accent"
+          />
+          <button
+            onClick={saveTiebreaker}
+            disabled={tiebreakerSaving || tiebreakerSaved || !tiebreakerGoals}
+            className={`h-9 px-3 rounded-lg text-xs font-bold transition-colors ${
+              tiebreakerSaved
+                ? 'bg-polla-success/20 text-polla-success'
+                : 'bg-polla-accent/20 text-polla-accent active:opacity-80'
+            } disabled:opacity-40`}
+          >
+            {tiebreakerSaving ? '...' : tiebreakerSaved ? 'Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={onOpen}
+          className="w-full py-3 rounded-xl border border-card-border bg-card text-sm font-bold text-text-70 active:opacity-70"
+        >
+          Edit Predictions
+        </button>
+        <SubmitHoldButton
+          onSubmit={onSubmit}
+          idleLabel="Hold to Submit"
+          holdingLabel="Keep holding..."
+          submittingLabel="Locking in..."
+        />
+        <p className="text-text-25 text-[9px] mt-1">
+          Press and hold for 2.5 seconds to lock your bracket in.
+        </p>
+      </div>
     </Card>
   )
 }

@@ -14,7 +14,7 @@ create table public.groups (
   entry_fee numeric(18,6) not null default 0 check (entry_fee >= 0 and entry_fee <= 500),
   payout_model text not null default 'podium_split'
     check (payout_model in ('winner_takes_all', 'podium_split', 'proportional')),
-  global_allocation integer not null default 20
+  global_allocation integer not null default 15
     check (global_allocation >= 10 and global_allocation <= 30),
   invite_code text not null unique,
   member_count integer not null default 0,

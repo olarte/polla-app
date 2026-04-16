@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
 
     const model = payout_model || 'podium_split'
-    const allocation = global_allocation || 20
+    const allocation = global_allocation || 15
 
     // Create group
     const { data: group, error: groupError } = await supabaseAdmin

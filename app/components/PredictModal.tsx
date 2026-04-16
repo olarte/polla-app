@@ -1008,6 +1008,42 @@ function CompletionScreen() {
     timeZoneName: 'short',
   })
 
+  const [tiebreakerGoals, setTiebreakerGoals] = useState<string>('')
+  const [tiebreakerSaved, setTiebreakerSaved] = useState(false)
+  const [tiebreakerSaving, setTiebreakerSaving] = useState(false)
+  const tiebreakerLoaded = useRef(false)
+
+  // Load existing tiebreaker on mount
+  useEffect(() => {
+    if (tiebreakerLoaded.current) return
+    tiebreakerLoaded.current = true
+    fetch('/api/global/tiebreaker')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.tiebreaker_goals !== null && d?.tiebreaker_goals !== undefined) {
+          setTiebreakerGoals(String(d.tiebreaker_goals))
+          setTiebreakerSaved(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const saveTiebreaker = useCallback(async () => {
+    const parsed = Number(tiebreakerGoals)
+    if (!tiebreakerGoals || !Number.isInteger(parsed) || parsed < 0 || parsed > 999) return
+    setTiebreakerSaving(true)
+    try {
+      const res = await fetch('/api/global/tiebreaker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goals: parsed }),
+      })
+      if (res.ok) setTiebreakerSaved(true)
+    } finally {
+      setTiebreakerSaving(false)
+    }
+  }, [tiebreakerGoals])
+
   return (
     <div className="h-full flex flex-col items-center justify-center text-center px-6 py-8 gap-5">
       <div className="text-7xl leading-none drop-shadow-[0_0_30px_rgba(233,69,96,0.35)]">
@@ -1023,7 +1059,44 @@ function CompletionScreen() {
         </p>
       </div>
 
-      <div className="mt-2 w-full max-w-xs rounded-2xl bg-polla-accent/10 border border-polla-accent/25 p-4">
+      {/* Tiebreaker input */}
+      <div className="w-full max-w-xs rounded-2xl bg-white/[0.03] border border-card-border p-4">
+        <p className="text-polla-gold text-[10px] font-bold uppercase tracking-widest mb-1">
+          Tiebreaker
+        </p>
+        <p className="text-text-40 text-[10px] leading-snug mb-3">
+          How many total goals will be scored across all 104 matches?
+          If you&apos;re tied on points, the closest guess wins.
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={999}
+            placeholder="e.g. 280"
+            value={tiebreakerGoals}
+            onChange={e => {
+              setTiebreakerGoals(e.target.value)
+              setTiebreakerSaved(false)
+            }}
+            className="flex-1 h-10 rounded-lg bg-white/[0.06] border border-card-border text-center text-white num text-sm font-bold placeholder:text-text-25 focus:outline-none focus:border-polla-accent"
+          />
+          <button
+            onClick={saveTiebreaker}
+            disabled={tiebreakerSaving || tiebreakerSaved || !tiebreakerGoals}
+            className={`h-10 px-4 rounded-lg text-xs font-bold transition-colors ${
+              tiebreakerSaved
+                ? 'bg-polla-success/20 text-polla-success'
+                : 'bg-polla-accent/20 text-polla-accent active:opacity-80'
+            } disabled:opacity-40`}
+          >
+            {tiebreakerSaving ? '…' : tiebreakerSaved ? 'Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      <div className="w-full max-w-xs rounded-2xl bg-polla-accent/10 border border-polla-accent/25 p-4">
         <p className="text-polla-accent text-[10px] font-bold uppercase tracking-widest mb-2">
           Edit until the first match
         </p>

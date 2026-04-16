@@ -15,11 +15,11 @@ These are intentional, debated choices. Do not relitigate without a deliberate r
 
 1. **One user, one set of predictions.** Predictions are keyed on `(user_id, match_id)` in the schema and apply to every pool the user has joined, including the global leaderboard. Joining more pools never creates more shots at a prize — the same bracket is scored everywhere. This is the guardrail that makes "no minimum entry fee" defensible, closes the spam-pool gaming vector, and keeps the mental model simple (March Madness analogue, not fantasy football).
 
-2. **No minimum entry fee for global-pool eligibility.** Any pool — even $1 — qualifies a user for La Gran Polla. The underdog narrative ("$5 entry, $15k win") is the most valuable marketing asset a skill-based contest has, and the 80/20 group-to-global split structurally insulates whales — most of their money stays in their private group where they compete against peers.
+2. **No minimum entry fee for global-pool eligibility.** Any pool — even $1 — qualifies a user for La Gran Polla. The underdog narrative ("$5 entry, $15k win") is the most valuable marketing asset a skill-based contest has, and the 85/15 group-to-global split structurally insulates whales — most of their money stays in their private group where they compete against peers.
 
 6. **Paid-only. No free pools, no XP.** Every pool is paid. MiniPay wallet connection is required to sign up and to join any pool. There is no XP currency, no streaks, no booster packs, no card album tied to engagement — leaderboards are driven solely by points earned from group-stage and knockout match predictions. Daily mini-predictions stay as a separate entertainment surface and will become paid in a future session; they do not contribute to the main leaderboard.
 
-3. **No stage multipliers.** Every match is worth the same, regardless of stage. The Final and a Group A opener both max out at 10 pts. Multipliers let late-tournament variance overwrite careful group-stage work, and the 80/20 pool split already gives knockout results outsized prize impact through the shared pool.
+3. **No stage multipliers.** Every match is worth the same, regardless of stage. The Final and a Group A opener both max out at 10 pts. Multipliers let late-tournament variance overwrite careful group-stage work, and the 85/15 pool split already gives knockout results outsized prize impact through the shared pool.
 
 4. **No tournament-wide bonus predictions.** No champion/runner-up/top-scorer/golden-ball side markets. All scoring comes from match-level grading. The `bonus_predictions` table and `score_bonus_predictions()` function are dropped in migration 008.
 
@@ -76,9 +76,9 @@ Polla is a **skill-based prize pool competition** — not a prediction market, n
 ## Core Product Concepts
 
 ### Pools (paid only)
-Every pool has a stablecoin entry fee — any positive amount, minimum $1. 5% service fee. 20% of the net group pool flows to the global pool. **Every entry — even $1 — grants La Gran Polla eligibility.** One user = one global-pool leaderboard entry, regardless of how many groups they join (predictions are keyed per user, not per group, so joining more pools does not create more shots at the global prize).
+Every pool has a stablecoin entry fee — any positive amount, minimum $1. 5% service fee. 15% of the net group pool flows to the global pool. **Every entry — even $1 — grants La Gran Polla eligibility.** One user = one global-pool leaderboard entry, regardless of how many groups they join (predictions are keyed per user, not per group, so joining more pools does not create more shots at the global prize).
 
-This is deliberate: a low-stake player topping the global leaderboard is the most valuable marketing story the product can tell ("$5 entry, $15k win"), and the 80/20 split already insulates high-stake players — most of their money stays in their private group where they compete against peers of similar stake, with only 20% flowing to the shared global pool.
+This is deliberate: a low-stake player topping the global leaderboard is the most valuable marketing story the product can tell ("$5 entry, $15k win"), and the 85/15 split already insulates high-stake players — most of their money stays in their private group where they compete against peers of similar stake, with only 15% flowing to the shared global pool.
 
 ### Points
 Points are the only currency. Earned from correct match predictions on the 104 World Cup matches (group stage + knockouts). Drive the group leaderboard, global ranking, tier, and payouts. Daily mini-predictions are a separate entertainment surface and do not contribute to the leaderboard.
@@ -192,7 +192,7 @@ Fully off-chain in Supabase. 1 USDC = 1 USDT = $1. Track deposit chain for payou
 
 ### Fund Flow
 ```
-Entry fees → 5% service fee → Net pool → 20% to global → Group pool → Payout model
+Entry fees → 5% service fee → Net pool → 15% to global → Group pool → Payout model
 ```
 
 ---
@@ -210,7 +210,7 @@ Tiered, exclusive. Pick the highest tier the prediction satisfies.
 
 Note: the "winner + one team's goals" tier can only fire when GD is wrong — if both GD and a team's goal count match, the exact score is reached by arithmetic. See `lib/scoring.ts` → `gradePrediction()`.
 
-**No stage multipliers.** Every match is worth the same — the Final and a Group A opener both max out at 10 pts. Multipliers were dropped because they let late-tournament variance overwrite careful group-stage work, and the 80/20 group-to-global pool split already gives knockout results outsized prize impact through the shared pool.
+**No stage multipliers.** Every match is worth the same — the Final and a Group A opener both max out at 10 pts. Multipliers were dropped because they let late-tournament variance overwrite careful group-stage work, and the 85/15 group-to-global pool split already gives knockout results outsized prize impact through the shared pool.
 
 **No tournament-wide bonus predictions.** Champion, runner-up, top scorer, golden ball, group winners — all removed. All scoring comes from match-level grading above. `bonus_predictions` table and `score_bonus_predictions()` function are dropped in migration 008.
 

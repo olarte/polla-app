@@ -189,27 +189,27 @@ interface GroupDef {
 const GROUP_DEFS: GroupDef[] = [
   {
     name: 'Naija Ballers 🇳🇬', emoji: '🇳🇬', isPaid: true, entryFee: 5,
-    payoutModel: 'podium_split', globalAlloc: 20, code: 'SEED01', creatorName: 'Chidi',
+    payoutModel: 'podium_split', globalAlloc: 15, code: 'SEED01', creatorName: 'Chidi',
     memberNames: ['Chidi', 'Amara', 'Kelechi', 'Ngozi', 'Emeka', 'Funke', 'Obinna', 'Adaeze', 'Tunde', 'Yemi', 'Chioma', 'James'],
   },
   {
     name: 'Copa Parceros 🇨🇴', emoji: '🇨🇴', isPaid: true, entryFee: 25,
-    payoutModel: 'podium_split', globalAlloc: 20, code: 'SEED02', creatorName: 'Andres',
+    payoutModel: 'podium_split', globalAlloc: 15, code: 'SEED02', creatorName: 'Andres',
     memberNames: ['Andres', 'Valentina', 'Santiago', 'Isabella', 'Mateo', 'Sofia', 'Julian', 'Mariana'],
   },
   {
     name: 'São Paulo FC Fans ⚽', emoji: '⚽', isPaid: true, entryFee: 10,
-    payoutModel: 'podium_split', globalAlloc: 20, code: 'SEED03', creatorName: 'Lucas',
+    payoutModel: 'podium_split', globalAlloc: 15, code: 'SEED03', creatorName: 'Lucas',
     memberNames: ['Lucas', 'Camila', 'Rafael', 'Isabela', 'Thiago', 'Fernanda', 'Gustavo', 'Larissa', 'Matheus', 'Juliana', 'Carlos', 'Lucia', 'Fatima', 'Yuki', 'Kwame'],
   },
   {
     name: 'MiniPay Legends 🏆', emoji: '🏆', isPaid: true, entryFee: 50,
-    payoutModel: 'winner_takes_all', globalAlloc: 20, code: 'SEED04', creatorName: 'Kwame',
+    payoutModel: 'winner_takes_all', globalAlloc: 15, code: 'SEED04', creatorName: 'Kwame',
     memberNames: ['Kwame', 'James', 'Carlos', 'Thiago', 'Andres', 'Emeka'],
   },
   {
     name: 'World Cup Newbies 🌍', emoji: '🌍', isPaid: true, entryFee: 5,
-    payoutModel: 'podium_split', globalAlloc: 20, code: 'SEED05', creatorName: 'James',
+    payoutModel: 'podium_split', globalAlloc: 15, code: 'SEED05', creatorName: 'James',
     memberNames: [
       'James', 'Fatima', 'Yuki', 'Kwame', 'Lucia', 'Carlos', 'Amina',
       'Chidi', 'Amara', 'Kelechi', 'Lucas', 'Camila', 'Rafael',

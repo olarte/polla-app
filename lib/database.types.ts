@@ -296,6 +296,21 @@ export interface Database {
           }
         ]
       }
+      global_pool_totals: {
+        Row: {
+          id: boolean
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          total_amount?: number
+        }
+        Update: {
+          total_amount?: number
+        }
+        Relationships: []
+      }
       global_leaderboard: {
         Row: {
           user_id: string
@@ -303,6 +318,7 @@ export interface Database {
           matches_predicted: number
           exact_scores: number
           bonus_points: number
+          tiebreaker_goals: number | null
           rank: number | null
           tier: string
           updated_at: string
@@ -313,6 +329,7 @@ export interface Database {
           matches_predicted?: number
           exact_scores?: number
           bonus_points?: number
+          tiebreaker_goals?: number | null
           rank?: number | null
           tier?: string
         }
@@ -321,6 +338,7 @@ export interface Database {
           matches_predicted?: number
           exact_scores?: number
           bonus_points?: number
+          tiebreaker_goals?: number | null
           rank?: number | null
           tier?: string
         }
@@ -688,6 +706,14 @@ export interface Database {
           p_amount: number
         }
         Returns: undefined
+      }
+      get_tier_distribution: {
+        Args: Record<string, never>
+        Returns: { tier: string; count: number }[]
+      }
+      get_actual_total_goals: {
+        Args: Record<string, never>
+        Returns: number
       }
     }
     Enums: {

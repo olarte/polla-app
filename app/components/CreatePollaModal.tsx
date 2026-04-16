@@ -55,7 +55,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
           emoji,
           entry_fee: Number(entryFee),
           payout_model: payoutModel,
-          global_allocation: 20,
+          global_allocation: 15,
         }),
       })
 
@@ -227,7 +227,7 @@ export default function CreatePollaModal({ isOpen, onClose, onCreated }: CreateP
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-40">Global Pool</span>
-                  <span className="num font-semibold">20%</span>
+                  <span className="num font-semibold">15%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-40">Service Fee</span>
