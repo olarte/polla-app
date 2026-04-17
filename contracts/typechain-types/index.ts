@@ -32,3 +32,5 @@ export type { MockUSDC } from "./contracts/MockUSDC";
 export { MockUSDC__factory } from "./factories/contracts/MockUSDC__factory";
 export type { PollaBets } from "./contracts/PollaBets";
 export { PollaBets__factory } from "./factories/contracts/PollaBets__factory";
+export type { SabiParlayPools } from "./contracts/SabiParlayPools";
+export { SabiParlayPools__factory } from "./factories/contracts/SabiParlayPools__factory";

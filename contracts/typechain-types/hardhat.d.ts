@@ -65,6 +65,10 @@ declare module "hardhat/types/runtime" {
       name: "PollaBets",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PollaBets__factory>;
+    getContractFactory(
+      name: "SabiParlayPools",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SabiParlayPools__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -131,6 +135,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.PollaBets>;
+    getContractAt(
+      name: "SabiParlayPools",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SabiParlayPools>;
 
     deployContract(
       name: "Ownable",
@@ -184,6 +193,10 @@ declare module "hardhat/types/runtime" {
       name: "PollaBets",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PollaBets>;
+    deployContract(
+      name: "SabiParlayPools",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SabiParlayPools>;
 
     deployContract(
       name: "Ownable",
@@ -250,6 +263,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PollaBets>;
+    deployContract(
+      name: "SabiParlayPools",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SabiParlayPools>;
 
     // default types
     getContractFactory(

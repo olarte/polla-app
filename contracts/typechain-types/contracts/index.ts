@@ -3,3 +3,4 @@
 /* eslint-disable */
 export type { MockUSDC } from "./MockUSDC";
 export type { PollaBets } from "./PollaBets";
+export type { SabiParlayPools } from "./SabiParlayPools";

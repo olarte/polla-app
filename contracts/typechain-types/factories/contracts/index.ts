@@ -3,3 +3,4 @@
 /* eslint-disable */
 export { MockUSDC__factory } from "./MockUSDC__factory";
 export { PollaBets__factory } from "./PollaBets__factory";
+export { SabiParlayPools__factory } from "./SabiParlayPools__factory";

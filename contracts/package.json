@@ -4,8 +4,12 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "test:fuzz": "FUZZ_RUNS=1000 hardhat test --grep fuzz",
+    "test:fuzz:prelaunch": "FUZZ_RUNS=10000 hardhat test --grep fuzz",
     "deploy:sepolia": "hardhat run scripts/deploy.ts --network celoSepolia",
-    "deploy:mainnet": "hardhat run scripts/deploy.ts --network celo"
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network celo",
+    "deploy:parlay:sepolia": "hardhat run scripts/deployParlayPools.ts --network celoSepolia",
+    "deploy:parlay:mainnet": "hardhat run scripts/deployParlayPools.ts --network celo"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

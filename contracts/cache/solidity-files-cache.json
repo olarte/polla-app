@@ -8,11 +8,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -49,11 +50,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -85,11 +87,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -123,11 +126,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -161,11 +165,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -200,11 +205,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -236,11 +242,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -272,11 +279,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -311,11 +319,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -347,11 +356,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -383,11 +393,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -419,11 +430,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -457,11 +469,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -498,11 +511,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -536,11 +550,12 @@
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
-          "evmVersion": "paris",
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
+          "evmVersion": "paris",
           "outputSelection": {
             "*": {
               "*": [
@@ -565,6 +580,48 @@
       ],
       "artifacts": [
         "IERC20Metadata"
+      ]
+    },
+    "/Users/danielolarte/Documents/Clau/POLLA/polla-app/contracts/contracts/SabiParlayPools.sol": {
+      "lastModificationDate": 1776435227473,
+      "contentHash": "7b3d0e7f3fcc7337c703349710eb4dc8",
+      "sourceName": "contracts/SabiParlayPools.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "SabiParlayPools"
       ]
     }
   }

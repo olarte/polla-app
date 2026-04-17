@@ -1,0 +1,19 @@
+{
+  "contract": "SabiParlayPools",
+  "address": "0x66D6562ce55955A0d80C3DC81D50A67eA1129Ad8",
+  "chainId": 11142220,
+  "network": "celo-sepolia",
+  "usdc": "0x01C5C0122039549AD1493B8220cABEdD739BC44E",
+  "operator": "0x168025fD748b63Cc6fB3bd59F197a6c79e6812c0",
+  "treasury": "0x168025fD748b63Cc6fB3bd59F197a6c79e6812c0",
+  "txHash": "0xc0c86917d00f625c8bb1797f4cec87cc89934d427a6fd50e61d199b648703b83",
+  "blockNumber": 23152429,
+  "deployedAt": "2026-04-17T14:33:40.440Z",
+  "verification": {
+    "sourcify": "https://repo.sourcify.dev/contracts/full_match/11142220/0x66D6562ce55955A0d80C3DC81D50A67eA1129Ad8/",
+    "celoscan": "not verified — requires CELOSCAN_API_KEY in env, then `npx hardhat verify --network celoSepolia 0x66D6562ce55955A0d80C3DC81D50A67eA1129Ad8 0x01C5C0122039549AD1493B8220cABEdD739BC44E 0x168025fD748b63Cc6fB3bd59F197a6c79e6812c0 0x168025fD748b63Cc6fB3bd59F197a6c79e6812c0`"
+  },
+  "notes": {
+    "operatorAndTreasury": "Both set to the deployer's Sepolia testnet wallet. For mainnet, operator must remain the hot wallet while treasury must be the hardware wallet — they must be distinct addresses on mainnet deploy."
+  }
+}
