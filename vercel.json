@@ -2,23 +2,23 @@
   "crons": [
     {
       "path": "/api/cron/parlay/create",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/parlay/lock",
-      "schedule": "* * * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/parlay/settle",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 2 * * *"
     },
     {
       "path": "/api/cron/parlay/reconcile",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron/parlay/monitor-gas",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }
