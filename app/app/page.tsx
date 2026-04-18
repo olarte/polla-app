@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import PredictModal from '../components/PredictModal'
 import CreatePollaModal from '../components/CreatePollaModal'
 import SubmitHoldButton from '../components/SubmitHoldButton'
+import ParlayMatchCard, { type ParlayMatchSummary } from '../components/parlay/ParlayMatchCard'
 import { useAuth } from '../contexts/AuthContext'
 import { createClient } from '@/lib/supabase-browser'
 
@@ -32,22 +33,7 @@ interface LeaderboardEntry {
   tier: string
 }
 
-interface DayMatch {
-  id: string
-  match_number: number
-  team_a_name: string
-  team_a_code: string
-  team_a_flag: string
-  team_b_name: string
-  team_b_code: string
-  team_b_flag: string
-  group_letter: string | null
-  stage: string
-  kickoff: string
-  venue: string
-  city: string
-  status: string
-}
+// Match card summary type is now imported from components/parlay/ParlayMatchCard.
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -285,23 +271,20 @@ function BracketCompleteCard({
 // Upcoming Matches (grouped by day)
 // ---------------------------------------------------------------------------
 
-function UpcomingMatches({ matches }: { matches: DayMatch[] }) {
-  // Group matches by calendar date in ET (UTC-4 in June)
-  // This ensures matches at e.g. 01:00 UTC on June 13 (= 9pm ET June 12)
-  // group under June 12, matching the schedule intent.
-  const ET_OFFSET = 4 * 60 * 60 * 1000
-  const byDay: [string, DayMatch[]][] = []
-  const dayMap = new Map<string, DayMatch[]>()
+const HOME_ET_OFFSET = 4 * 60 * 60 * 1000
+
+function UpcomingMatches({ matches, now }: { matches: ParlayMatchSummary[]; now: number }) {
+  const byDay: [string, ParlayMatchSummary[]][] = []
+  const dayMap = new Map<string, ParlayMatchSummary[]>()
 
   for (const match of matches) {
-    const utc = new Date(match.kickoff).getTime()
-    const et = new Date(utc - ET_OFFSET)
+    const et = new Date(new Date(match.kickoff).getTime() - HOME_ET_OFFSET)
     const key = et.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
       year: 'numeric',
-      timeZone: 'UTC', // we already shifted to ET
+      timeZone: 'UTC',
     })
     if (!dayMap.has(key)) {
       dayMap.set(key, [])
@@ -315,46 +298,10 @@ function UpcomingMatches({ matches }: { matches: DayMatch[] }) {
       {byDay.map(([dayLabel, dayMatches]) => (
         <div key={dayLabel}>
           <Label>{dayLabel}</Label>
-          <div className="space-y-2.5 mt-3">
-            {dayMatches.map((match) => {
-              const kickoff = new Date(match.kickoff)
-              const time = kickoff.toLocaleTimeString(undefined, {
-                hour: 'numeric',
-                minute: '2-digit',
-                timeZoneName: 'short',
-              })
-              return (
-                <Link
-                  key={match.id}
-                  href={`/app/match/${match.id}`}
-                  className="block active:scale-[0.98] transition-transform"
-                >
-                  <Card className="py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">{match.team_a_flag}</span>
-                          <span className="text-sm font-semibold">{match.team_a_name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-base">{match.team_b_flag}</span>
-                          <span className="text-sm font-semibold">{match.team_b_name}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-text-70 text-xs font-semibold">{time}</p>
-                        <p className="text-text-40 text-[10px] mt-0.5">
-                          {match.group_letter ? `Group ${match.group_letter}` : match.stage}
-                        </p>
-                        <p className="text-text-25 text-[10px] mt-0.5 max-w-[120px] truncate">
-                          {match.venue}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              )
-            })}
+          <div className="space-y-3 mt-3">
+            {dayMatches.map(match => (
+              <ParlayMatchCard key={match.id} match={match} now={now} />
+            ))}
           </div>
         </div>
       ))}
@@ -392,8 +339,15 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry | null>(null)
   const [predictionCount, setPredictionCount] = useState(0)
   const [globalPool, setGlobalPool] = useState(0)
-  const [dayMatches, setDayMatches] = useState<DayMatch[]>([])
+  const [dayMatches, setDayMatches] = useState<ParlayMatchSummary[]>([])
   const [loading, setLoading] = useState(true)
+  const [now, setNow] = useState(() => Date.now())
+
+  // Tick countdowns every second
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   // Hide bottom nav when modals are open
   useEffect(() => {
@@ -458,38 +412,33 @@ export default function HomePage() {
             .single(),
         ])
 
-        // 5. Upcoming matches: find next match date, then fetch 2 days from it
-        const { data: firstMatch } = await supabase
-          .from('matches')
-          .select('kickoff')
-          .gte('kickoff', new Date().toISOString())
-          .order('kickoff', { ascending: true })
-          .limit(1)
-          .single()
-
-        if (firstMatch) {
-          // Schedule times are ET (UTC-4 in June). Compute the ET calendar
-          // day of the first match, then span 2 full ET days.
-          // ET midnight = UTC 04:00, so shift by 4h before taking the date.
-          const ET_OFFSET_MS = 4 * 60 * 60 * 1000
-          const matchUtc = new Date(firstMatch.kickoff).getTime()
-          const matchEt = new Date(matchUtc - ET_OFFSET_MS)
-          // Midnight ET of that day = midnight UTC of the shifted date + offset back
-          const dayStartUtc = new Date(
-            Date.UTC(matchEt.getUTCFullYear(), matchEt.getUTCMonth(), matchEt.getUTCDate()) + ET_OFFSET_MS
-          )
-          const twoDaysLater = new Date(dayStartUtc.getTime() + 2 * 86400000)
-
-          const { data: upcomingMatches } = await supabase
-            .from('matches')
-            .select('id, match_number, team_a_name, team_a_code, team_a_flag, team_b_name, team_b_code, team_b_flag, group_letter, stage, kickoff, venue, city, status')
-            .gte('kickoff', dayStartUtc.toISOString())
-            .lt('kickoff', twoDaysLater.toISOString())
-            .order('kickoff', { ascending: true })
-
-          if (upcomingMatches) {
-            setDayMatches(upcomingMatches as DayMatch[])
+        // 5. Upcoming matches with parlay summaries — pulled from the Daily
+        //    API which already decorates each match with its parlay market.
+        //    Window to the next 2 ET days starting from the first future match.
+        try {
+          const res = await fetch('/api/daily/matches', { cache: 'no-store' })
+          if (res.ok) {
+            const { matches: allMatches } = await res.json() as {
+              matches: ParlayMatchSummary[]
+            }
+            const ET_OFFSET_MS = 4 * 60 * 60 * 1000
+            const nowMs = Date.now()
+            const firstFuture = allMatches.find(m => new Date(m.kickoff).getTime() >= nowMs)
+            if (firstFuture) {
+              const matchEt = new Date(new Date(firstFuture.kickoff).getTime() - ET_OFFSET_MS)
+              const dayStartUtc = new Date(
+                Date.UTC(matchEt.getUTCFullYear(), matchEt.getUTCMonth(), matchEt.getUTCDate()) + ET_OFFSET_MS
+              ).getTime()
+              const twoDaysLater = dayStartUtc + 2 * 86400000
+              const windowed = allMatches.filter(m => {
+                const k = new Date(m.kickoff).getTime()
+                return k >= dayStartUtc && k < twoDaysLater
+              })
+              setDayMatches(windowed)
+            }
           }
+        } catch {
+          // non-fatal — rest of home still renders
         }
 
         // Process groups
@@ -657,7 +606,7 @@ export default function HomePage() {
 
       {/* -- Upcoming Matches (grouped by day) -- */}
       {!loading && dayMatches.length > 0 && (
-        <UpcomingMatches matches={dayMatches} />
+        <UpcomingMatches matches={dayMatches} now={now} />
       )}
 
       {/* -- Modals -- */}
