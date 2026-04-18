@@ -140,22 +140,6 @@ export const QUESTION_TEMPLATES: Record<QuestionType, QuestionTemplate> = {
     },
   },
 
-  home_clean_sheet: {
-    type: 'home_clean_sheet',
-    prompt: 'Home team keeps a clean sheet?',
-    optionA: 'Yes',
-    optionB: 'No',
-    grade: (m) => (m.score.fullTime.away === 0 ? 'A' : 'B'),
-  },
-
-  away_clean_sheet: {
-    type: 'away_clean_sheet',
-    prompt: 'Away team keeps a clean sheet?',
-    optionA: 'Yes',
-    optionB: 'No',
-    grade: (m) => (m.score.fullTime.home === 0 ? 'A' : 'B'),
-  },
-
   comeback_win: {
     type: 'comeback_win',
     prompt: 'Winner came from behind at some point?',

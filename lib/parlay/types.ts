@@ -75,8 +75,6 @@ export type QuestionType =
   | 'first_half_goal'
   | 'red_card_match'
   | 'over_under_9_5_corners'
-  | 'home_clean_sheet'
-  | 'away_clean_sheet'
   | 'comeback_win'
   | 'over_under_3_5_yellows'
 
@@ -89,8 +87,6 @@ export const ALL_QUESTION_TYPES: QuestionType[] = [
   'first_half_goal',
   'red_card_match',
   'over_under_9_5_corners',
-  'home_clean_sheet',
-  'away_clean_sheet',
   'comeback_win',
   'over_under_3_5_yellows',
 ]
