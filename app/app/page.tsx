@@ -324,29 +324,35 @@ function UpcomingMatches({ matches }: { matches: DayMatch[] }) {
                 timeZoneName: 'short',
               })
               return (
-                <Card key={match.id} className="py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{match.team_a_flag}</span>
-                        <span className="text-sm font-semibold">{match.team_a_name}</span>
+                <Link
+                  key={match.id}
+                  href={`/app/match/${match.id}`}
+                  className="block active:scale-[0.98] transition-transform"
+                >
+                  <Card className="py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{match.team_a_flag}</span>
+                          <span className="text-sm font-semibold">{match.team_a_name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-base">{match.team_b_flag}</span>
+                          <span className="text-sm font-semibold">{match.team_b_name}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-base">{match.team_b_flag}</span>
-                        <span className="text-sm font-semibold">{match.team_b_name}</span>
+                      <div className="text-right">
+                        <p className="text-text-70 text-xs font-semibold">{time}</p>
+                        <p className="text-text-40 text-[10px] mt-0.5">
+                          {match.group_letter ? `Group ${match.group_letter}` : match.stage}
+                        </p>
+                        <p className="text-text-25 text-[10px] mt-0.5 max-w-[120px] truncate">
+                          {match.venue}
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-text-70 text-xs font-semibold">{time}</p>
-                      <p className="text-text-40 text-[10px] mt-0.5">
-                        {match.group_letter ? `Group ${match.group_letter}` : match.stage}
-                      </p>
-                      <p className="text-text-25 text-[10px] mt-0.5 max-w-[120px] truncate">
-                        {match.venue}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               )
             })}
           </div>

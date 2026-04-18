@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import Link from 'next/link'
 import Card from '../../components/Card'
 import Label from '../../components/Label'
-import BetCard from '../../components/BetCard'
-import ConnectWalletPrompt from '../../components/ConnectWalletPrompt'
 import { EmptyMatches } from '../../components/EmptyState'
 
 interface Match {
@@ -26,25 +25,32 @@ interface Match {
   status: string
 }
 
-function getCountdownStr(kickoff: string): string {
-  const diff = new Date(kickoff).getTime() - Date.now()
-  if (diff < 0) return 'Starting soon'
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  if (h > 24) return `${Math.floor(h / 24)}d ${h % 24}h`
-  if (h < 1) return `${m} min`
-  return `${h}h ${m}m`
+// Schedule times are ET (UTC-4 in June). Group by ET calendar day so
+// 01:00 UTC on June 13 (= 21:00 ET June 12) groups under June 12.
+const ET_OFFSET_MS = 4 * 60 * 60 * 1000
+
+function etDayKey(iso: string): string {
+  const et = new Date(new Date(iso).getTime() - ET_OFFSET_MS)
+  return et.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
 }
 
-function formatDate(): string {
-  return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+function formatKickoffTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  })
 }
 
 export default function DailyPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
-  const [walletPromptOpen, setWalletPromptOpen] = useState(false)
-  const [unclaimed, setUnclaimed] = useState<{ total: number; count: number } | null>(null)
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -62,142 +68,102 @@ export default function DailyPage() {
     fetchMatches()
   }, [fetchMatches])
 
-  // Fetch unclaimed winnings
-  useEffect(() => {
-    fetch('/api/bets/unclaimed')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && data.total > 0) setUnclaimed({ total: data.total, count: data.count })
-      })
-      .catch(() => {})
-  }, [])
-
-  // Separate upcoming vs completed
-  const upcoming = matches.filter(m => m.status === 'scheduled')
-  const completed = matches.filter(m => m.status === 'completed' || m.status === 'live')
+  // Group matches by ET calendar day, preserving kickoff order.
+  const groupedByDay = useMemo<[string, Match[]][]>(() => {
+    const dayMap = new Map<string, Match[]>()
+    const order: string[] = []
+    for (const m of matches) {
+      const key = etDayKey(m.kickoff)
+      if (!dayMap.has(key)) {
+        dayMap.set(key, [])
+        order.push(key)
+      }
+      dayMap.get(key)!.push(m)
+    }
+    return order.map(k => [k, dayMap.get(k)!])
+  }, [matches])
 
   return (
     <div className="px-4 pt-4 space-y-5 pb-32 animate-fade-in">
-      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold">Today&apos;s Matches</h1>
-        <p className="text-text-40 text-xs mt-0.5">{formatDate()}</p>
+        <h1 className="text-xl font-bold">World Cup 2026</h1>
+        <p className="text-text-40 text-xs mt-0.5">104 matches · tap to predict</p>
       </div>
 
-      {/* Unclaimed winnings banner */}
-      {unclaimed && unclaimed.total > 0 && (
-        <Card glow className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">💰</span>
-            <div className="text-left">
-              <p className="text-sm font-bold text-polla-success">
-                ${unclaimed.total.toLocaleString('en-US', { minimumFractionDigits: 2 })} unclaimed
-              </p>
-              <p className="text-text-40 text-[10px]">
-                {unclaimed.count} winning {unclaimed.count === 1 ? 'bet' : 'bets'} ready to claim
-              </p>
-            </div>
-          </div>
-          <span className="text-polla-accent text-xs font-semibold">↓ Scroll to claim</span>
-        </Card>
-      )}
-
-      {/* Loading skeleton */}
       {loading ? (
         <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <div className="flex items-center justify-between animate-pulse">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-full bg-white/[0.06] h-7 w-7" />
-                  <div className="rounded-lg bg-white/[0.06] h-4 w-10" />
-                  <span className="text-text-25 text-xs">vs</span>
-                  <div className="rounded-lg bg-white/[0.06] h-4 w-10" />
-                  <div className="rounded-full bg-white/[0.06] h-7 w-7" />
-                </div>
-                <div className="rounded-lg bg-white/[0.06] h-4 w-14" />
-              </div>
-            </Card>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="glass-card h-16 skeleton-pulse" />
           ))}
         </div>
-      ) : upcoming.length === 0 && completed.length === 0 ? (
+      ) : matches.length === 0 ? (
         <EmptyMatches />
       ) : (
-        <>
-          {/* Upcoming matches with BetCards */}
-          {upcoming.length > 0 && (
-            <div>
-              <Label>Upcoming</Label>
-              <div className="space-y-3 mt-2">
-                {upcoming.map(match => (
-                  <div key={match.id}>
-                    {/* Match header */}
-                    <div className="flex items-center justify-between mb-2 px-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{match.team_a_flag}</span>
-                        <span className="text-xs font-semibold">{match.team_a_code}</span>
-                        <span className="text-text-25 text-[10px]">vs</span>
-                        <span className="text-xs font-semibold">{match.team_b_code}</span>
-                        <span className="text-base">{match.team_b_flag}</span>
-                      </div>
-                      <span className="text-text-40 text-[10px] num">{getCountdownStr(match.kickoff)}</span>
-                    </div>
-                    {/* Bet card */}
-                    <BetCard
-                      match={match}
-                      onWalletNeeded={() => setWalletPromptOpen(true)}
-                    />
-                  </div>
+        <div className="space-y-5">
+          {groupedByDay.map(([dayLabel, dayMatches]) => (
+            <div key={dayLabel}>
+              <Label>{dayLabel}</Label>
+              <div className="space-y-2.5 mt-2">
+                {dayMatches.map(match => (
+                  <MatchRow key={match.id} match={match} />
                 ))}
               </div>
             </div>
-          )}
-
-          {/* Completed matches with results + bet outcomes */}
-          {completed.length > 0 && (
-            <div>
-              <Label>Results</Label>
-              <div className="space-y-3 mt-2">
-                {completed.map(match => (
-                  <div key={match.id}>
-                    {/* Match result header */}
-                    <div className="flex items-center justify-between mb-2 px-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{match.team_a_flag}</span>
-                        <span className="text-xs font-semibold">{match.team_a_code}</span>
-                        <span className="num text-sm font-bold px-1.5">{match.score_a} - {match.score_b}</span>
-                        <span className="text-xs font-semibold">{match.team_b_code}</span>
-                        <span className="text-base">{match.team_b_flag}</span>
-                      </div>
-                      <span className="text-text-25 text-[10px]">FT</span>
-                    </div>
-                    {/* Bet card with claim flow */}
-                    <BetCard
-                      match={match}
-                      onWalletNeeded={() => setWalletPromptOpen(true)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* "No more upcoming" message when only completed remain */}
-          {upcoming.length === 0 && completed.length > 0 && (
-            <Card className="text-center py-4">
-              <p className="text-text-40 text-xs">No more matches today</p>
-            </Card>
-          )}
-        </>
-      )}
-
-      {/* Connect Wallet Prompt */}
-      {walletPromptOpen && (
-        <ConnectWalletPrompt
-          onClose={() => setWalletPromptOpen(false)}
-          onConnected={() => setWalletPromptOpen(false)}
-        />
+          ))}
+        </div>
       )}
     </div>
+  )
+}
+
+function MatchRow({ match }: { match: Match }) {
+  const kickoff = new Date(match.kickoff).getTime()
+  const isLive = match.status === 'live'
+  const isDone = match.status === 'completed'
+  const isFuture = kickoff > Date.now() && match.status === 'scheduled'
+
+  const hasScore = match.score_a !== null && match.score_b !== null
+
+  return (
+    <Link
+      href={`/app/match/${match.id}`}
+      className="block active:scale-[0.98] transition-transform"
+    >
+      <Card className="py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-base">{match.team_a_flag}</span>
+              <span className="text-sm font-semibold truncate">{match.team_a_name}</span>
+              {hasScore && (
+                <span className="num text-sm font-bold text-text-100 ml-auto">{match.score_a}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-base">{match.team_b_flag}</span>
+              <span className="text-sm font-semibold truncate">{match.team_b_name}</span>
+              {hasScore && (
+                <span className="num text-sm font-bold text-text-100 ml-auto">{match.score_b}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="text-right flex-shrink-0">
+            {isLive && (
+              <p className="text-polla-accent-dark text-[10px] font-bold uppercase tracking-wider">Live</p>
+            )}
+            {isDone && (
+              <p className="text-text-40 text-[10px] uppercase tracking-wider">FT</p>
+            )}
+            {isFuture && (
+              <p className="text-text-70 text-xs font-semibold">{formatKickoffTime(match.kickoff)}</p>
+            )}
+            <p className="text-text-40 text-[10px] mt-0.5">
+              {match.group_letter ? `Group ${match.group_letter}` : match.stage}
+            </p>
+          </div>
+        </div>
+      </Card>
+    </Link>
   )
 }
