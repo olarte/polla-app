@@ -12,6 +12,12 @@ interface MatchTabsProps {
 export default function MatchTabs({ match }: MatchTabsProps) {
   const matchLabel = `${match.team_a_name} vs ${match.team_b_name}`
   return (
-    <ParlayTab matchId={match.id} matchLabel={matchLabel} kickoffIso={match.kickoff} />
+    <ParlayTab
+      matchId={match.id}
+      matchLabel={matchLabel}
+      kickoffIso={match.kickoff}
+      home={{ flag: match.team_a_flag, code: match.team_a_code }}
+      away={{ flag: match.team_b_flag, code: match.team_b_code }}
+    />
   )
 }

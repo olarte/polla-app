@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccount } from 'wagmi'
 import { PARLAY_COPY } from '@/lib/parlay/copy'
+import { applyTeamLabels, type TeamRef } from '@/lib/parlay/displayLabels'
 import { packPicks, usePlaceTicket, useUsdcBalance, type TicketStep } from '@/lib/contracts/useSabiParlay'
 import LockCountdown from './LockCountdown'
 import QuestionCard, { type ParlayQuestion, type Pick } from './QuestionCard'
@@ -43,11 +44,13 @@ interface ParlayTabProps {
   matchId: string
   matchLabel: string
   kickoffIso: string
+  home: TeamRef
+  away: TeamRef
 }
 
 const DEFAULT_STAKE = 5
 
-export default function ParlayTab({ matchId, matchLabel, kickoffIso }: ParlayTabProps) {
+export default function ParlayTab({ matchId, matchLabel, kickoffIso, home, away }: ParlayTabProps) {
   const { address, isConnected } = useAccount()
   const [loading, setLoading] = useState(true)
   const [market, setMarket] = useState<ParlayMarket | null>(null)
@@ -69,7 +72,7 @@ export default function ParlayTab({ matchId, matchLabel, kickoffIso }: ParlayTab
       if (!res.ok) throw new Error('load failed')
       const data = await res.json()
       setMarket(data.market)
-      setQuestions(data.questions || [])
+      setQuestions(applyTeamLabels((data.questions || []) as ParlayQuestion[], home, away))
       setTicket(data.ticket)
       if (data.ticket) {
         setPicks([
@@ -84,7 +87,7 @@ export default function ParlayTab({ matchId, matchLabel, kickoffIso }: ParlayTab
     } finally {
       setLoading(false)
     }
-  }, [matchId])
+  }, [matchId, home, away])
 
   useEffect(() => {
     loadMarket()
